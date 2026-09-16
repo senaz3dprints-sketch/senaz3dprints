@@ -12,24 +12,32 @@ interface ProductDetailPageProps {
 }
 
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const product = await db.product.findUnique({
-    where: { slug: params.slug },
-    include: { category: true },
-  });
+  let product = null;
+  let relatedProducts: any[] = [];
+
+  try {
+    product = await db.product.findUnique({
+      where: { slug: params.slug },
+      include: { category: true },
+    });
+
+    if (product) {
+      relatedProducts = await db.product.findMany({
+        where: {
+          categoryId: product.categoryId,
+          id: { not: product.id },
+          isPublished: true,
+        },
+        take: 3,
+      });
+    }
+  } catch (e) {
+    console.error('ProductDetailPage DB fetch error:', e);
+  }
 
   if (!product || !product.isPublished) {
     notFound();
   }
-
-  // Fetch related products from the same category
-  const relatedProducts = await db.product.findMany({
-    where: {
-      categoryId: product.categoryId,
-      id: { not: product.id },
-      isPublished: true,
-    },
-    take: 3,
-  });
 
   return (
     <ProductDetailClient

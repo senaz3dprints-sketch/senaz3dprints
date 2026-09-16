@@ -21,22 +21,36 @@ import {
 export const revalidate = 0; // Dynamic rendering for fresh site content
 
 export default async function HomePage() {
-  // Fetch Featured Products & Categories from Database
-  const products = await db.product.findMany({
-    where: { isPublished: true },
-    include: { category: true },
-    orderBy: { createdAt: 'desc' },
-    take: 6,
-  });
+  let products: any[] = [];
+  let categories: any[] = [];
 
-  const categories = await db.category.findMany({
-    orderBy: { displayOrder: 'asc' },
-  });
+  try {
+    products = await db.product.findMany({
+      where: { isPublished: true },
+      include: { category: true },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+    });
+  } catch (e) {
+    console.error('HomePage products DB fetch error:', e);
+  }
 
-  // Fetch Editable Site Content
-  const siteContentRecord = await db.siteContent.findUnique({
-    where: { key: 'homepage' },
-  });
+  try {
+    categories = await db.category.findMany({
+      orderBy: { displayOrder: 'asc' },
+    });
+  } catch (e) {
+    console.error('HomePage categories DB fetch error:', e);
+  }
+
+  let siteContentRecord = null;
+  try {
+    siteContentRecord = await db.siteContent.findUnique({
+      where: { key: 'homepage' },
+    });
+  } catch (e) {
+    console.error('HomePage content DB fetch error:', e);
+  }
   let content = {
     heroTitle: 'Made to Print. Built for You.',
     heroSubtitle:

@@ -5,15 +5,22 @@ import ShopClient from './ShopClient';
 export const revalidate = 0;
 
 export default async function ShopPage() {
-  const categories = await db.category.findMany({
-    orderBy: { displayOrder: 'asc' },
-  });
+  let categories: any[] = [];
+  let products: any[] = [];
 
-  const products = await db.product.findMany({
-    where: { isPublished: true },
-    include: { category: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  try {
+    categories = await db.category.findMany({
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    products = await db.product.findMany({
+      where: { isPublished: true },
+      include: { category: true },
+      orderBy: { createdAt: 'desc' },
+    });
+  } catch (e) {
+    console.error('ShopPage DB fetch error:', e);
+  }
 
   return (
     <Suspense fallback={<div className="p-12 text-center text-xs font-mono text-slate-400">Loading catalog...</div>}>

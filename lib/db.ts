@@ -1,4 +1,34 @@
 import { PrismaClient } from '@prisma/client';
+import fs from 'fs';
+import path from 'path';
+
+function getDatabaseUrl(): string {
+  if (process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('dev.db')) {
+    return process.env.DATABASE_URL;
+  }
+
+  try {
+    const tmpDbPath = '/tmp/senaz_dev.db';
+    const localDbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+    const rootDbPath = path.join(process.cwd(), 'dev.db');
+
+    if (!fs.existsSync(tmpDbPath)) {
+      if (fs.existsSync(localDbPath)) {
+        fs.copyFileSync(localDbPath, tmpDbPath);
+      } else if (fs.existsSync(rootDbPath)) {
+        fs.copyFileSync(rootDbPath, tmpDbPath);
+      }
+    }
+
+    if (fs.existsSync(tmpDbPath)) {
+      return `file:${tmpDbPath}`;
+    }
+  } catch (e) {
+    console.warn('[DB Setup] Could not copy SQLite database to /tmp:', e);
+  }
+
+  return process.env.DATABASE_URL || 'file:./dev.db';
+}
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -7,6 +37,11 @@ const globalForPrisma = globalThis as unknown as {
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
+    datasources: {
+      db: {
+        url: getDatabaseUrl(),
+      },
+    },
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
