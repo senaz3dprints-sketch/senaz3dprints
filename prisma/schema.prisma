@@ -1,0 +1,130 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  image       String?
+  displayOrder Int      @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id                    String   @id @default(cuid())
+  name                  String
+  slug                  String   @unique
+  shortDescription      String
+  fullDescription       String
+  categoryId            String
+  category              Category @relation(fields: [categoryId], references: [id])
+  price                 Float
+  compareAtPrice        Float?
+  images                String   // JSON string array of image URLs
+  colors                String?  // JSON string array of colors
+  sizes                 String?  // JSON string array of sizes
+  material              String   @default("PLA+")
+  weight                String?
+  dimensions            String?
+  stockQuantity         Int      @default(10)
+  stockStatus           String   @default("IN_STOCK") // IN_STOCK, LOW_STOCK, OUT_OF_STOCK
+  isFeatured            Boolean  @default(false)
+  isNew                 Boolean  @default(false)
+  isPublished           Boolean  @default(true)
+  personalizationEnabled Boolean @default(false)
+  customTextEnabled     Boolean  @default(false)
+  tags                  String?  // JSON string array or comma separated
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Order {
+  id             String   @id // e.g., SNZ-10492
+  customerName   String
+  whatsapp       String
+  email          String?
+  address        String
+  city           String
+  state          String
+  pincode        String
+  orderNotes     String?
+  items          String   // JSON array of items {productId, name, price, quantity, color, size, personalizedText}
+  subtotal       Float
+  discountAmount Float    @default(0)
+  totalAmount    Float
+  couponCode     String?
+  referralCode   String?
+  status         String   @default("PENDING") // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model CustomRequest {
+  id                String   @id // e.g., SNZ-REQ-1082
+  customerName      String
+  whatsapp          String
+  email             String?
+  fileUrl           String?
+  fileName          String?
+  referenceImageUrl String?
+  productType       String
+  materialPreference String  @default("PLA+")
+  colorPreference    String  @default("White")
+  quantity          Int      @default(1)
+  dimensions        String?
+  additionalNotes   String?
+  status            String   @default("PENDING") // PENDING, QUOTED, IN_PRODUCTION, COMPLETED, REJECTED
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  discountType   String    // PERCENTAGE or FIXED
+  discountValue  Float
+  minOrderValue  Float     @default(0)
+  maxDiscount    Float?
+  usageLimit     Int       @default(100)
+  timesUsed      Int       @default(0)
+  perUserLimit   Int       @default(1)
+  expiryDate     DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  referralCode   String   @unique // e.g. SENAZ-MILAN
+  referrerName   String
+  referrerContact String?
+  totalReferrals Int      @default(0)
+  totalOrderValue Float   @default(0)
+  status         String   @default("ACTIVE")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String   @unique // e.g., "homepage", "about", "contact"
+  content   String   // JSON object storing dynamic content fields
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
