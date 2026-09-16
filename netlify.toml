@@ -1,10 +1,12 @@
 [build]
-  command = "npx prisma db push && npx prisma db seed && npm run build"
+  command = "npx prisma generate && npx prisma db push && npx prisma db seed && next build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
-  NEXT_USE_NETLIFY_EDGE = "true"
+  DATABASE_URL = "file:./dev.db"
+  ADMIN_AUTH_SECRET = "senaz_3d_prints_super_secret_admin_jwt_key_2026"
+  WHATSAPP_NUMBER = "918761053230"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
