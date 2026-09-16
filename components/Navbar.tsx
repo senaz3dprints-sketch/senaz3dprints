@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { ShoppingBag, Heart, Search, Menu, X, Printer, User } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
@@ -38,8 +39,15 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-lg bg-brand-900/80 border border-tech-accent/40 flex items-center justify-center group-hover:border-tech-accent transition-colors shadow-sm">
-              <Printer className="w-5 h-5 text-tech-accent" />
+            <div className="w-9 h-9 rounded-lg bg-brand-950/80 border border-tech-accent/40 flex items-center justify-center overflow-hidden group-hover:border-tech-accent transition-colors shadow-sm shrink-0">
+              <Image
+                src="/images/logo-icon.png"
+                alt="SENAZ 3D PRINTS Logo"
+                width={36}
+                height={36}
+                className="object-contain p-0.5"
+                priority
+              />
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold tracking-tight text-lg leading-tight font-sans text-white">

@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Printer, Lock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Lock, AlertCircle, ArrowRight } from 'lucide-react';
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState('admin');
@@ -41,9 +42,16 @@ export default function AdminLoginPage() {
     <div className="min-h-screen bg-tech-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-tech-card border border-tech-border rounded-2xl p-8 space-y-6 shadow-2xl">
         {/* Brand Logo */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-xl bg-tech-accent/20 border border-tech-accent/40 flex items-center justify-center mx-auto text-tech-accent">
-            <Printer className="w-6 h-6" />
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 rounded-2xl bg-brand-950 border border-tech-accent/40 flex items-center justify-center mx-auto shadow-lg overflow-hidden p-1">
+            <Image
+              src="/images/logo-icon.png"
+              alt="SENAZ 3D PRINTS Logo"
+              width={56}
+              height={56}
+              className="object-contain"
+              priority
+            />
           </div>
           <h1 className="text-2xl font-extrabold text-white font-sans tracking-tight">
             SENAZ Admin Portal

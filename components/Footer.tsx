@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Printer, MessageCircle, Mail, MapPin, ShieldCheck, Cpu } from 'lucide-react';
 
 export default function Footer() {
@@ -12,8 +13,14 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded bg-brand-900 border border-tech-accent/40 flex items-center justify-center">
-                <Printer className="w-4 h-4 text-tech-accent" />
+              <div className="w-8 h-8 rounded bg-brand-950 border border-tech-accent/40 flex items-center justify-center overflow-hidden shrink-0">
+                <Image
+                  src="/images/logo-icon.png"
+                  alt="SENAZ 3D PRINTS Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain p-0.5"
+                />
               </div>
               <span className="font-bold text-white tracking-tight text-lg">
                 SENAZ <span className="text-tech-accent font-mono text-xs font-semibold">3D PRINTS</span>
