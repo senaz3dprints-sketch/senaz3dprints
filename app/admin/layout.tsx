@@ -54,14 +54,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="w-8 h-8 rounded bg-brand-950 border border-tech-accent/40 flex items-center justify-center overflow-hidden shrink-0">
                 <Image
                   src="/images/logo-icon.png"
-                  alt="SENAZ Admin Logo"
+                  alt="SenAZ Admin Logo"
                   width={32}
                   height={32}
                   className="object-contain p-0.5"
                 />
               </div>
               <span className="font-bold text-white text-sm font-sans">
-                SENAZ <span className="text-tech-accent font-mono text-xs">ADMIN</span>
+                Sen<span className="text-tech-accent">AZ</span> <span className="text-tech-accent font-mono text-xs">ADMIN</span>
               </span>
             </Link>
             <Link

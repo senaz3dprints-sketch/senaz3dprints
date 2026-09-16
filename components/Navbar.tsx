@@ -42,7 +42,7 @@ export default function Navbar() {
             <div className="w-9 h-9 rounded-lg bg-brand-950/80 border border-tech-accent/40 flex items-center justify-center overflow-hidden group-hover:border-tech-accent transition-colors shadow-sm shrink-0">
               <Image
                 src="/images/logo-icon.png"
-                alt="SENAZ 3D PRINTS Logo"
+                alt="SenAZ 3D PRINTS Logo"
                 width={36}
                 height={36}
                 className="object-contain p-0.5"
@@ -51,10 +51,10 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold tracking-tight text-lg leading-tight font-sans text-white">
-                SENAZ <span className="text-tech-accent font-mono text-sm font-semibold">3D PRINTS</span>
+                Sen<span className="text-tech-accent">AZ</span> <span className="text-tech-accent font-mono text-sm font-semibold">3D PRINTS</span>
               </span>
               <span className="text-[10px] text-slate-400 font-mono tracking-widest uppercase">
-                Precision Manufacturing
+                Ideas Into Reality
               </span>
             </div>
           </Link>

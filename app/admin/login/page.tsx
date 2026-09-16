@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
           <div className="w-16 h-16 rounded-2xl bg-brand-950 border border-tech-accent/40 flex items-center justify-center mx-auto shadow-lg overflow-hidden p-1">
             <Image
               src="/images/logo-icon.png"
-              alt="SENAZ 3D PRINTS Logo"
+              alt="SenAZ 3D PRINTS Logo"
               width={56}
               height={56}
               className="object-contain"
@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <h1 className="text-2xl font-extrabold text-white font-sans tracking-tight">
-            SENAZ Admin Portal
+            Sen<span className="text-tech-accent">AZ</span> Admin Portal
           </h1>
           <p className="text-xs text-slate-400 font-mono">
             Manage products, orders, requests & content

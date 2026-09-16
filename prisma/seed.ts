@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('Seeding SENAZ 3D PRINTS database...');
+  console.log('Seeding SenAZ 3D PRINTS database...');
 
   // 1. Create Default Admin User
   const passwordHash = await bcrypt.hash('admin_senaz_pass', 10);

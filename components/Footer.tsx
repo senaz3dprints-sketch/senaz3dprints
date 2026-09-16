@@ -16,14 +16,14 @@ export default function Footer() {
               <div className="w-8 h-8 rounded bg-brand-950 border border-tech-accent/40 flex items-center justify-center overflow-hidden shrink-0">
                 <Image
                   src="/images/logo-icon.png"
-                  alt="SENAZ 3D PRINTS Logo"
+                  alt="SenAZ 3D PRINTS Logo"
                   width={32}
                   height={32}
                   className="object-contain p-0.5"
                 />
               </div>
               <span className="font-bold text-white tracking-tight text-lg">
-                SENAZ <span className="text-tech-accent font-mono text-xs font-semibold">3D PRINTS</span>
+                Sen<span className="text-tech-accent">AZ</span> <span className="text-tech-accent font-mono text-xs font-semibold">3D PRINTS</span>
               </span>
             </Link>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
@@ -64,7 +64,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/about" className="hover:text-tech-accent transition-colors">
-                  About SENAZ
+                  About SenAZ
                 </Link>
               </li>
               <li>

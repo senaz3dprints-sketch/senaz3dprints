@@ -22,7 +22,7 @@ export default function ContactPage() {
           Get in Touch
         </span>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-sans tracking-tight">
-          Contact SENAZ 3D PRINTS
+          Contact SenAZ 3D PRINTS
         </h1>
         <p className="text-xs sm:text-sm text-slate-300 font-sans">
           Have questions regarding an order, material recommendation, or bulk inquiry? Reach out anytime!

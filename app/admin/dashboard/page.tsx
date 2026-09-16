@@ -45,7 +45,7 @@ export default async function AdminDashboardPage() {
           Business Overview & Analytics
         </h1>
         <p className="text-xs text-slate-400 font-mono">
-          SENAZ 3D PRINTS Operational Metrics
+          SenAZ 3D PRINTS Operational Metrics
         </p>
       </div>
 

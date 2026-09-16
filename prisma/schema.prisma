@@ -105,7 +105,7 @@ model Coupon {
 
 model Referral {
   id             String   @id @default(cuid())
-  referralCode   String   @unique // e.g. SENAZ-MILAN
+  referralCode   String   @unique // e.g. SenAZ-MILAN
   referrerName   String
   referrerContact String?
   totalReferrals Int      @default(0)

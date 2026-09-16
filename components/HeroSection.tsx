@@ -30,7 +30,7 @@ export default function HeroSection({
             {/* Small Brand Label */}
             <div className="inline-block">
               <span className="text-xs font-mono font-bold tracking-widest uppercase text-tech-accent">
-                SENAZ 3D PRINTS
+                SenAZ 3D PRINTS
               </span>
             </div>
 
@@ -71,7 +71,7 @@ export default function HeroSection({
             <div className="w-full max-w-xl relative rounded-2xl overflow-hidden shadow-2xl bg-tech-card border border-tech-border/80 aspect-4/3 sm:aspect-16/10 group">
               <img
                 src="/images/senaz_3d_printer_hero.jpg"
-                alt="SENAZ 3D Printing Studio - Real FDM Printer on Workbench"
+                alt="SenAZ 3D Printing Studio - Real FDM Printer on Workbench"
                 className="w-full h-full object-cover rounded-2xl group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>

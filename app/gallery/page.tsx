@@ -52,7 +52,7 @@ export default function GalleryPage() {
           <span>Real Print Showcase</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-sans tracking-tight">
-          SENAZ Business Gallery
+          SenAZ Business Gallery
         </h1>
         <p className="text-sm text-slate-300 font-sans leading-relaxed">
           High-resolution product photographs showcasing surface quality, layer fidelity, and custom finishes.

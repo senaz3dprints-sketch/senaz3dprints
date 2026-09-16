@@ -33,7 +33,7 @@ export function generateOrderWhatsAppUrl(
     if (item.personalizedText) itemDetailsText += `   Personalised Text: "${item.personalizedText}"\n`;
   });
 
-  const text = `Hello *SENAZ 3D PRINTS*,
+  const text = `Hello *SenAZ 3D PRINTS*,
 
 I would like to confirm my order!
 
@@ -57,7 +57,7 @@ export function generateProductInquiryUrl(
 ): string {
   const number = customNumber || DEFAULT_WHATSAPP_NUMBER;
 
-  const text = `Hello *SENAZ 3D PRINTS*,
+  const text = `Hello *SenAZ 3D PRINTS*,
 
 I have a question regarding this product:
 *${productName}* (Price: ₹${price})
@@ -76,7 +76,7 @@ export function generateCustomRequestWhatsAppUrl(
 ): string {
   const number = customNumber || DEFAULT_WHATSAPP_NUMBER;
 
-  const text = `Hello *SENAZ 3D PRINTS*,
+  const text = `Hello *SenAZ 3D PRINTS*,
 
 I submitted a Custom 3D Printing request!
 

@@ -100,7 +100,7 @@ export default function PersonalizationPreview({
             type="text"
             value={text}
             onChange={(e) => handleTextChange(e.target.value)}
-            placeholder="e.g. MILAN, SENAZ-3D"
+            placeholder="e.g. MILAN, SenAZ-3D"
             className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2 text-sm text-white focus:outline-none focus:border-tech-accent font-mono"
             maxLength={18}
           />
