@@ -7,14 +7,18 @@ const GOOGLE_SHEET_WEBHOOK_URL = process.env.GOOGLE_SHEET_WEBHOOK_URL;
 
 /**
  * Appends a row to Google Sheets server-side.
- * Supports both Google Apps Script Webhook URL (easiest, no cloud console needed)
+ * Supports both Google Apps Script Webhook URL (easiest, zero-auth needed)
  * and Google Service Account JWT auth.
  */
 async function appendToSheet(tabName: string, values: any[]) {
-  // 1. FAST METHOD: Google Apps Script Webhook URL (No service account needed)
-  if (GOOGLE_SHEET_WEBHOOK_URL) {
+  const webhookUrl =
+    process.env.GOOGLE_SHEET_WEBHOOK_URL ||
+    'https://script.google.com/macros/s/AKfycbxcbN43urHfRpLS0axFpQ9LKHNrRONMJyoGmVL-4tRhXCwaA34PvZJGPj6wHfTfIFElcA/exec';
+
+  // 1. FAST METHOD: Google Apps Script Webhook URL
+  if (webhookUrl) {
     try {
-      const res = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+      const res = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         redirect: 'follow',
@@ -26,6 +30,8 @@ async function appendToSheet(tabName: string, values: any[]) {
       if (res.ok) {
         console.log(`[GoogleSheets Webhook Sync] Successfully synced row to "${tabName}".`);
         return true;
+      } else {
+        console.error(`[GoogleSheets Webhook HTTP Error] Status ${res.status}:`, await res.text());
       }
     } catch (err) {
       console.error(`[GoogleSheets Webhook Error] Failed to send data to webhook:`, err);
@@ -33,8 +39,12 @@ async function appendToSheet(tabName: string, values: any[]) {
   }
 
   // 2. TRADITIONAL METHOD: Google Service Account
-  if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY || !SPREADSHEET_ID) {
-    console.log(`[GoogleSheets Sync Fallback] (${tabName}): Credentials unconfigured. Data logged safely in DB:`, values);
+  const serviceAccountEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+
+  if (!serviceAccountEmail || !privateKey || !spreadsheetId) {
+    console.log(`[GoogleSheets Sync Fallback] (${tabName}): Data recorded safely in database.`);
     return false;
   }
 
