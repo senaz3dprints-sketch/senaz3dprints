@@ -110,16 +110,38 @@ export function generateAdminToCustomerConfirmationWhatsAppUrl(order: {
   const cleanPhone = (order.customerPhone || '').replace(/[^0-9]/g, '');
   const phone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
 
+  let statusDetails = '';
+  switch (order.status) {
+    case 'CONFIRMED':
+      statusDetails = 'Your order has been CONFIRMED by our team and is scheduled for 3D printing!';
+      break;
+    case 'PROCESSING':
+      statusDetails = 'Your order is currently IN PRODUCTION (3D Printing & Quality Finishing) in our lab.';
+      break;
+    case 'SHIPPED':
+      statusDetails = 'Great news! Your order has been DISPATCHED / SHIPPED and is on its way to your delivery address.';
+      break;
+    case 'DELIVERED':
+      statusDetails = 'Your order has been DELIVERED successfully! We hope you love your custom 3D prints.';
+      break;
+    case 'CANCELLED':
+      statusDetails = 'Your order has been marked as CANCELLED. Please contact us if you have any questions.';
+      break;
+    default:
+      statusDetails = `Your order status is now: *${order.status}*.`;
+  }
+
   const text = `Hello *${order.customerName}*,
 
-Thank you for choosing *SenAZ 3D PRINTS*!
+Order Update from *SenAZ 3D PRINTS*:
 
-We are pleased to confirm your order details:
 *Order ID:* ${order.orderId}
+*Current Status:* ${order.status}
 *Total Amount:* Rs. ${order.totalAmount}
-*Status:* ${order.status}
 
-Your order is now being processed in our precision 3D printing lab. We will send you tracking updates as soon as it is dispatched!
+${statusDetails}
+
+For live photos or questions, reply to this message directly.
 
 Best regards,
 *SenAZ 3D PRINTS*
@@ -127,5 +149,6 @@ https://senaz3dprints.in`;
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
+
 
 
