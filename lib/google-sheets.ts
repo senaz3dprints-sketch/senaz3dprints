@@ -203,3 +203,68 @@ export async function recordReferralSheetRecord(referral: {
   return await appendToSheet('Referrals', row);
 }
 
+/**
+ * Updates order status in Google Sheets (Column 14 / N) by matching Order ID (Column 1 / A)
+ */
+export async function updateOrderStatusSheetRecord(orderId: string, newStatus: string) {
+  const webhookUrl =
+    process.env.GOOGLE_SHEET_WEBHOOK_URL ||
+    'https://script.google.com/macros/s/AKfycbxcbN43urHfRpLS0axFpQ9LKHNrRONMJyoGmVL-4tRhXCwaA34PvZJGPj6wHfTfIFElcA/exec';
+
+  // 1. Google Apps Script Webhook
+  if (webhookUrl) {
+    try {
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        redirect: 'follow',
+        body: JSON.stringify({
+          action: 'updateStatus',
+          tab: 'Orders',
+          orderId,
+          status: newStatus,
+        }),
+      });
+      if (res.ok) {
+        console.log(`[GoogleSheets Sync] Updated order ${orderId} status to "${newStatus}".`);
+        return true;
+      }
+    } catch (err) {
+      console.error(`[GoogleSheets Sync Error] Failed to update status in webhook:`, err);
+    }
+  }
+
+  // 2. Google Service Account Fallback
+  if (SERVICE_ACCOUNT_EMAIL && PRIVATE_KEY && SPREADSHEET_ID) {
+    try {
+      const auth = new google.auth.JWT({
+        email: SERVICE_ACCOUNT_EMAIL,
+        key: PRIVATE_KEY,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+      });
+      const sheets = google.sheets({ version: 'v4', auth });
+      const getRows = await sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'Orders!A:N',
+      });
+      const rows = getRows.data.values || [];
+      const rowIndex = rows.findIndex((r) => r[0] === orderId);
+      if (rowIndex !== -1) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: SPREADSHEET_ID,
+          range: `Orders!N${rowIndex + 1}`,
+          valueInputOption: 'USER_ENTERED',
+          requestBody: {
+            values: [[newStatus]],
+          },
+        });
+        return true;
+      }
+    } catch (error) {
+      console.error('[GoogleSheets JWT Status Update Error]', error);
+    }
+  }
+
+  return false;
+}
+

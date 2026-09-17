@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
+import { updateOrderStatusSheetRecord } from '@/lib/google-sheets';
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,6 +36,13 @@ export async function PUT(req: NextRequest) {
       where: { id },
       data: { status },
     });
+
+    // Update status in Google Sheets synchronously
+    try {
+      await updateOrderStatusSheetRecord(id, status);
+    } catch (sheetErr) {
+      console.error('Failed to sync updated order status to Google Sheets:', sheetErr);
+    }
 
     return NextResponse.json({ success: true, order: updated });
   } catch (error) {

@@ -13,10 +13,38 @@ export async function GET(req: NextRequest) {
     }
 
     const referrals = await db.referral.findMany({
-      orderBy: { totalReferrals: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ referrals });
+    // Aggregate live orders for each referral code
+    const referralsWithLiveOrders = await Promise.all(
+      referrals.map(async (ref) => {
+        const matchingOrders = await db.order.findMany({
+          where: { referralCode: ref.referralCode },
+          select: {
+            id: true,
+            customerName: true,
+            whatsapp: true,
+            totalAmount: true,
+            status: true,
+            createdAt: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        const liveCount = matchingOrders.length;
+        const liveOrderValue = matchingOrders.reduce((sum, ord) => sum + ord.totalAmount, 0);
+
+        return {
+          ...ref,
+          totalReferrals: Math.max(ref.totalReferrals, liveCount),
+          totalOrderValue: Math.max(ref.totalOrderValue, liveOrderValue),
+          orders: matchingOrders,
+        };
+      })
+    );
+
+    return NextResponse.json({ referrals: referralsWithLiveOrders });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch referrals.' }, { status: 500 });
   }

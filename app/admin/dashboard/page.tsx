@@ -32,6 +32,9 @@ export default async function AdminDashboardPage() {
 
   const totalCouponUsage = await db.coupon.aggregate({ _sum: { timesUsed: true } });
 
+  const totalReferralPartners = await db.referral.count({ where: { status: 'ACTIVE' } });
+  const referralOrdersCount = await db.order.count({ where: { referralCode: { not: null } } });
+
   const recentOrders = await db.order.findMany({
     orderBy: { createdAt: 'desc' },
     take: 5,
@@ -105,15 +108,22 @@ export default async function AdminDashboardPage() {
           <p className="text-[11px] font-mono text-slate-500">Live in public store catalog</p>
         </div>
 
-        {/* Low Stock Alert */}
-        <div className="bg-tech-card p-5 rounded-2xl border border-tech-border space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-mono">Low Stock Alert</span>
-            <AlertTriangle className="w-4 h-4 text-rose-400" />
+        {/* Referral Partner Network */}
+        <Link
+          href="/admin/referrals"
+          className="bg-tech-card p-5 rounded-2xl border border-tech-border hover:border-tech-accent transition-all space-y-2 group block"
+        >
+          <div className="flex items-center justify-between text-slate-400 group-hover:text-tech-accent transition-colors">
+            <span className="text-xs font-mono">Referral Network</span>
+            <Tag className="w-4 h-4 text-tech-accent" />
           </div>
-          <div className="text-2xl font-bold font-mono text-rose-400">{lowStockProducts}</div>
-          <p className="text-[11px] font-mono text-slate-500">Products with ≤ 5 stock remaining</p>
-        </div>
+          <div className="text-2xl font-bold font-mono text-tech-accent">
+            {referralOrdersCount} <span className="text-xs text-slate-400">orders</span>
+          </div>
+          <p className="text-[11px] font-mono text-slate-500">
+            {totalReferralPartners} active referral partners →
+          </p>
+        </Link>
 
         {/* Coupon Usage */}
         <div className="bg-tech-card p-5 rounded-2xl border border-tech-border space-y-2">

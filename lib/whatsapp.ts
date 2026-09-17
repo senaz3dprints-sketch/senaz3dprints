@@ -99,3 +99,32 @@ I've uploaded my model/reference on your website. Looking forward to your quote!
 
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
+
+export function generateAdminToCustomerConfirmationWhatsAppUrl(order: {
+  customerPhone: string;
+  customerName: string;
+  orderId: string;
+  totalAmount: number;
+  status: string;
+}): string {
+  const cleanPhone = (order.customerPhone || '').replace(/[^0-9]/g, '');
+  const phone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+  const text = `Hello *${order.customerName}*! 👋
+
+Thank you for choosing *SenAZ 3D PRINTS*! 🎨✨
+
+We are pleased to confirm your order details:
+📦 *Order ID:* ${order.orderId}
+💰 *Total Amount:* ₹${order.totalAmount}
+📊 *Status:* ${order.status}
+
+Your order is now being processed in our precision 3D printing lab. We'll send you tracking updates as soon as it is dispatched!
+
+Best regards,
+*SenAZ 3D PRINTS*
+https://senaz3dprints.in`;
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
