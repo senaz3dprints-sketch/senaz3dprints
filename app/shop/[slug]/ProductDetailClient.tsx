@@ -166,7 +166,9 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 colors={colorList.length > 0 ? colorList : undefined}
                 onPersonalizationChange={(data) => {
                   setPersonalizedText(data.text);
-                  setSelectedColor(data.color);
+                  if (data.textColor || data.color) {
+                    setSelectedColor(data.textColor || data.color || '');
+                  }
                 }}
               />
             </div>
