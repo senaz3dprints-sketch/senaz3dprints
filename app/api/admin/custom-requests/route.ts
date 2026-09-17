@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
+import { updateCustomRequestStatusSheetRecord } from '@/lib/google-sheets';
 
 export async function GET(req: NextRequest) {
   try {
@@ -35,6 +36,18 @@ export async function PUT(req: NextRequest) {
       where: { id },
       data: { status },
     });
+
+    // Synchronously update Google Sheet tab 'CustomRequests' and notify customer
+    try {
+      await updateCustomRequestStatusSheetRecord(id, status, {
+        customerName: updated.customerName,
+        customerEmail: updated.email,
+        whatsapp: updated.whatsapp,
+        productType: updated.productType,
+      });
+    } catch (sheetErr) {
+      console.error('[Admin Custom Request Sheet Sync Error]', sheetErr);
+    }
 
     return NextResponse.json({ success: true, request: updated });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
+import { syncReferralPartnerSheetRecord } from '@/lib/google-sheets';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -72,6 +73,19 @@ export async function POST(req: NextRequest) {
         status: 'ACTIVE',
       },
     });
+
+    // Sync partner code to Referrals tab in Google Sheets
+    try {
+      await syncReferralPartnerSheetRecord({
+        referralCode: referral.referralCode,
+        referrerName: referral.referrerName,
+        referrerContact: referral.referrerContact,
+        status: referral.status,
+        createdAt: referral.createdAt,
+      });
+    } catch (sheetErr) {
+      console.error('[Admin Referral Sheet Sync Error]', sheetErr);
+    }
 
     return NextResponse.json({ success: true, referral });
   } catch (error: any) {

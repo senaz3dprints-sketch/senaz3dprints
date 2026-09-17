@@ -178,6 +178,32 @@ export async function createCustomRequestSheetRecord(request: {
   return await appendToSheet('CustomRequests', row);
 }
 
+export async function syncReferralPartnerSheetRecord(referral: {
+  referralCode: string;
+  referrerName: string;
+  referrerContact?: string | null;
+  status: string;
+  createdAt: Date;
+}) {
+  const istDate = new Date(referral.createdAt).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  const row = [
+    referral.referralCode,             // 1. Referral Code
+    referral.referrerName,             // 2. Referrer Name
+    referral.referrerContact || 'N/A', // 3. Contact
+    0,                                 // 4. Total Orders
+    0,                                 // 5. Total Sales (₹)
+    referral.status,                   // 6. Status
+    istDate,                           // 7. Created Date
+  ];
+
+  return await appendToSheet('Referrals', row);
+}
+
 export async function recordReferralSheetRecord(referral: {
   referralCode: string;
   referrerName: string;
@@ -202,6 +228,53 @@ export async function recordReferralSheetRecord(referral: {
 
   return await appendToSheet('Referrals', row);
 }
+
+/**
+ * Updates status of a custom 3D printing request in Google Sheets (CustomRequests tab)
+ */
+export async function updateCustomRequestStatusSheetRecord(
+  requestId: string,
+  newStatus: string,
+  details?: {
+    customerName?: string;
+    customerEmail?: string | null;
+    whatsapp?: string;
+    productType?: string;
+  }
+) {
+  const webhookUrl =
+    process.env.GOOGLE_SHEET_WEBHOOK_URL ||
+    'https://script.google.com/macros/s/AKfycbxKoEvu-uDBhWDjRWf2c9hUXKNhDvzzD3CQy5i5WdaKm9z0m7Oes2xgYr8Sx6Us-F3wVA/exec';
+
+  if (webhookUrl) {
+    try {
+      const res = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        redirect: 'follow',
+        body: JSON.stringify({
+          action: 'updateCustomRequestStatus',
+          tab: 'CustomRequests',
+          requestId,
+          status: newStatus,
+          customerName: details?.customerName,
+          customerEmail: details?.customerEmail,
+          whatsapp: details?.whatsapp,
+          productType: details?.productType,
+        }),
+      });
+      if (res.ok) {
+        console.log(`[GoogleSheets Sync] Updated custom request ${requestId} status to "${newStatus}".`);
+        return true;
+      }
+    } catch (err) {
+      console.error(`[GoogleSheets Sync Error] Failed to update custom request status:`, err);
+    }
+  }
+
+  return false;
+}
+
 
 /**
  * Updates order status in Google Sheets (Column 14 / N) by matching Order ID (Column 1 / A)
