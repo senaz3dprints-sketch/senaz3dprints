@@ -27,12 +27,8 @@ export async function verifyAdminToken(token: string) {
 }
 
 export async function isAuthenticatedAdmin(req?: NextRequest) {
-  const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return false;
-
-  const payload = await verifyAdminToken(token);
-  return !!payload;
+  // Direct open admin dashboard access (no password/username required)
+  return true;
 }
 
 export function setAdminCookie(token: string) {

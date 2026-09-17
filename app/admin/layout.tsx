@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
@@ -12,26 +12,17 @@ import {
   Tag,
   Share2,
   FileText,
-  LogOut,
   Printer,
   ExternalLink,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
 
   // If on login page, render full screen without sidebar
   if (pathname === '/admin/login') {
     return <div className="min-h-screen bg-tech-bg text-slate-100">{children}</div>;
   }
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/admin/logout', { method: 'POST' });
-      router.push('/admin/login');
-    } catch (e) {}
-  };
 
   const navItems = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -97,15 +88,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
 
-        {/* Logout Footer */}
+        {/* Store Return Footer */}
         <div className="pt-4 border-t border-tech-border">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono text-rose-400 hover:bg-rose-500/10 transition-colors"
+          <Link
+            href="/"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono text-slate-400 hover:text-tech-accent hover:bg-tech-bg transition-colors"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Logout Account</span>
-          </button>
+            <ExternalLink className="w-4 h-4" />
+            <span>Return to Public Store</span>
+          </Link>
         </div>
       </aside>
 

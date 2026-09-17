@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MessageCircle, Mail, MapPin, Send, CheckCircle } from 'lucide-react';
+import { MessageCircle, Mail, MapPin, Send, CheckCircle, Instagram, Youtube } from 'lucide-react';
 
 export default function ContactPage() {
   const [name, setName] = useState('');
@@ -76,6 +76,52 @@ export default function ContactPage() {
                 <span className="text-sm font-semibold text-white">India | Nationwide Courier</span>
               </div>
             </div>
+
+            {/* Social Channels */}
+            <div className="pt-2 border-t border-tech-border space-y-3">
+              <span className="text-xs font-mono text-slate-400 block font-semibold uppercase">
+                Official Social Channels
+              </span>
+              <div className="grid grid-cols-2 gap-3">
+                <a
+                  href="https://www.instagram.com/senaz_prints?utm_source=qr&stkn=MWd5MjBmcjlvNzIxcA=="
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2.5 p-3 rounded-xl bg-tech-bg border border-tech-border hover:border-pink-500/50 hover:bg-pink-500/5 transition-all group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Instagram className="w-4 h-4 text-pink-400" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <span className="text-[10px] font-mono text-pink-400 block font-semibold">
+                      Instagram
+                    </span>
+                    <span className="text-xs font-bold text-white group-hover:text-pink-300 truncate block">
+                      @senaz_prints
+                    </span>
+                  </div>
+                </a>
+
+                <a
+                  href="https://youtube.com/@senaz3dprints?si=MAPWtk-2VY4qJn9e"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2.5 p-3 rounded-xl bg-tech-bg border border-tech-border hover:border-rose-500/50 hover:bg-rose-500/5 transition-all group"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <Youtube className="w-4 h-4 text-rose-500" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <span className="text-[10px] font-mono text-rose-400 block font-semibold">
+                      YouTube
+                    </span>
+                    <span className="text-xs font-bold text-white group-hover:text-rose-300 truncate block">
+                      @senaz3dprints
+                    </span>
+                  </div>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -86,7 +132,7 @@ export default function ContactPage() {
               <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto" />
               <h3 className="text-xl font-bold text-white">Message Sent!</h3>
               <p className="text-xs text-slate-400">
-                Thank you for contacting SENAZ 3D PRINTS. We will reply to your message shortly.
+                Thank you for contacting SenAZ 3D PRINTS. We will reply to your message shortly.
               </p>
             </div>
           ) : (

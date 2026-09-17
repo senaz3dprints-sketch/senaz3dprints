@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Printer, MessageCircle, Mail, MapPin, ShieldCheck, Cpu } from 'lucide-react';
+import { Printer, MessageCircle, Mail, MapPin, ShieldCheck, Cpu, Instagram, Youtube } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -109,7 +109,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact & Social */}
           <div>
             <h4 className="text-xs font-mono uppercase tracking-wider text-slate-200 font-semibold mb-3">
               Direct Contact
@@ -119,13 +119,13 @@ export default function Footer() {
                 href="https://wa.me/918761053230"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 text-slate-300 hover:text-tech-accent transition-colors"
+                className="flex items-center gap-2 text-slate-300 hover:text-emerald-400 transition-colors"
               >
-                <MessageCircle className="w-4 h-4 text-emerald-400" />
+                <MessageCircle className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span>WhatsApp Order Support</span>
               </a>
               <div className="flex items-center gap-2 text-slate-400">
-                <Mail className="w-4 h-4 text-slate-500" />
+                <Mail className="w-4 h-4 text-slate-500 shrink-0" />
                 <span>senaz3dprints@gmail.com</span>
               </div>
               <div className="flex items-start gap-2 text-slate-400">
@@ -133,11 +133,38 @@ export default function Footer() {
                 <span>India | Nationwide Dispatch</span>
               </div>
             </div>
+
+            {/* Social Media Links */}
+            <div className="mt-4 pt-4 border-t border-tech-border/70 space-y-2">
+              <span className="text-[11px] font-mono uppercase text-slate-400 font-semibold block">
+                Follow SenAZ
+              </span>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://www.instagram.com/senaz_prints?utm_source=qr&stkn=MWd5MjBmcjlvNzIxcA=="
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="SenAZ Instagram"
+                  className="w-8 h-8 rounded-lg bg-tech-card border border-tech-border hover:border-pink-500/60 hover:text-pink-400 text-slate-300 flex items-center justify-center transition-colors shadow-sm"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://youtube.com/@senaz3dprints?si=MAPWtk-2VY4qJn9e"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="SenAZ YouTube"
+                  className="w-8 h-8 rounded-lg bg-tech-card border border-tech-border hover:border-rose-500/60 hover:text-rose-500 text-slate-300 flex items-center justify-center transition-colors shadow-sm"
+                >
+                  <Youtube className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="mt-12 pt-6 border-t border-tech-border flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-4">
-          <p>© {new Date().getFullYear()} SENAZ 3D PRINTS (senaz3dprints.in). All rights reserved.</p>
+          <p>© {new Date().getFullYear()} SenAZ 3D PRINTS (senaz3dprints.in). All rights reserved.</p>
           <div className="flex gap-4">
             <Link href="/admin/login" className="hover:text-slate-300">
               Admin Portal
