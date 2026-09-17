@@ -11,8 +11,11 @@ export interface OrderWhatsAppDetails {
     personalizedText?: string;
     price: number;
   }>;
+  subtotal?: number;
   totalAmount: number;
   discountAmount?: number;
+  couponCode?: string | null;
+  referralCode?: string | null;
   address: string;
   city: string;
   pincode: string;
@@ -27,25 +30,32 @@ export function generateOrderWhatsAppUrl(
   let itemDetailsText = '';
   order.items.forEach((item, index) => {
     itemDetailsText += `${index + 1}. *${item.name}*\n`;
-    itemDetailsText += `   Qty: ${item.quantity} | Price: ₹${item.price}\n`;
+    itemDetailsText += `   Qty: ${item.quantity} | Unit Price: ₹${item.price}\n`;
     if (item.color) itemDetailsText += `   Color: ${item.color}\n`;
     if (item.size) itemDetailsText += `   Size: ${item.size}\n`;
-    if (item.personalizedText) itemDetailsText += `   Personalised Text: "${item.personalizedText}"\n`;
+    if (item.personalizedText) itemDetailsText += `   Custom Text: "${item.personalizedText}"\n`;
   });
+
+  const subtotal = order.subtotal || (order.totalAmount + (order.discountAmount || 0));
+  const discount = order.discountAmount || 0;
+  const appliedCode = order.couponCode ? `(Coupon: ${order.couponCode})` : (order.referralCode ? `(Referral: ${order.referralCode})` : '');
 
   const text = `Hello *SenAZ 3D PRINTS*,
 
-I would like to confirm my order!
+I placed an order on your website and would like to confirm production!
 
 📦 *Order ID:* ${order.orderId}
-👤 *Name:* ${order.customerName}
-📍 *Address:* ${order.address}, ${order.city} - ${order.pincode}
+👤 *Customer:* ${order.customerName}
+📍 *Delivery Address:* ${order.address}, ${order.city} - ${order.pincode}
 
-🛒 *Items:*
+🛒 *Ordered Items:*
 ${itemDetailsText}
-💰 *Total Amount:* ₹${order.totalAmount}${order.discountAmount ? ` (Saved ₹${order.discountAmount})` : ''}
+🧾 *BILLING DETAILS:*
+• Subtotal: ₹${subtotal}
+${discount > 0 ? `• Discount Applied: -₹${discount} ${appliedCode}\n` : ''}• Shipping / Delivery: FREE
+💰 *FINAL PAYABLE AMOUNT:* ₹${order.totalAmount}
 
-Please confirm availability and dispatch date. Thank you!`;
+Please confirm order acceptance and estimated dispatch date. Thank you!`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }

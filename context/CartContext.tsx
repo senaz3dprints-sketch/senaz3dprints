@@ -19,6 +19,7 @@ interface CartContextType {
   wishlist: string[]; // Product IDs
   referralCode: string;
   setReferralCode: (code: string) => void;
+  removeReferralCode: () => void;
   addToCart: (item: CartItem) => void;
   removeFromCart: (index: number) => void;
   updateQuantity: (index: number, quantity: number) => void;
@@ -36,8 +37,29 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const [referralCode, setReferralCode] = useState<string>('');
+  const [referralCode, setReferralCodeState] = useState<string>('');
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Helper to set and save referral code
+  const setReferralCode = (code: string) => {
+    const sanitized = (code || '').trim().toUpperCase();
+    setReferralCodeState(sanitized);
+    try {
+      if (sanitized) {
+        localStorage.setItem('senaz_referral_code', sanitized);
+      } else {
+        localStorage.removeItem('senaz_referral_code');
+      }
+    } catch (e) {}
+  };
+
+  // Helper to remove referral code
+  const removeReferralCode = () => {
+    setReferralCodeState('');
+    try {
+      localStorage.removeItem('senaz_referral_code');
+    } catch (e) {}
+  };
 
   // Load from local storage and URL params on mount
   useEffect(() => {
@@ -54,10 +76,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (refFromUrl) {
           const sanitizedRef = refFromUrl.trim().toUpperCase();
           localStorage.setItem('senaz_referral_code', sanitizedRef);
-          setReferralCode(sanitizedRef);
+          setReferralCodeState(sanitizedRef);
         } else {
           const savedRef = localStorage.getItem('senaz_referral_code');
-          if (savedRef) setReferralCode(savedRef);
+          if (savedRef) setReferralCodeState(savedRef.trim().toUpperCase());
         }
       }
     } catch (e) {
@@ -135,6 +157,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         wishlist,
         referralCode,
         setReferralCode,
+        removeReferralCode,
         addToCart,
         removeFromCart,
         updateQuantity,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createOrderSheetRecord } from '@/lib/google-sheets';
+import { createOrderSheetRecord, recordReferralSheetRecord } from '@/lib/google-sheets';
 import { generateOrderWhatsAppUrl } from '@/lib/whatsapp';
 
 export async function POST(req: NextRequest) {
@@ -63,20 +63,24 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Validate Coupon Server-Side
+    // Validate Coupon / Referral Discount Server-Side
     let discountAmount = 0;
-    let validCouponCode = null;
+    let validCouponCode: string | null = null;
+    let validReferralCode: string | null = null;
+    let referrerName: string | null = null;
 
-    if (couponCode) {
+    if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+      const cleanCoupon = couponCode.trim().toUpperCase();
       const coupon = await db.coupon.findUnique({
-        where: { code: couponCode.trim().toUpperCase() },
+        where: { code: cleanCoupon },
       });
 
       if (
         coupon &&
         coupon.isActive &&
         subtotal >= coupon.minOrderValue &&
-        coupon.timesUsed < coupon.usageLimit
+        coupon.timesUsed < coupon.usageLimit &&
+        (!coupon.expiryDate || new Date() <= new Date(coupon.expiryDate))
       ) {
         if (coupon.discountType === 'PERCENTAGE') {
           discountAmount = (subtotal * coupon.discountValue) / 100;
@@ -86,7 +90,7 @@ export async function POST(req: NextRequest) {
         } else if (coupon.discountType === 'FIXED') {
           discountAmount = coupon.discountValue;
         }
-        discountAmount = Math.min(subtotal, discountAmount);
+        discountAmount = Math.min(subtotal, Math.round(discountAmount));
         validCouponCode = coupon.code;
 
         // Increment coupon timesUsed
@@ -97,26 +101,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Final total calculation
-    const totalAmount = Math.max(0, subtotal - discountAmount);
-
-    // Track Referral Code
-    let validReferralCode = null;
-    if (referralCode) {
+    // Track Referral Code & Apply Referral Discount if no coupon applied
+    if (referralCode && typeof referralCode === 'string' && referralCode.trim()) {
+      const cleanRef = referralCode.trim().toUpperCase();
       const ref = await db.referral.findUnique({
-        where: { referralCode: referralCode.trim().toUpperCase() },
+        where: { referralCode: cleanRef },
       });
-      if (ref) {
+      if (ref && ref.status === 'ACTIVE') {
         validReferralCode = ref.referralCode;
+        referrerName = ref.referrerName;
+
+        // If no coupon discount was applied, apply 10% referral discount
+        if (discountAmount === 0) {
+          discountAmount = Math.min(subtotal, Math.round(subtotal * 0.10));
+        }
+
+        const calculatedFinal = Math.max(0, subtotal - discountAmount);
         await db.referral.update({
           where: { id: ref.id },
           data: {
             totalReferrals: { increment: 1 },
-            totalOrderValue: { increment: totalAmount },
+            totalOrderValue: { increment: calculatedFinal },
           },
         });
       }
     }
+
+    // Final total calculation
+    const totalAmount = Math.max(0, subtotal - discountAmount);
 
     // Generate unique Order ID
     const randomSuffix = Math.floor(10000 + Math.random() * 90000);
@@ -144,7 +156,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Sync to Google Sheets and trigger email alert
+    // Sync to Google Sheets (Orders tab) and trigger email alert
     try {
       await createOrderSheetRecord({
         id: orderRecord.id,
@@ -163,17 +175,31 @@ export async function POST(req: NextRequest) {
         notes: orderRecord.orderNotes,
         createdAt: orderRecord.createdAt,
       });
+
+      // If valid referral code was used, also sync to Referrals tab in Google Sheets
+      if (validReferralCode && referrerName) {
+        await recordReferralSheetRecord({
+          referralCode: validReferralCode,
+          referrerName,
+          orderId: orderRecord.id,
+          orderValue: orderRecord.totalAmount,
+          createdAt: orderRecord.createdAt,
+        });
+      }
     } catch (sheetErr) {
       console.error('Google Sheets sync error:', sheetErr);
     }
 
-    // Generate WhatsApp URL
+    // Generate WhatsApp URL with Full Breakdown
     const whatsappUrl = generateOrderWhatsAppUrl({
       orderId: orderRecord.id,
       customerName: orderRecord.customerName,
       items: validatedItems,
+      subtotal,
       totalAmount: orderRecord.totalAmount,
       discountAmount: orderRecord.discountAmount,
+      couponCode: validCouponCode,
+      referralCode: validReferralCode,
       address: orderRecord.address,
       city: orderRecord.city,
       pincode: orderRecord.pincode,

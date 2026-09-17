@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Trash2, Tag, ArrowRight, ShoppingBag, Sparkles, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import OrderModal from './OrderModal';
@@ -15,52 +15,132 @@ export default function CartDrawer() {
     cartTotal,
     referralCode,
     setReferralCode,
+    removeReferralCode,
   } = useCart();
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{
+
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{
     code: string;
+    type: 'COUPON' | 'REFERRAL';
     discountAmount: number;
+    message?: string;
   } | null>(null);
-  const [couponError, setCouponError] = useState<string | null>(null);
-  const [couponLoading, setCouponLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
 
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
+  // Auto-validate if referral code exists from URL or context on mount/cartTotal change
+  useEffect(() => {
+    if (!referralCode || cartTotal <= 0) return;
+
+    // If coupon is already applied, don't overwrite with referral
+    if (appliedDiscount && appliedDiscount.type === 'COUPON') return;
+
+    // Validate active referral code
+    const validateReferral = async () => {
+      try {
+        const res = await fetch('/api/coupons/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: referralCode, subtotal: cartTotal }),
+        });
+        const data = await res.json();
+        if (res.ok && data.valid && data.type === 'REFERRAL') {
+          setAppliedDiscount({
+            code: data.code,
+            type: 'REFERRAL',
+            discountAmount: data.discountAmount,
+            message: data.message,
+          });
+        }
+      } catch (e) {}
+    };
+
+    validateReferral();
+  }, [referralCode, cartTotal]);
+
+  // Recalculate discount when cart total changes if discount is active
+  useEffect(() => {
+    if (!appliedDiscount || cartTotal <= 0) return;
+
+    const revalidate = async () => {
+      try {
+        const res = await fetch('/api/coupons/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: appliedDiscount.code, subtotal: cartTotal }),
+        });
+        const data = await res.json();
+        if (res.ok && data.valid) {
+          setAppliedDiscount({
+            code: data.code,
+            type: data.type,
+            discountAmount: data.discountAmount,
+            message: data.message,
+          });
+        } else {
+          // If min order value no longer met
+          setAppliedDiscount(null);
+          setPromoError(data.error || 'Discount requirements no longer met.');
+        }
+      } catch (e) {}
+    };
+
+    revalidate();
+  }, [cartTotal]);
+
   if (!isCartOpen) return null;
 
-  const handleApplyCoupon = async (e: React.FormEvent) => {
+  const handleApplyPromo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!couponCode.trim()) return;
+    const cleanCode = promoInput.trim().toUpperCase();
+    if (!cleanCode) return;
 
-    setCouponLoading(true);
-    setCouponError(null);
+    setPromoLoading(true);
+    setPromoError(null);
 
     try {
       const res = await fetch('/api/coupons/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponCode, subtotal: cartTotal }),
+        body: JSON.stringify({ code: cleanCode, subtotal: cartTotal }),
       });
       const data = await res.json();
 
       if (res.ok && data.valid) {
-        setAppliedCoupon({
+        setAppliedDiscount({
           code: data.code,
+          type: data.type,
           discountAmount: data.discountAmount,
+          message: data.message,
         });
-        setCouponError(null);
+        if (data.type === 'REFERRAL') {
+          setReferralCode(data.code);
+        }
+        setPromoInput('');
+        setPromoError(null);
       } else {
-        setCouponError(data.error || 'Invalid coupon code.');
-        setAppliedCoupon(null);
+        setPromoError(data.error || 'Invalid or expired coupon/referral code.');
+        setAppliedDiscount(null);
       }
     } catch (err) {
-      setCouponError('Failed to validate coupon code.');
+      setPromoError('Failed to validate discount code.');
     } finally {
-      setCouponLoading(false);
+      setPromoLoading(false);
     }
   };
 
-  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const handleRemoveDiscount = () => {
+    if (appliedDiscount?.type === 'REFERRAL') {
+      removeReferralCode();
+    }
+    setAppliedDiscount(null);
+    setPromoInput('');
+    setPromoError(null);
+  };
+
+  const discountAmount = appliedDiscount ? appliedDiscount.discountAmount : 0;
   const finalTotal = Math.max(0, cartTotal - discountAmount);
 
   return (
@@ -181,51 +261,56 @@ export default function CartDrawer() {
             {/* Footer Summary & Checkout Button */}
             {cart.length > 0 && (
               <div className="p-4 bg-tech-card border-t border-tech-border space-y-3">
-                {/* Coupon Code Input */}
-                <form onSubmit={handleApplyCoupon} className="space-y-1">
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Tag className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
-                      <input
-                        type="text"
-                        placeholder="Coupon (e.g. WELCOME10)"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        className="w-full bg-tech-bg border border-tech-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-white uppercase font-mono focus:outline-none focus:border-tech-accent"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={couponLoading}
-                      className="px-3 py-1.5 bg-tech-bg border border-tech-border hover:border-tech-accent text-slate-200 hover:text-white text-xs font-mono font-semibold rounded-lg"
-                    >
-                      {couponLoading ? '...' : 'Apply'}
-                    </button>
-                  </div>
-
-                  {appliedCoupon && (
-                    <div className="flex items-center justify-between text-xs font-mono text-emerald-400 pt-1">
-                      <span className="flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Coupon {appliedCoupon.code} applied!
-                      </span>
-                      <span>-₹{appliedCoupon.discountAmount}</span>
+                {/* Promo / Coupon / Referral Code Input */}
+                <div className="space-y-2">
+                  {!appliedDiscount ? (
+                    <form onSubmit={handleApplyPromo} className="space-y-1">
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Tag className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-500" />
+                          <input
+                            type="text"
+                            placeholder="Promo / Referral Code"
+                            value={promoInput}
+                            onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                            className="w-full bg-tech-bg border border-tech-border rounded-lg pl-8 pr-3 py-1.5 text-xs text-white uppercase font-mono focus:outline-none focus:border-tech-accent placeholder:normal-case placeholder:text-slate-500"
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={promoLoading || !promoInput.trim()}
+                          className="px-3 py-1.5 bg-tech-bg border border-tech-border hover:border-tech-accent text-slate-200 hover:text-white text-xs font-mono font-semibold rounded-lg disabled:opacity-50 transition-colors"
+                        >
+                          {promoLoading ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                      {promoError && (
+                        <p className="text-[11px] font-mono text-rose-400 pt-0.5">{promoError}</p>
+                      )}
+                    </form>
+                  ) : (
+                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs font-mono">
+                      <div className="flex items-center gap-1.5 text-emerald-400">
+                        <Check className="w-3.5 h-3.5 shrink-0" />
+                        <div>
+                          <span className="font-bold">{appliedDiscount.code}</span>
+                          <span className="text-slate-400 ml-1.5 text-[11px]">
+                            ({appliedDiscount.type === 'REFERRAL' ? 'Referral 10% OFF' : 'Coupon Applied'})
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-emerald-400">-₹{appliedDiscount.discountAmount}</span>
+                        <button
+                          onClick={handleRemoveDiscount}
+                          className="p-1 rounded hover:bg-emerald-500/20 text-slate-400 hover:text-rose-400 transition-colors"
+                          title="Remove discount"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   )}
-
-                  {couponError && (
-                    <p className="text-[11px] font-mono text-rose-400 pt-1">{couponError}</p>
-                  )}
-                </form>
-
-                {/* Referral Input */}
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Referral Code (Optional)"
-                    value={referralCode}
-                    onChange={(e) => setReferralCode(e.target.value)}
-                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-1.5 text-xs text-white uppercase font-mono focus:outline-none focus:border-tech-accent"
-                  />
                 </div>
 
                 {/* Price Breakdown */}
@@ -234,10 +319,10 @@ export default function CartDrawer() {
                     <span>Subtotal</span>
                     <span>₹{cartTotal}</span>
                   </div>
-                  {appliedCoupon && (
-                    <div className="flex justify-between text-emerald-400">
-                      <span>Discount ({appliedCoupon.code})</span>
-                      <span>-₹{appliedCoupon.discountAmount}</span>
+                  {appliedDiscount && (
+                    <div className="flex justify-between text-emerald-400 font-medium">
+                      <span>Discount ({appliedDiscount.code})</span>
+                      <span>-₹{appliedDiscount.discountAmount}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-slate-400">
@@ -267,8 +352,9 @@ export default function CartDrawer() {
       {/* Checkout Order Details Modal */}
       {isCheckoutModalOpen && (
         <OrderModal
-          appliedCoupon={appliedCoupon?.code}
-          referralCode={referralCode}
+          appliedCoupon={appliedDiscount?.type === 'COUPON' ? appliedDiscount.code : undefined}
+          referralCode={appliedDiscount?.type === 'REFERRAL' ? appliedDiscount.code : undefined}
+          discountAmount={discountAmount}
           onClose={() => setIsCheckoutModalOpen(false)}
         />
       )}
