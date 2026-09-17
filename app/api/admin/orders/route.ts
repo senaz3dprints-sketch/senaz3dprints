@@ -37,9 +37,20 @@ export async function PUT(req: NextRequest) {
       data: { status },
     });
 
-    // Update status in Google Sheets synchronously
+    // Update status in Google Sheets synchronously & trigger customer confirmation email if marked CONFIRMED
     try {
-      await updateOrderStatusSheetRecord(id, status);
+      await updateOrderStatusSheetRecord(id, status, {
+        customerName: updated.customerName,
+        customerEmail: updated.email,
+        totalAmount: updated.totalAmount,
+        subtotal: updated.subtotal,
+        discountAmount: updated.discountAmount,
+        items: updated.items,
+        address: updated.address,
+        city: updated.city,
+        state: updated.state,
+        pincode: updated.pincode,
+      });
     } catch (sheetErr) {
       console.error('Failed to sync updated order status to Google Sheets:', sheetErr);
     }

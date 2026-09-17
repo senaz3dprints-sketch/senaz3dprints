@@ -205,11 +205,41 @@ export async function recordReferralSheetRecord(referral: {
 
 /**
  * Updates order status in Google Sheets (Column 14 / N) by matching Order ID (Column 1 / A)
+ * and triggers customer email notifications on status change (e.g. CONFIRMED).
  */
-export async function updateOrderStatusSheetRecord(orderId: string, newStatus: string) {
+export async function updateOrderStatusSheetRecord(
+  orderId: string,
+  newStatus: string,
+  orderDetails?: {
+    customerName?: string;
+    customerEmail?: string | null;
+    totalAmount?: number;
+    subtotal?: number;
+    discountAmount?: number;
+    items?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  }
+) {
   const webhookUrl =
     process.env.GOOGLE_SHEET_WEBHOOK_URL ||
     'https://script.google.com/macros/s/AKfycbxD7m0gqk1ERVxEzTMy5ay3Tb1W-UqFay5wKcBGJUmSIzFJuixADxr-kaY9FOeCYtgAAQ/exec';
+
+  let itemsSummary = '';
+  if (orderDetails?.items) {
+    try {
+      const parsedItems = JSON.parse(orderDetails.items);
+      if (Array.isArray(parsedItems)) {
+        itemsSummary = parsedItems
+          .map((it: any) => `${it.quantity}x ${it.name}` + (it.personalizedText ? ` ("${it.personalizedText}")` : ''))
+          .join(', ');
+      }
+    } catch (e) {
+      itemsSummary = orderDetails.items;
+    }
+  }
 
   // 1. Google Apps Script Webhook
   if (webhookUrl) {
@@ -223,6 +253,11 @@ export async function updateOrderStatusSheetRecord(orderId: string, newStatus: s
           tab: 'Orders',
           orderId,
           status: newStatus,
+          customerName: orderDetails?.customerName,
+          customerEmail: orderDetails?.customerEmail,
+          totalAmount: orderDetails?.totalAmount,
+          items: itemsSummary,
+          address: orderDetails?.address ? `${orderDetails.address}, ${orderDetails.city}, ${orderDetails.state} - ${orderDetails.pincode}` : undefined,
         }),
       });
       if (res.ok) {
