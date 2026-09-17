@@ -95,6 +95,49 @@ export default function AdminProductsPage() {
     setModalOpen(true);
   };
 
+  const processImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataResult = e.target?.result as string;
+        if (!dataResult) return resolve('');
+
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimized = canvas.toDataURL('image/jpeg', 0.88);
+            resolve(optimized);
+          } else {
+            resolve(dataResult);
+          }
+        };
+        img.onerror = () => resolve(dataResult);
+        img.src = dataResult;
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
     const file = e.target.files[0];
@@ -102,24 +145,18 @@ export default function AdminProductsPage() {
     setUploadError('');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok && data.url) {
-        setImages((prev) => [...prev, data.url]);
-      } else {
-        setUploadError(data.error || 'Failed to upload photo. You can also paste an image URL.');
+      // 1. Instant client-side processing so image shows up immediately
+      const optimizedDataUrl = await processImageFile(file);
+      if (optimizedDataUrl) {
+        setImages((prev) => [...prev, optimizedDataUrl]);
       }
     } catch (err) {
-      setUploadError('Network error uploading image.');
+      console.error('Image processing error:', err);
+      setUploadError('Could not process image file.');
     } finally {
       setUploadingImage(false);
+      // Reset input value so the same file can be chosen again
+      if (e.target) e.target.value = '';
     }
   };
 
