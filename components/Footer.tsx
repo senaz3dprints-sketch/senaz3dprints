@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Printer, MessageCircle, Mail, MapPin, ShieldCheck, Cpu, Instagram, Youtube } from 'lucide-react';
+import { Printer, MessageCircle, Mail, MapPin, ShieldCheck, Cpu, Instagram, Youtube, Linkedin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -171,12 +171,13 @@ export default function Footer() {
             <p className="text-slate-400 flex items-center gap-1.5">
               <span>Developed by</span>
               <a
-                href="https://github.com/milanjyotiray"
+                href="https://linkedin.com/in/milanjyotiray"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-tech-accent hover:text-white font-medium underline underline-offset-2 decoration-tech-accent/40 hover:decoration-tech-accent transition-colors inline-flex items-center gap-1"
+                className="text-tech-accent hover:text-white font-medium underline underline-offset-2 decoration-tech-accent/40 hover:decoration-tech-accent transition-colors inline-flex items-center gap-1.5"
               >
-                Milan Jyoti Ray
+                <Linkedin className="w-3.5 h-3.5 text-[#0A66C2] inline-block shrink-0" />
+                <span>Milan Jyoti Ray</span>
               </a>
             </p>
           </div>
