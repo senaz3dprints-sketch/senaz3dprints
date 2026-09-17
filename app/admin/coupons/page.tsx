@@ -161,7 +161,7 @@ export default function AdminCouponsPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. SENAZ20"
+                  placeholder="e.g. SENAZ20 or SenAZ20"
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white font-bold"

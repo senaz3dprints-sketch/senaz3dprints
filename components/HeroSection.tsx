@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { ShoppingBag, Upload, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 
@@ -17,27 +17,44 @@ export default function HeroSection({
   primaryCta = 'Shop Products',
   secondaryCta = 'Get a Custom Print',
 }: HeroSectionProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn('Hero video autoplay bypassed by browser policy:', err);
+        });
+      }
+    }
+  }, []);
+
   return (
-    <section className="relative overflow-hidden bg-tech-bg border-b border-tech-border min-h-[560px] lg:min-h-[640px] flex items-center">
+    <section className="relative overflow-hidden bg-tech-bg border-b border-tech-border min-h-[580px] lg:min-h-[660px] flex items-center">
       {/* 1. BACKGROUND REAL 3D PRINTER VIDEO */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
           preload="auto"
           poster="/images/senaz_3d_printer_hero.jpg"
-          className="w-full h-full object-cover scale-105"
+          className="w-full h-full object-cover object-center scale-105 transition-opacity duration-700 opacity-90"
         >
+          <source src="/videos/3d-printer-printing.webm" type="video/webm" />
           <source src="/videos/3d-printer-printing.mp4" type="video/mp4" />
           <source src="/videos/printer-hero.mp4" type="video/mp4" />
         </video>
 
-        {/* Dynamic Dark Gradient & Glassmorphism Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-r from-tech-bg/95 via-tech-bg/85 to-tech-bg/70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-tech-bg/60" />
-        <div className="absolute inset-0 bg-grid-pattern opacity-20" />
+        {/* Dynamic Dark Gradient & Overlays: Darkened on the left for text readability, crystal clear on the right */}
+        <div className="absolute inset-0 bg-gradient-to-r from-tech-bg/90 via-tech-bg/60 to-tech-bg/25 lg:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-tech-bg/40" />
+        <div className="absolute inset-0 bg-grid-pattern opacity-15" />
         
         {/* Ambient Cyan Glow */}
         <div className="absolute -left-20 top-1/4 w-96 h-96 bg-tech-accent/15 rounded-full blur-3xl pointer-events-none" />
@@ -54,7 +71,7 @@ export default function HeroSection({
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
             <span className="text-xs font-mono font-bold tracking-widest uppercase text-tech-accent">
-              SENAZ 3D PRINTS • LIVE STUDIO
+              SenAZ 3D PRINTS • LIVE STUDIO
             </span>
           </div>
 

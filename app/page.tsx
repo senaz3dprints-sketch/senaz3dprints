@@ -205,7 +205,7 @@ export default async function HomePage() {
 
           <div className="lg:col-span-6">
             <PersonalizationPreview
-              initialText="SENAZ 3D"
+              initialText="SenAZ 3D"
             />
           </div>
         </div>
@@ -246,7 +246,7 @@ export default async function HomePage() {
             Simple Workflow
           </span>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-sans">
-            How SENAZ Printing Works
+            How SenAZ Printing Works
           </h2>
         </div>
 
@@ -337,11 +337,11 @@ export default async function HomePage() {
             <div className="relative">
               <img
                 src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80"
-                alt="SENAZ 3D Printing Quality"
+                alt="SenAZ 3D Printing Quality"
                 className="w-full h-80 lg:h-96 object-cover rounded-2xl border border-tech-border shadow-2xl"
               />
               <div className="absolute bottom-4 left-4 bg-tech-card/95 border border-tech-border backdrop-blur-md p-3.5 rounded-xl font-mono text-xs text-slate-200">
-                <span className="text-tech-accent font-bold">SENAZ Quality Check:</span> Passed 100% Surface Inspection
+                <span className="text-tech-accent font-bold">SenAZ Quality Check:</span> Passed 100% Surface Inspection
               </div>
             </div>
           </div>
@@ -379,7 +379,7 @@ export default async function HomePage() {
               name: 'Vikram R.',
               role: 'Tech Enthusiast',
               comment:
-                'The Low-Poly Dragon statue sits right next to my setup. Crisp geometric edges and fast delivery. SENAZ is my go-to print lab now.',
+                'The Low-Poly Dragon statue sits right next to my setup. Crisp geometric edges and fast delivery. SenAZ is my go-to print lab now.',
               stars: 5,
             },
           ].map((t, idx) => (
