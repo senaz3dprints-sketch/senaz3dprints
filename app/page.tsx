@@ -18,9 +18,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function HomePage() {
   let products: any[] = [];
@@ -30,7 +28,7 @@ export default async function HomePage() {
     products = await db.product.findMany({
       where: { isPublished: true },
       include: { category: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
       take: 6,
     });
   } catch (e) {

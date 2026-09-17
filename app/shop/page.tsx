@@ -2,9 +2,7 @@ import React, { Suspense } from 'react';
 import { db } from '@/lib/db';
 import ShopClient from './ShopClient';
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function ShopPage() {
   let categories: any[] = [];
@@ -18,7 +16,7 @@ export default async function ShopPage() {
     products = await db.product.findMany({
       where: { isPublished: true },
       include: { category: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
     });
   } catch (e) {
     console.error('ShopPage DB fetch error:', e);

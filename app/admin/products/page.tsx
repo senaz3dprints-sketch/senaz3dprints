@@ -1,7 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Package, Plus, Edit2, Trash2, Eye, EyeOff, Upload, Check, X, Sparkles } from 'lucide-react';
+import {
+  Package,
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  EyeOff,
+  Upload,
+  Check,
+  X,
+  Sparkles,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
+  RefreshCw,
+} from 'lucide-react';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -10,8 +25,15 @@ export default function AdminProductsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
+  // Drag & Drop Reorder State
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderSavedToast, setOrderSavedToast] = useState(false);
+
   // Form State
   const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
   const [price, setPrice] = useState('');
   const [compareAtPrice, setCompareAtPrice] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -19,8 +41,13 @@ export default function AdminProductsPage() {
   const [fullDescription, setFullDescription] = useState('');
   const [material, setMaterial] = useState('PLA+');
   const [stockQuantity, setStockQuantity] = useState('20');
+  const [stockStatus, setStockStatus] = useState('IN_STOCK');
+  const [dimensions, setDimensions] = useState('');
+  const [weight, setWeight] = useState('');
+  const [tags, setTags] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
   const [isNew, setIsNew] = useState(false);
+  const [isPublished, setIsPublished] = useState(true);
   const [personalizationEnabled, setPersonalizationEnabled] = useState(false);
 
   // Image Upload State
@@ -50,18 +77,87 @@ export default function AdminProductsPage() {
     fetchProducts();
   }, []);
 
+  // Save reordered array to server
+  const saveNewOrder = async (reorderedProducts: any[]) => {
+    setSavingOrder(true);
+    try {
+      const orderedIds = reorderedProducts.map((p) => p.id);
+      const res = await fetch('/api/admin/products/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderedIds }),
+      });
+      if (res.ok) {
+        setOrderSavedToast(true);
+        setTimeout(() => setOrderSavedToast(false), 3000);
+      }
+    } catch (e) {
+      console.error('Failed to save product order:', e);
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (dropIndex: number) => {
+    if (draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const updated = [...products];
+    const [movedItem] = updated.splice(draggedIndex, 1);
+    updated.splice(dropIndex, 0, movedItem);
+
+    setProducts(updated);
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+    saveNewOrder(updated);
+  };
+
+  const moveItem = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= products.length) return;
+
+    const updated = [...products];
+    const temp = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = temp;
+
+    setProducts(updated);
+    saveNewOrder(updated);
+  };
+
   const openAddModal = () => {
     setEditingProduct(null);
     setName('');
+    setSlug('');
     setPrice('');
     setCompareAtPrice('');
     setCategoryId(categories[0]?.id || '');
     setShortDescription('');
     setFullDescription('');
-    setMaterial('PLA+');
+    setMaterial('PLA / PLA+');
     setStockQuantity('20');
+    setStockStatus('IN_STOCK');
+    setDimensions('');
+    setWeight('');
+    setTags('');
     setIsFeatured(false);
     setIsNew(true);
+    setIsPublished(true);
     setPersonalizationEnabled(false);
     setImages(['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80']);
     setImageUrlInput('');
@@ -72,16 +168,22 @@ export default function AdminProductsPage() {
   const openEditModal = (p: any) => {
     setEditingProduct(p);
     setName(p.name);
+    setSlug(p.slug || '');
     setPrice(p.price.toString());
     setCompareAtPrice(p.compareAtPrice ? p.compareAtPrice.toString() : '');
     setCategoryId(p.categoryId);
     setShortDescription(p.shortDescription || '');
     setFullDescription(p.fullDescription || '');
-    setMaterial(p.material || 'PLA+');
-    setStockQuantity(p.stockQuantity.toString());
-    setIsFeatured(p.isFeatured);
-    setIsNew(p.isNew);
-    setPersonalizationEnabled(p.personalizationEnabled);
+    setMaterial(p.material || 'PLA / PLA+');
+    setStockQuantity(p.stockQuantity?.toString() || '20');
+    setStockStatus(p.stockStatus || 'IN_STOCK');
+    setDimensions(p.dimensions || '');
+    setWeight(p.weight || '');
+    setTags(typeof p.tags === 'string' ? p.tags : '');
+    setIsFeatured(!!p.isFeatured);
+    setIsNew(!!p.isNew);
+    setIsPublished(p.isPublished !== undefined ? !!p.isPublished : true);
+    setPersonalizationEnabled(!!p.personalizationEnabled);
 
     let parsedImages = [];
     try {
@@ -145,7 +247,6 @@ export default function AdminProductsPage() {
     setUploadError('');
 
     try {
-      // 1. Instant client-side processing so image shows up immediately
       const optimizedDataUrl = await processImageFile(file);
       if (optimizedDataUrl) {
         setImages((prev) => [...prev, optimizedDataUrl]);
@@ -155,7 +256,6 @@ export default function AdminProductsPage() {
       setUploadError('Could not process image file.');
     } finally {
       setUploadingImage(false);
-      // Reset input value so the same file can be chosen again
       if (e.target) e.target.value = '';
     }
   };
@@ -171,20 +271,24 @@ export default function AdminProductsPage() {
 
     const payload = {
       id: editingProduct?.id,
-      name,
-      price,
-      compareAtPrice: compareAtPrice || null,
-      categoryId: categoryId || categories[0]?.id || 'cuid-1',
+      name: name.trim(),
+      slug: slug.trim() || undefined,
+      price: parseFloat(price) || 0,
+      compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+      categoryId: categoryId || categories[0]?.id,
       shortDescription,
       fullDescription,
       material,
-      stockQuantity,
+      stockQuantity: parseInt(stockQuantity) || 0,
+      stockStatus,
+      dimensions: dimensions.trim() || null,
+      weight: weight.trim() || null,
+      tags: tags.trim() || null,
       isFeatured,
       isNew,
+      isPublished,
       personalizationEnabled,
       images,
-      colors: ['Arctic White', 'Matte Black', 'Electric Blue', 'Silk Gold'],
-      sizes: ['Standard'],
     };
 
     const method = editingProduct ? 'PUT' : 'POST';
@@ -224,31 +328,57 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-tech-border pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-tech-border pb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-white font-sans tracking-tight">
-            Product Management
+            Product Management & Ordering
           </h1>
           <p className="text-xs text-slate-400 font-mono">
-            Add, edit pricing, stock levels, variants, and 3D personalization settings
+            Drag & drop or move rows to choose which product appears 1st, 2nd, 3rd on the store
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2.5 bg-tech-accent text-tech-bg font-bold text-xs font-mono rounded-lg hover:bg-tech-accent/90 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Product</span>
-        </button>
+        <div className="flex items-center gap-3">
+          {savingOrder && (
+            <span className="text-xs font-mono text-amber-400 flex items-center gap-1.5 animate-pulse bg-amber-950/60 px-2.5 py-1 rounded-lg border border-amber-500/30">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              <span>Saving Order...</span>
+            </span>
+          )}
+
+          {orderSavedToast && (
+            <span className="text-xs font-mono text-emerald-400 flex items-center gap-1.5 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-500/30">
+              <Check className="w-3.5 h-3.5" />
+              <span>Order Updated Live!</span>
+            </span>
+          )}
+
+          <button
+            onClick={openAddModal}
+            className="px-4 py-2.5 bg-tech-accent text-tech-bg font-bold text-xs font-mono rounded-lg hover:bg-tech-accent/90 transition-all flex items-center gap-2 shadow-lg shadow-tech-accent/20"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Product</span>
+          </button>
+        </div>
       </div>
 
-      {/* Products Table */}
+      {/* Reorder Guide Bar */}
+      <div className="bg-tech-card/60 border border-tech-border/80 px-4 py-2.5 rounded-xl flex items-center justify-between text-xs font-mono text-slate-400">
+        <div className="flex items-center gap-2">
+          <GripVertical className="w-4 h-4 text-tech-accent" />
+          <span>💡 <strong>Drag & Move:</strong> Hold the grip handle to drag rows up or down, or click the ▲ / ▼ buttons.</span>
+        </div>
+        <span className="hidden sm:inline text-[11px] text-tech-accent">Live Auto-Sync Enabled</span>
+      </div>
+
+      {/* Products Table with Drag and Drop */}
       <div className="bg-tech-card rounded-2xl border border-tech-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono text-slate-300">
             <thead className="bg-tech-bg border-b border-tech-border text-slate-400">
               <tr>
+                <th className="p-3.5 w-16 text-center">Rank</th>
                 <th className="p-3.5">Product</th>
                 <th className="p-3.5">Category</th>
                 <th className="p-3.5">Price</th>
@@ -260,7 +390,7 @@ export default function AdminProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-tech-border">
-              {products.map((p) => {
+              {products.map((p, index) => {
                 let imgList = [];
                 try {
                   imgList = JSON.parse(p.images);
@@ -268,13 +398,71 @@ export default function AdminProductsPage() {
                   imgList = [p.images];
                 }
                 const primary = imgList[0] || '';
+                const isDragging = draggedIndex === index;
+                const isDragOver = dragOverIndex === index && draggedIndex !== index;
 
                 return (
-                  <tr key={p.id} className="hover:bg-tech-bg/50">
+                  <tr
+                    key={p.id}
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={() => handleDrop(index)}
+                    className={`transition-colors ${
+                      isDragging ? 'opacity-40 bg-tech-bg/90' : ''
+                    } ${
+                      isDragOver ? 'border-y-2 border-tech-accent bg-tech-accent/10' : 'hover:bg-tech-bg/50'
+                    }`}
+                  >
+                    {/* Rank & Drag Grip Controls */}
+                    <td className="p-3.5 text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <div
+                          className="cursor-grab active:cursor-grabbing p-1 text-slate-500 hover:text-tech-accent transition-colors"
+                          title="Drag to reorder"
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </div>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono ${
+                          index === 0
+                            ? 'bg-amber-400/20 text-amber-300 border border-amber-400/40'
+                            : index === 1
+                            ? 'bg-slate-300/20 text-slate-200 border border-slate-300/40'
+                            : index === 2
+                            ? 'bg-amber-700/20 text-amber-500 border border-amber-700/40'
+                            : 'bg-tech-bg text-slate-400 border border-tech-border'
+                        }`}>
+                          {index === 0 ? '1st' : index === 1 ? '2nd' : index === 2 ? '3rd' : `${index + 1}th`}
+                        </span>
+                        
+                        {/* Quick Up/Down Move Buttons */}
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => moveItem(index, 'up')}
+                            disabled={index === 0}
+                            className="p-0.5 hover:bg-tech-card rounded text-slate-400 hover:text-white disabled:opacity-20 transition-colors"
+                            title="Move Up"
+                          >
+                            <ArrowUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveItem(index, 'down')}
+                            disabled={index === products.length - 1}
+                            className="p-0.5 hover:bg-tech-card rounded text-slate-400 hover:text-white disabled:opacity-20 transition-colors"
+                            title="Move Down"
+                          >
+                            <ArrowDown className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+
                     <td className="p-3.5 flex items-center gap-3">
-                      <img src={primary} alt="" className="w-10 h-10 object-cover rounded bg-tech-bg" />
-                      <div>
-                        <span className="font-bold text-white block">{p.name}</span>
+                      <img src={primary} alt="" className="w-10 h-10 object-cover rounded bg-tech-bg shrink-0 border border-tech-border" />
+                      <div className="overflow-hidden">
+                        <span className="font-bold text-white block truncate">{p.name}</span>
                         <span className="text-[10px] text-slate-500 font-sans">{p.slug}</span>
                       </div>
                     </td>
@@ -339,120 +527,249 @@ export default function AdminProductsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveProduct} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form onSubmit={handleSaveProduct} className="space-y-5 max-h-[75vh] overflow-y-auto pr-1">
+              
+              {/* Section 1: Basic Information */}
+              <div className="space-y-3 bg-tech-bg/50 p-4 rounded-xl border border-tech-border">
+                <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
+                  1. Basic Information & Pricing
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Product Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="e.g. Hexagon Geometric Lamp"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">URL Slug (Auto or Custom)</label>
+                    <input
+                      type="text"
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      placeholder="e.g. hexagon-geometric-lamp"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Category *</label>
+                    <select
+                      required
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-sans"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id} className="bg-tech-card text-white">
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Selling Price (₹) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="e.g. 299"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Original Price (₹)</label>
+                    <input
+                      type="number"
+                      value={compareAtPrice}
+                      onChange={(e) => setCompareAtPrice(e.target.value)}
+                      placeholder="e.g. 499"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Material, Specs & Inventory */}
+              <div className="space-y-3 bg-tech-bg/50 p-4 rounded-xl border border-tech-border">
+                <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
+                  2. Material & Inventory Details
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Material</label>
+                    <select
+                      value={material}
+                      onChange={(e) => setMaterial(e.target.value)}
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-sans"
+                    >
+                      <option value="PLA / PLA+">PLA / PLA+ (High Speed FDM)</option>
+                      <option value="PETG">PETG (Heat & Water Resistant)</option>
+                      <option value="TPU (Flexible)">TPU (Flexible Rubber)</option>
+                      <option value="ABS">ABS (High Impact & Heat)</option>
+                      <option value="ASA">ASA (UV & Weather Resistant)</option>
+                      <option value="Nylon (PA)">Nylon (PA - High Strength)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Stock Quantity</label>
+                    <input
+                      type="number"
+                      value={stockQuantity}
+                      onChange={(e) => setStockQuantity(e.target.value)}
+                      placeholder="e.g. 25"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Stock Status</label>
+                    <select
+                      value={stockStatus}
+                      onChange={(e) => setStockStatus(e.target.value)}
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent"
+                    >
+                      <option value="IN_STOCK">In Stock (Available)</option>
+                      <option value="LOW_STOCK">Low Stock Alert</option>
+                      <option value="OUT_OF_STOCK">Out of Stock</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Dimensions</label>
+                    <input
+                      type="text"
+                      value={dimensions}
+                      onChange={(e) => setDimensions(e.target.value)}
+                      placeholder="e.g. 75 x 30 x 4 mm"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Weight</label>
+                    <input
+                      type="text"
+                      value={weight}
+                      onChange={(e) => setWeight(e.target.value)}
+                      placeholder="e.g. 25 grams"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Tags (Comma Separated)</label>
+                    <input
+                      type="text"
+                      value={tags}
+                      onChange={(e) => setTags(e.target.value)}
+                      placeholder="e.g. keychain, custom, gifts"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Descriptions */}
+              <div className="space-y-3 bg-tech-bg/50 p-4 rounded-xl border border-tech-border">
+                <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
+                  3. Product Descriptions
+                </h4>
+
                 <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1">Product Name</label>
+                  <label className="block text-xs font-mono text-slate-300 mb-1">Short Description *</label>
                   <input
                     type="text"
                     required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white"
+                    value={shortDescription}
+                    onChange={(e) => setShortDescription(e.target.value)}
+                    placeholder="Brief 1-sentence product summary"
+                    className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1">Price (₹)</label>
-                  <input
-                    type="number"
-                    required
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono"
+                  <label className="block text-xs font-mono text-slate-300 mb-1">Full Detailed Description</label>
+                  <textarea
+                    rows={3}
+                    value={fullDescription}
+                    onChange={(e) => setFullDescription(e.target.value)}
+                    placeholder="Provide full technical specs, care instructions, and manufacturing details"
+                    className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white resize-none focus:outline-none focus:border-tech-accent"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1">Compare Price (₹)</label>
-                  <input
-                    type="number"
-                    value={compareAtPrice}
-                    onChange={(e) => setCompareAtPrice(e.target.value)}
-                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono"
-                  />
+              {/* Section 4: Feature Toggles */}
+              <div className="p-4 bg-tech-bg/50 rounded-xl border border-tech-border space-y-3">
+                <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
+                  4. Visibility & Feature Options
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent">
+                    <input
+                      type="checkbox"
+                      checked={isPublished}
+                      onChange={(e) => setIsPublished(e.target.checked)}
+                      className="rounded bg-tech-bg border-tech-border text-tech-accent"
+                    />
+                    <span>Store Published</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent">
+                    <input
+                      type="checkbox"
+                      checked={personalizationEnabled}
+                      onChange={(e) => setPersonalizationEnabled(e.target.checked)}
+                      className="rounded bg-tech-bg border-tech-border text-tech-accent"
+                    />
+                    <span>3D Customizer</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent">
+                    <input
+                      type="checkbox"
+                      checked={isFeatured}
+                      onChange={(e) => setIsFeatured(e.target.checked)}
+                      className="rounded bg-tech-bg border-tech-border text-tech-accent"
+                    />
+                    <span>Featured Hero</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent">
+                    <input
+                      type="checkbox"
+                      checked={isNew}
+                      onChange={(e) => setIsNew(e.target.checked)}
+                      className="rounded bg-tech-bg border-tech-border text-tech-accent"
+                    />
+                    <span>New Badge</span>
+                  </label>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1">Material</label>
-                  <input
-                    type="text"
-                    value={material}
-                    onChange={(e) => setMaterial(e.target.value)}
-                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-mono text-slate-300 mb-1">Stock Quantity</label>
-                  <input
-                    type="number"
-                    value={stockQuantity}
-                    onChange={(e) => setStockQuantity(e.target.value)}
-                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono"
-                  />
-                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-mono text-slate-300 mb-1">Short Description</label>
-                <input
-                  type="text"
-                  required
-                  value={shortDescription}
-                  onChange={(e) => setShortDescription(e.target.value)}
-                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-slate-300 mb-1">Full Description</label>
-                <textarea
-                  rows={3}
-                  value={fullDescription}
-                  onChange={(e) => setFullDescription(e.target.value)}
-                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white resize-none"
-                />
-              </div>
-
-              {/* Toggles */}
-              <div className="flex flex-wrap gap-6 pt-2 font-mono text-xs">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={personalizationEnabled}
-                    onChange={(e) => setPersonalizationEnabled(e.target.checked)}
-                    className="rounded bg-tech-bg border-tech-border text-tech-accent"
-                  />
-                  <span>Enable 3D Text Personalisation</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isFeatured}
-                    onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="rounded bg-tech-bg border-tech-border text-tech-accent"
-                  />
-                  <span>Featured Product</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isNew}
-                    onChange={(e) => setIsNew(e.target.checked)}
-                    className="rounded bg-tech-bg border-tech-border text-tech-accent"
-                  />
-                  <span>Mark as New</span>
-                </label>
-              </div>
-
-              {/* Image Upload & Management UI */}
-              <div className="space-y-3 pt-2">
-                <label className="block text-xs font-mono text-slate-300 font-semibold">Product Images</label>
+              {/* Section 5: Image Upload & Management UI */}
+              <div className="space-y-3 bg-tech-bg/50 p-4 rounded-xl border border-tech-border">
+                <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
+                  5. Product Photos & Media
+                </h4>
 
                 {uploadError && (
                   <p className="text-[11px] font-mono text-rose-400 bg-rose-500/10 p-2 rounded-lg border border-rose-500/30">
@@ -492,7 +809,7 @@ export default function AdminProductsPage() {
                     placeholder="Or paste image URL (https://...)"
                     value={imageUrlInput}
                     onChange={(e) => setImageUrlInput(e.target.value)}
-                    className="flex-1 bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
+                    className="flex-1 bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
                   />
                   <button
                     type="button"
@@ -506,9 +823,10 @@ export default function AdminProductsPage() {
 
               <button
                 type="submit"
-                className="w-full py-3 bg-tech-accent text-tech-bg font-bold font-mono text-xs rounded-xl hover:bg-tech-accent/90 transition-all shadow-lg shadow-tech-accent/20"
+                className="w-full py-3.5 bg-tech-accent text-tech-bg font-extrabold font-mono text-sm rounded-xl hover:bg-tech-accent/90 transition-all shadow-xl shadow-tech-accent/25 flex items-center justify-center gap-2"
               >
-                {editingProduct ? 'Save & Update on Website' : 'Publish Product to Store'}
+                <Check className="w-4 h-4" />
+                <span>{editingProduct ? 'Save & Update All Product Details' : 'Publish Product to Store'}</span>
               </button>
             </form>
           </div>

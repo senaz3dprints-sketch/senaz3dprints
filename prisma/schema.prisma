@@ -44,6 +44,7 @@ model Product {
   personalizationEnabled Boolean @default(false)
   customTextEnabled     Boolean  @default(false)
   tags                  String?  // JSON string array or comma separated
+  displayOrder          Int      @default(0)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }

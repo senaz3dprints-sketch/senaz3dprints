@@ -165,7 +165,21 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-tech-border flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-4">
           <p>© {new Date().getFullYear()} SenAZ 3D PRINTS (senaz3dprints.in). All rights reserved.</p>
-          <p className="text-slate-600">Precision 3D Manufacturing Studio • India</p>
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-3 gap-y-1">
+            <p className="text-slate-500">Precision 3D Manufacturing Studio • India</p>
+            <span className="text-slate-700 hidden sm:inline">•</span>
+            <p className="text-slate-400 flex items-center gap-1.5">
+              <span>Developed by</span>
+              <a
+                href="https://github.com/milanjyotiray"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-tech-accent hover:text-white font-medium underline underline-offset-2 decoration-tech-accent/40 hover:decoration-tech-accent transition-colors inline-flex items-center gap-1"
+              >
+                Milan Jyoti Ray
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </footer>

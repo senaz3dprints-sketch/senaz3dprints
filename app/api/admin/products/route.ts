@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     const products = await db.product.findMany({
       include: { category: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
     });
 
     const categories = await db.category.findMany({
