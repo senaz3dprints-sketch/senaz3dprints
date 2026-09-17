@@ -1,17 +1,39 @@
 import { google } from 'googleapis';
 
-// Environment variables must stay strictly server-side
 const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
 const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID;
+const GOOGLE_SHEET_WEBHOOK_URL = process.env.GOOGLE_SHEET_WEBHOOK_URL;
 
 /**
- * Appends a row to a specific tab in Google Sheets server-side.
- * Never exposes credentials to client bundle.
+ * Appends a row to Google Sheets server-side.
+ * Supports both Google Apps Script Webhook URL (easiest, no cloud console needed)
+ * and Google Service Account JWT auth.
  */
 async function appendToSheet(tabName: string, values: any[]) {
+  // 1. FAST METHOD: Google Apps Script Webhook URL (No service account needed)
+  if (GOOGLE_SHEET_WEBHOOK_URL) {
+    try {
+      const res = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tab: tabName,
+          row: values,
+        }),
+      });
+      if (res.ok) {
+        console.log(`[GoogleSheets Webhook Sync] Successfully synced row to "${tabName}".`);
+        return true;
+      }
+    } catch (err) {
+      console.error(`[GoogleSheets Webhook Error] Failed to send data to webhook:`, err);
+    }
+  }
+
+  // 2. TRADITIONAL METHOD: Google Service Account
   if (!SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY || !SPREADSHEET_ID) {
-    console.log(`[GoogleSheets Sync Fallback] (${tabName}): Credentials unconfigured. Logged data:`, values);
+    console.log(`[GoogleSheets Sync Fallback] (${tabName}): Credentials unconfigured. Data logged safely in DB:`, values);
     return false;
   }
 
