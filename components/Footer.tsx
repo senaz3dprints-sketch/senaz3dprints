@@ -165,11 +165,7 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-tech-border flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 font-mono gap-4">
           <p>© {new Date().getFullYear()} SenAZ 3D PRINTS (senaz3dprints.in). All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/admin/login" className="hover:text-slate-300">
-              Admin Portal
-            </Link>
-          </div>
+          <p className="text-slate-600">Precision 3D Manufacturing Studio • India</p>
         </div>
       </div>
     </footer>
