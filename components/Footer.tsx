@@ -177,7 +177,7 @@ export default function Footer() {
                 className="text-tech-accent hover:text-white font-medium underline underline-offset-2 decoration-tech-accent/40 hover:decoration-tech-accent transition-colors inline-flex items-center gap-1.5"
               >
                 <Linkedin className="w-3.5 h-3.5 text-[#0A66C2] inline-block shrink-0" />
-                <span>Milan Jyoti Ray</span>
+                <span>Milanjyoti Ray</span>
               </a>
             </p>
           </div>
