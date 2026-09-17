@@ -17,6 +17,7 @@ async function appendToSheet(tabName: string, values: any[]) {
       const res = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        redirect: 'follow',
         body: JSON.stringify({
           tab: tabName,
           row: values,
