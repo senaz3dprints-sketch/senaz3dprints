@@ -13,7 +13,7 @@ const GOOGLE_SHEET_WEBHOOK_URL = process.env.GOOGLE_SHEET_WEBHOOK_URL;
 async function appendToSheet(tabName: string, values: any[]) {
   const webhookUrl =
     process.env.GOOGLE_SHEET_WEBHOOK_URL ||
-    'https://script.google.com/macros/s/AKfycbxD7m0gqk1ERVxEzTMy5ay3Tb1W-UqFay5wKcBGJUmSIzFJuixADxr-kaY9FOeCYtgAAQ/exec';
+    'https://script.google.com/macros/s/AKfycbxKoEvu-uDBhWDjRWf2c9hUXKNhDvzzD3CQy5i5WdaKm9z0m7Oes2xgYr8Sx6Us-F3wVA/exec';
 
   // 1. FAST METHOD: Google Apps Script Webhook URL
   if (webhookUrl) {
@@ -225,7 +225,7 @@ export async function updateOrderStatusSheetRecord(
 ) {
   const webhookUrl =
     process.env.GOOGLE_SHEET_WEBHOOK_URL ||
-    'https://script.google.com/macros/s/AKfycbxD7m0gqk1ERVxEzTMy5ay3Tb1W-UqFay5wKcBGJUmSIzFJuixADxr-kaY9FOeCYtgAAQ/exec';
+    'https://script.google.com/macros/s/AKfycbxKoEvu-uDBhWDjRWf2c9hUXKNhDvzzD3CQy5i5WdaKm9z0m7Oes2xgYr8Sx6Us-F3wVA/exec';
 
   let itemsSummary = '';
   if (orderDetails?.items) {
