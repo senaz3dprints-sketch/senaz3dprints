@@ -149,8 +149,15 @@ export default function AdminProductsPage() {
 
   const handleDeleteProduct = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
-    const res = await fetch(`/api/admin/products?id=${id}`, { method: 'DELETE' });
-    if (res.ok) fetchProducts();
+    try {
+      const res = await fetch(`/api/admin/products?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+        fetchProducts();
+      }
+    } catch (e) {
+      console.error('Failed to delete product', e);
+    }
   };
 
   const togglePublishStatus = async (p: any) => {

@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     });
 
     try {
-      revalidatePath('/');
+      revalidatePath('/', 'layout');
       revalidatePath('/shop');
       revalidatePath('/admin/products');
     } catch (e) {}
@@ -136,7 +136,7 @@ export async function PUT(req: NextRequest) {
     });
 
     try {
-      revalidatePath('/');
+      revalidatePath('/', 'layout');
       revalidatePath('/shop');
       revalidatePath(`/shop/${updated.slug}`);
       revalidatePath('/admin/products');
@@ -165,13 +165,13 @@ export async function DELETE(req: NextRequest) {
     const deleted = await db.product.delete({ where: { id } });
 
     try {
-      revalidatePath('/');
+      revalidatePath('/', 'layout');
       revalidatePath('/shop');
       if (deleted?.slug) revalidatePath(`/shop/${deleted.slug}`);
       revalidatePath('/admin/products');
     } catch (e) {}
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, deletedId: id });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete product.' }, { status: 500 });
   }
