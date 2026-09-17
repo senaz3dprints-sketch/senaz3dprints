@@ -9,6 +9,43 @@ const JWT_SECRET = new TextEncoder().encode(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // 1. Check API Admin Routes Security
+  if (pathname.startsWith('/api/admin')) {
+    // Whitelist login and logout API endpoints
+    if (pathname === '/api/admin/login' || pathname === '/api/admin/logout') {
+      return NextResponse.next();
+    }
+
+    const token =
+      request.cookies.get('senaz_admin_session')?.value ||
+      request.headers.get('Authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Admin session token is missing.' },
+        { status: 401 }
+      );
+    }
+
+    try {
+      const verified = await jwtVerify(token, JWT_SECRET);
+      if (verified.payload && verified.payload.role === 'ADMIN') {
+        return NextResponse.next();
+      }
+    } catch (err) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Invalid or expired admin session token.' },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Forbidden. Admin privileges required.' },
+      { status: 403 }
+    );
+  }
+
+  // 2. Check Admin Frontend Dashboard Routes Security
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin/login') {
       return NextResponse.next();
@@ -35,9 +72,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  // Add security response headers
+  const response = NextResponse.next();
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+
+  return response;
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/admin/:path*'],
 };
+

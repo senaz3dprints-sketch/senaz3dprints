@@ -21,19 +21,37 @@ export default function HeroSection({
 
   useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.defaultMuted = true;
-      videoRef.current.muted = true;
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.warn('Hero video autoplay bypassed by browser policy:', err);
-        });
-      }
+      const video = videoRef.current;
+      video.defaultMuted = true;
+      video.muted = true;
+      video.setAttribute('muted', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      
+      const startVideo = () => {
+        if (video) {
+          const promise = video.play();
+          if (promise !== undefined) {
+            promise.catch(() => {
+              // On mobile browsers with strict policies, retry on first user interaction
+              const triggerPlayOnTouch = () => {
+                video.play().catch(() => {});
+                window.removeEventListener('touchstart', triggerPlayOnTouch);
+                window.removeEventListener('scroll', triggerPlayOnTouch);
+              };
+              window.addEventListener('touchstart', triggerPlayOnTouch, { once: true, passive: true });
+              window.addEventListener('scroll', triggerPlayOnTouch, { once: true, passive: true });
+            });
+          }
+        }
+      };
+
+      startVideo();
     }
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-tech-bg border-b border-tech-border min-h-[580px] lg:min-h-[660px] flex items-center">
+    <section className="relative overflow-hidden bg-tech-bg border-b border-tech-border min-h-[520px] sm:min-h-[580px] lg:min-h-[660px] flex items-center">
       {/* 1. BACKGROUND REAL 3D PRINTER VIDEO */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
         <video
@@ -42,18 +60,23 @@ export default function HeroSection({
           loop
           muted
           playsInline
+          // @ts-ignore
+          webkit-playsinline="true"
+          x5-playsinline="true"
+          disablePictureInPicture
+          disableRemotePlayback
           preload="auto"
           poster="/images/senaz_3d_printer_hero.jpg"
-          className="w-full h-full object-cover object-center scale-105 transition-opacity duration-700 opacity-90"
+          className="w-full h-full object-cover object-[55%_45%] sm:object-center transition-opacity duration-700 opacity-90"
         >
-          <source src="/videos/3d-printer-printing.webm" type="video/webm" />
           <source src="/videos/3d-printer-printing.mp4" type="video/mp4" />
+          <source src="/videos/3d-printer-printing.webm" type="video/webm" />
           <source src="/videos/printer-hero.mp4" type="video/mp4" />
         </video>
 
-        {/* Dynamic Dark Gradient & Overlays: Darkened on the left for text readability, crystal clear on the right */}
-        <div className="absolute inset-0 bg-gradient-to-r from-tech-bg/90 via-tech-bg/60 to-tech-bg/25 lg:to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-tech-bg/40" />
+        {/* Dynamic Dark Gradient & Overlays: Perfectly balanced for mobile & desktop readability */}
+        <div className="absolute inset-0 bg-gradient-to-b sm:bg-gradient-to-r from-tech-bg/95 via-tech-bg/75 to-tech-bg/35 sm:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-tech-bg/50" />
         <div className="absolute inset-0 bg-grid-pattern opacity-15" />
         
         {/* Ambient Cyan Glow */}
