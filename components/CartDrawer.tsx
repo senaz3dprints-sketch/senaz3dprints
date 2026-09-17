@@ -6,7 +6,16 @@ import { useCart } from '@/context/CartContext';
 import OrderModal from './OrderModal';
 
 export default function CartDrawer() {
-  const { cart, removeFromCart, updateQuantity, isCartOpen, setIsCartOpen, cartTotal } = useCart();
+  const {
+    cart,
+    removeFromCart,
+    updateQuantity,
+    isCartOpen,
+    setIsCartOpen,
+    cartTotal,
+    referralCode,
+    setReferralCode,
+  } = useCart();
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
@@ -14,8 +23,6 @@ export default function CartDrawer() {
   } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
-
-  const [referralCode, setReferralCode] = useState('');
 
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 

@@ -17,6 +17,8 @@ export interface CartItem {
 interface CartContextType {
   cart: CartItem[];
   wishlist: string[]; // Product IDs
+  referralCode: string;
+  setReferralCode: (code: string) => void;
   addToCart: (item: CartItem) => void;
   removeFromCart: (index: number) => void;
   updateQuantity: (index: number, quantity: number) => void;
@@ -34,9 +36,10 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [referralCode, setReferralCode] = useState<string>('');
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Load from local storage on mount
+  // Load from local storage and URL params on mount
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('senaz_cart');
@@ -44,6 +47,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
       const savedWishlist = localStorage.getItem('senaz_wishlist');
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const refFromUrl = urlParams.get('ref');
+        if (refFromUrl) {
+          const sanitizedRef = refFromUrl.trim().toUpperCase();
+          localStorage.setItem('senaz_referral_code', sanitizedRef);
+          setReferralCode(sanitizedRef);
+        } else {
+          const savedRef = localStorage.getItem('senaz_referral_code');
+          if (savedRef) setReferralCode(savedRef);
+        }
+      }
     } catch (e) {
       console.error('Failed to load local storage cart/wishlist', e);
     }
@@ -117,6 +133,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       value={{
         cart,
         wishlist,
+        referralCode,
+        setReferralCode,
         addToCart,
         removeFromCart,
         updateQuantity,

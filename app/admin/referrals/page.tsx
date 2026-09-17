@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Share2, Plus, Trash2, Check, X, Users, IndianRupee } from 'lucide-react';
+import { Share2, Plus, Trash2, Check, X, Users, IndianRupee, Copy, MessageCircle, Link as LinkIcon, ExternalLink } from 'lucide-react';
 
 export default function AdminReferralsPage() {
   const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Form State
   const [referralCode, setReferralCode] = useState('');
@@ -30,6 +31,24 @@ export default function AdminReferralsPage() {
   useEffect(() => {
     fetchReferrals();
   }, []);
+
+  const handleCopyLink = (code: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://senaz3dprints.in';
+    const link = `${origin}/?ref=${encodeURIComponent(code)}`;
+    navigator.clipboard.writeText(link);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2500);
+  };
+
+  const getWhatsAppShareUrl = (code: string, referrer: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://senaz3dprints.in';
+    const link = `${origin}/?ref=${encodeURIComponent(code)}`;
+    const msg = encodeURIComponent(
+      `Hey! Check out custom 3D printed keychains, desk decor, and precision prints at SenAZ 3D PRINTS.\n\n` +
+      `Use my referral link to explore the catalog: ${link}`
+    );
+    return `https://wa.me/?text=${msg}`;
+  };
 
   const handleCreateReferral = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,10 +95,10 @@ export default function AdminReferralsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-tech-border pb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-white font-sans tracking-tight">
-            Referral System Records
+            Referral & Partner Links
           </h1>
-          <p className="text-xs text-slate-400 font-mono">
-            Track referrer performance, create unique codes (`?ref=CODE`), and monitor earnings
+          <p className="text-xs text-slate-400 font-mono mt-1">
+            Generate referral links (`?ref=CODE`), copy share links, and track performance.
           </p>
         </div>
         <button
@@ -91,16 +110,30 @@ export default function AdminReferralsPage() {
         </button>
       </div>
 
+      {/* Info Card */}
+      <div className="bg-tech-card/80 border border-tech-border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-mono">
+        <div className="flex items-center gap-2.5 text-slate-300">
+          <LinkIcon className="w-4 h-4 text-tech-accent shrink-0" />
+          <span>
+            Referral Format: <strong className="text-tech-accent">https://senaz3dprints.in/?ref=CODE</strong>
+          </span>
+        </div>
+        <span className="text-[11px] text-slate-400">
+          Any visitor clicking the link automatically has the referral attached to their orders.
+        </span>
+      </div>
+
       <div className="bg-tech-card rounded-2xl border border-tech-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono text-slate-300">
             <thead className="bg-tech-bg border-b border-tech-border text-slate-400">
               <tr>
                 <th className="p-3.5">Referral Code</th>
+                <th className="p-3.5">Share Link</th>
                 <th className="p-3.5">Referrer Name</th>
                 <th className="p-3.5">Contact</th>
-                <th className="p-3.5">Successful Referrals</th>
-                <th className="p-3.5">Total Generated Value</th>
+                <th className="p-3.5">Orders</th>
+                <th className="p-3.5">Generated Value</th>
                 <th className="p-3.5">Status</th>
                 <th className="p-3.5 text-right">Actions</th>
               </tr>
@@ -110,6 +143,41 @@ export default function AdminReferralsPage() {
                 <tr key={r.id} className="hover:bg-tech-bg/50">
                   <td className="p-3.5 font-bold text-tech-accent tracking-wider">
                     {r.referralCode}
+                  </td>
+                  <td className="p-3.5">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleCopyLink(r.referralCode)}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
+                          copiedCode === r.referralCode
+                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                            : 'bg-tech-bg border-tech-border text-slate-300 hover:text-white hover:border-tech-accent'
+                        }`}
+                        title="Copy direct referral URL"
+                      >
+                        {copiedCode === r.referralCode ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-tech-accent" />
+                            <span>Copy Link</span>
+                          </>
+                        )}
+                      </button>
+
+                      <a
+                        href={getWhatsAppShareUrl(r.referralCode, r.referrerName)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="p-1.5 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-900/60 transition-colors"
+                        title="Share on WhatsApp"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   </td>
                   <td className="p-3.5 font-bold text-white">{r.referrerName}</td>
                   <td className="p-3.5">{r.referrerContact || 'N/A'}</td>
@@ -141,7 +209,7 @@ export default function AdminReferralsPage() {
               ))}
               {referrals.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500 text-xs font-mono">
+                  <td colSpan={8} className="p-8 text-center text-slate-500 text-xs font-mono">
                     No referral codes created yet. Click "New Referral Code" above to add one.
                   </td>
                 </tr>

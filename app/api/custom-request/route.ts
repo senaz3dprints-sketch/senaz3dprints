@@ -81,21 +81,25 @@ export async function POST(req: NextRequest) {
     });
 
     // Google Sheets Sync
-    createCustomRequestSheetRecord({
-      id: requestRecord.id,
-      customerName: requestRecord.customerName,
-      whatsapp: requestRecord.whatsapp,
-      email: requestRecord.email,
-      productType: requestRecord.productType,
-      materialPreference: requestRecord.materialPreference,
-      colorPreference: requestRecord.colorPreference,
-      quantity: requestRecord.quantity,
-      dimensions: requestRecord.dimensions,
-      fileUrl: requestRecord.fileUrl,
-      referenceImageUrl: requestRecord.referenceImageUrl,
-      additionalNotes: requestRecord.additionalNotes,
-      createdAt: requestRecord.createdAt,
-    });
+    try {
+      await createCustomRequestSheetRecord({
+        id: requestRecord.id,
+        customerName: requestRecord.customerName,
+        whatsapp: requestRecord.whatsapp,
+        email: requestRecord.email,
+        productType: requestRecord.productType,
+        materialPreference: requestRecord.materialPreference,
+        colorPreference: requestRecord.colorPreference,
+        quantity: requestRecord.quantity,
+        dimensions: requestRecord.dimensions,
+        fileUrl: requestRecord.fileUrl,
+        referenceImageUrl: requestRecord.referenceImageUrl,
+        additionalNotes: requestRecord.additionalNotes,
+        createdAt: requestRecord.createdAt,
+      });
+    } catch (sheetErr) {
+      console.error('Custom request Google Sheets sync error:', sheetErr);
+    }
 
     // WhatsApp Redirect URL
     const whatsappUrl = generateCustomRequestWhatsAppUrl(

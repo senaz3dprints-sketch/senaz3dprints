@@ -144,24 +144,28 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Async sync to Google Sheets
-    createOrderSheetRecord({
-      id: orderRecord.id,
-      customerName: orderRecord.customerName,
-      whatsapp: orderRecord.whatsapp,
-      email: orderRecord.email,
-      address: orderRecord.address,
-      city: orderRecord.city,
-      state: orderRecord.state,
-      pincode: orderRecord.pincode,
-      totalAmount: orderRecord.totalAmount,
-      discountAmount: orderRecord.discountAmount,
-      couponCode: orderRecord.couponCode,
-      referralCode: orderRecord.referralCode,
-      items: JSON.stringify(validatedItems),
-      notes: orderRecord.orderNotes,
-      createdAt: orderRecord.createdAt,
-    });
+    // Sync to Google Sheets and trigger email alert
+    try {
+      await createOrderSheetRecord({
+        id: orderRecord.id,
+        customerName: orderRecord.customerName,
+        whatsapp: orderRecord.whatsapp,
+        email: orderRecord.email,
+        address: orderRecord.address,
+        city: orderRecord.city,
+        state: orderRecord.state,
+        pincode: orderRecord.pincode,
+        totalAmount: orderRecord.totalAmount,
+        discountAmount: orderRecord.discountAmount,
+        couponCode: orderRecord.couponCode,
+        referralCode: orderRecord.referralCode,
+        items: JSON.stringify(validatedItems),
+        notes: orderRecord.orderNotes,
+        createdAt: orderRecord.createdAt,
+      });
+    } catch (sheetErr) {
+      console.error('Google Sheets sync error:', sheetErr);
+    }
 
     // Generate WhatsApp URL
     const whatsappUrl = generateOrderWhatsAppUrl({
