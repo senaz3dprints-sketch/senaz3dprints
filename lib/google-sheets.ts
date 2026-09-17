@@ -80,21 +80,47 @@ export async function createOrderSheetRecord(order: {
   notes?: string | null;
   createdAt: Date;
 }) {
+  // Format items nicely for the sheet
+  let itemsSummary = order.items;
+  try {
+    const parsedItems = JSON.parse(order.items);
+    if (Array.isArray(parsedItems)) {
+      itemsSummary = parsedItems
+        .map((it: any) => {
+          let desc = `${it.quantity}x ${it.name}`;
+          const details: string[] = [];
+          if (it.color) details.push(`Color: ${it.color}`);
+          if (it.size) details.push(`Size: ${it.size}`);
+          if (it.personalizedText) details.push(`Text: "${it.personalizedText}"`);
+          if (details.length > 0) desc += ` (${details.join(', ')})`;
+          return desc;
+        })
+        .join(' | ');
+    }
+  } catch (e) {}
+
+  // Format date in IST
+  const istDate = new Date(order.createdAt).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
   const row = [
-    order.id,
-    order.createdAt.toISOString(),
-    order.customerName,
-    order.whatsapp,
-    order.email || 'N/A',
-    `${order.address}, ${order.city}, ${order.state} - ${order.pincode}`,
-    order.items,
-    order.totalAmount + order.discountAmount,
-    order.discountAmount,
-    order.totalAmount,
-    order.couponCode || 'None',
-    order.referralCode || 'None',
-    order.notes || 'None',
-    'PENDING',
+    order.id,                                                            // 1. Order ID
+    istDate,                                                             // 2. Date & Time
+    order.customerName,                                                  // 3. Customer Name
+    order.whatsapp,                                                      // 4. WhatsApp Number
+    order.email || 'N/A',                                                // 5. Email Address
+    `${order.address}, ${order.city}, ${order.state} - ${order.pincode}`, // 6. Full Address
+    itemsSummary,                                                        // 7. Ordered Items & Quantities
+    order.totalAmount + order.discountAmount,                            // 8. Subtotal (₹)
+    order.discountAmount,                                                // 9. Discount (₹)
+    order.totalAmount,                                                   // 10. Final Total (₹)
+    order.couponCode || 'None',                                          // 11. Coupon Code
+    order.referralCode || 'None',                                        // 12. Referral Code
+    order.notes || 'None',                                               // 13. Customer Notes
+    'PENDING',                                                           // 14. Status
   ];
 
   return await appendToSheet('Orders', row);
@@ -115,21 +141,27 @@ export async function createCustomRequestSheetRecord(request: {
   additionalNotes?: string | null;
   createdAt: Date;
 }) {
+  const istDate = new Date(request.createdAt).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
   const row = [
-    request.id,
-    request.createdAt.toISOString(),
-    request.customerName,
-    request.whatsapp,
-    request.email || 'N/A',
-    request.productType,
-    request.materialPreference,
-    request.colorPreference,
-    request.quantity,
-    request.dimensions || 'N/A',
-    request.fileUrl || 'N/A',
-    request.referenceImageUrl || 'N/A',
-    request.additionalNotes || 'None',
-    'PENDING',
+    request.id,                          // 1. Request ID
+    istDate,                             // 2. Date & Time
+    request.customerName,                // 3. Customer Name
+    request.whatsapp,                    // 4. WhatsApp Number
+    request.email || 'N/A',              // 5. Email Address
+    request.productType,                 // 6. Product Type
+    request.materialPreference,          // 7. Material
+    request.colorPreference,             // 8. Color
+    request.quantity,                    // 9. Quantity
+    request.dimensions || 'N/A',         // 10. Dimensions
+    request.fileUrl || 'N/A',            // 11. STL File Link
+    request.referenceImageUrl || 'N/A',  // 12. Reference Image Link
+    request.additionalNotes || 'None',   // 13. Additional Notes
+    'PENDING',                           // 14. Status
   ];
 
   return await appendToSheet('CustomRequests', row);
@@ -142,14 +174,21 @@ export async function recordReferralSheetRecord(referral: {
   orderValue: number;
   createdAt: Date;
 }) {
+  const istDate = new Date(referral.createdAt).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
   const row = [
-    referral.referralCode,
-    referral.referrerName,
-    referral.orderId,
-    referral.orderValue,
-    referral.createdAt.toISOString(),
-    'RECORDED',
+    referral.referralCode,  // Referral Code
+    referral.referrerName,  // Referrer Name
+    referral.orderId,       // Order ID
+    referral.orderValue,    // Order Value (₹)
+    istDate,                // Date & Time
+    'RECORDED',             // Status
   ];
 
   return await appendToSheet('Referrals', row);
 }
+
