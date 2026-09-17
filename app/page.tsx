@@ -177,36 +177,10 @@ export default async function HomePage() {
 
       {/* 4. PERSONALISATION FEATURE SPOTLIGHT */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-tech-card rounded-2xl border border-tech-border p-6 lg:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          <div className="lg:col-span-6 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tech-accent/10 border border-tech-accent/30 text-xs font-mono text-tech-accent">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Personalised Name Products</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white font-sans leading-tight">
-              Turn Names & Ideas into Tactile 3D Objects.
-            </h2>
-            <p className="text-sm text-slate-300 leading-relaxed font-sans">
-              Customize keychains, desk nameplates, and monogram tags with your exact text. Pick from arctic white, obsidian black, ruby red, or silk gold layers.
-            </p>
-
-            <div className="pt-2 flex items-center gap-4">
-              <Link
-                href="/shop?category=personalised"
-                className="px-6 py-3 rounded-lg bg-tech-accent text-tech-bg font-bold text-xs font-mono hover:bg-tech-accent/90 transition-all flex items-center gap-2"
-              >
-                <span>Browse Personalised Catalog</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="lg:col-span-6">
-            <PersonalizationPreview
-              initialText="SenAZ 3D"
-            />
-          </div>
-        </div>
+        <PersonalizationPreview
+          initialText="SenAZ 3D"
+          showHeroBanner={true}
+        />
       </section>
 
       {/* 5. CUSTOM 3D PRINTING SERVICE BANNER */}
