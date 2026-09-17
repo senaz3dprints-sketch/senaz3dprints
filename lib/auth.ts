@@ -27,8 +27,26 @@ export async function verifyAdminToken(token: string) {
 }
 
 export async function isAuthenticatedAdmin(req?: NextRequest) {
-  // Direct open admin dashboard access (no password/username required)
-  return true;
+  try {
+    const cookieStore = cookies();
+    const token = cookieStore.get(COOKIE_NAME)?.value;
+    if (token) {
+      const verified = await verifyAdminToken(token);
+      if (verified && verified.role === 'ADMIN') return true;
+    }
+
+    if (req) {
+      const authHeader = req.headers.get('Authorization');
+      if (authHeader?.startsWith('Bearer ')) {
+        const bearerToken = authHeader.substring(7);
+        const verified = await verifyAdminToken(bearerToken);
+        if (verified && verified.role === 'ADMIN') return true;
+      }
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
 }
 
 export function setAdminCookie(token: string) {

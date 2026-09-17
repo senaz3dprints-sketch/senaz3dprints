@@ -4,6 +4,9 @@ import { saveUploadedFile } from '@/lib/upload';
 import { createCustomRequestSheetRecord } from '@/lib/google-sheets';
 import { generateCustomRequestWhatsAppUrl } from '@/lib/whatsapp';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();

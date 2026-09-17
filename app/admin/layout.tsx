@@ -88,15 +88,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </div>
 
-        {/* Store Return Footer */}
-        <div className="pt-4 border-t border-tech-border">
+        {/* Store Return & Logout Footer */}
+        <div className="pt-4 border-t border-tech-border space-y-1">
           <Link
             href="/"
+            target="_blank"
             className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono text-slate-400 hover:text-tech-accent hover:bg-tech-bg transition-colors"
           >
             <ExternalLink className="w-4 h-4" />
-            <span>Return to Public Store</span>
+            <span>View Public Store</span>
           </Link>
+          <button
+            onClick={async () => {
+              await fetch('/api/admin/logout', { method: 'POST' });
+              window.location.href = '/admin/login';
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-mono text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors"
+          >
+            <ExternalLink className="w-4 h-4 rotate-180" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </aside>
 

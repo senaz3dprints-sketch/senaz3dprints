@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { saveUploadedFile } from '@/lib/upload';
 import { isAuthenticatedAdmin } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export async function POST(req: NextRequest) {
   try {
     const isAuth = await isAuthenticatedAdmin(req);
@@ -23,7 +26,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, url: result.fileUrl });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to upload image.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Upload API route error:', error);
+    return NextResponse.json({ error: error?.message || 'Failed to upload image.' }, { status: 500 });
   }
 }

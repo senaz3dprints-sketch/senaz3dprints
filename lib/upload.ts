@@ -46,28 +46,48 @@ export async function saveUploadedFile(file: File, category: '3d-models' | 'imag
     };
   }
 
-  // Create target folder
-  const uploadDir = path.join(process.cwd(), 'public', 'uploads', category);
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-
-  // Generate safe filename without path traversal risk
-  const sanitizedOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-  const uniquePrefix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
-  const finalFileName = `${uniquePrefix}_${sanitizedOriginalName}`;
-  const targetPath = path.join(uploadDir, finalFileName);
-
-  // Write file buffer safely
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
-  fs.writeFileSync(targetPath, buffer);
 
-  const fileUrl = `/uploads/${category}/${finalFileName}`;
+  // Attempt local disk storage if directory is writable
+  try {
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', category);
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
 
-  return {
-    success: true,
-    fileUrl,
-    fileName: file.name,
-  };
+    const sanitizedOriginalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const uniquePrefix = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const finalFileName = `${uniquePrefix}_${sanitizedOriginalName}`;
+    const targetPath = path.join(uploadDir, finalFileName);
+
+    fs.writeFileSync(targetPath, buffer);
+
+    return {
+      success: true,
+      fileUrl: `/uploads/${category}/${finalFileName}`,
+      fileName: file.name,
+    };
+  } catch (fsError) {
+    // Fallback for serverless / read-only filesystem environments (e.g. Vercel)
+    const mimeType =
+      file.type ||
+      (extension === '.png'
+        ? 'image/png'
+        : extension === '.webp'
+        ? 'image/webp'
+        : extension === '.stl'
+        ? 'model/stl'
+        : extension === '.obj'
+        ? 'model/obj'
+        : 'image/jpeg');
+
+    const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`;
+
+    return {
+      success: true,
+      fileUrl: dataUrl,
+      fileName: file.name,
+    };
+  }
 }

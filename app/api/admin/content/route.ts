@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
 
@@ -29,6 +30,12 @@ export async function PUT(req: NextRequest) {
       update: { content: JSON.stringify(body) },
       create: { key: 'homepage', content: JSON.stringify(body) },
     });
+
+    try {
+      revalidatePath('/', 'layout');
+      revalidatePath('/about', 'layout');
+      revalidatePath('/contact', 'layout');
+    } catch (e) {}
 
     return NextResponse.json({ success: true, content: JSON.parse(updated.content) });
   } catch (error) {
