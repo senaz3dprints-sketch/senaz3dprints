@@ -1,29 +1,50 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Type, Palette, Sparkles, MessageCircle, Layers, Check, Shield } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import {
+  Type,
+  Palette,
+  Sparkles,
+  MessageCircle,
+  Layers,
+  Check,
+  Shield,
+  Upload,
+  Plus,
+  Minus,
+  FileText,
+  X,
+  Image as ImageIcon,
+} from 'lucide-react';
 
 interface PersonalizationPreviewProps {
   initialText?: string;
   colors?: string[];
-  onPersonalizationChange?: (data: { text: string; baseColor?: string; textColor?: string; color?: string }) => void;
+  onPersonalizationChange?: (data: {
+    text: string;
+    baseColor?: string;
+    textColor?: string;
+    color?: string;
+    quantity?: number;
+    uploadedFileName?: string;
+  }) => void;
 }
 
 const BASE_COLORS = [
-  { name: 'Matte Obsidian', hex: '#12161f', border: '#2d3748', isDark: true },
-  { name: 'Carbon Stealth', hex: '#1e293b', border: '#334155', isDark: true },
-  { name: 'Pure Snow White', hex: '#f8fafc', border: '#e2e8f0', isDark: false },
-  { name: 'Deep Navy', hex: '#0f172a', border: '#1e3a8a', isDark: true },
-  { name: 'Racing Red', hex: '#991b1b', border: '#dc2626', isDark: true },
+  { name: 'Matte Obsidian Black', hex: '#12161f', border: '#374151', textPreviewColor: '#94a3b8' },
+  { name: 'Carbon Stealth Grey', hex: '#1e293b', border: '#475569', textPreviewColor: '#cbd5e1' },
+  { name: 'Pure Snow White', hex: '#f8fafc', border: '#cbd5e1', textPreviewColor: '#0f172a' },
+  { name: 'Deep Navy Blue', hex: '#0f172a', border: '#2563eb', textPreviewColor: '#93c5fd' },
+  { name: 'Racing Crimson Red', hex: '#991b1b', border: '#ef4444', textPreviewColor: '#fca5a5' },
 ];
 
 const TEXT_COLORS = [
-  { name: 'Electric Cyan', hex: '#00e5ff', glow: 'rgba(0, 229, 255, 0.4)' },
-  { name: 'Silk Gold', hex: '#f59e0b', glow: 'rgba(245, 158, 11, 0.4)' },
-  { name: 'Ruby Red', hex: '#ef4444', glow: 'rgba(239, 68, 68, 0.4)' },
-  { name: 'Arctic White', hex: '#ffffff', glow: 'rgba(255, 255, 255, 0.4)' },
-  { name: 'Lime Green', hex: '#10b981', glow: 'rgba(16, 185, 129, 0.4)' },
-  { name: 'Sunset Orange', hex: '#f97316', glow: 'rgba(249, 115, 22, 0.4)' },
+  { name: 'Electric Neon Cyan', hex: '#00e5ff', glow: 'rgba(0, 229, 255, 0.5)' },
+  { name: 'Silk Radiant Gold', hex: '#f59e0b', glow: 'rgba(245, 158, 11, 0.5)' },
+  { name: 'Ruby Flame Red', hex: '#ef4444', glow: 'rgba(239, 68, 68, 0.5)' },
+  { name: 'Pure Arctic White', hex: '#ffffff', glow: 'rgba(255, 255, 255, 0.5)' },
+  { name: 'Vibrant Lime Green', hex: '#10b981', glow: 'rgba(16, 185, 129, 0.5)' },
+  { name: 'Sunset Signal Orange', hex: '#f97316', glow: 'rgba(249, 115, 22, 0.5)' },
 ];
 
 export default function PersonalizationPreview({
@@ -33,40 +54,62 @@ export default function PersonalizationPreview({
   const [text, setText] = useState(initialText);
   const [selectedBase, setSelectedBase] = useState(BASE_COLORS[0]);
   const [selectedText, setSelectedText] = useState(TEXT_COLORS[0]);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string; previewUrl?: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTextChange = (val: string) => {
     const sanitized = val.slice(0, 14);
     setText(sanitized);
-    if (onPersonalizationChange) {
-      onPersonalizationChange({
-        text: sanitized,
-        baseColor: selectedBase.name,
-        textColor: selectedText.name,
-        color: selectedText.name,
-      });
-    }
+    notifyChange(sanitized, selectedBase.name, selectedText.name, quantity, uploadedFile?.name);
   };
 
   const handleBaseChange = (base: typeof BASE_COLORS[0]) => {
     setSelectedBase(base);
-    if (onPersonalizationChange) {
-      onPersonalizationChange({
-        text,
-        baseColor: base.name,
-        textColor: selectedText.name,
-        color: selectedText.name,
-      });
-    }
+    notifyChange(text, base.name, selectedText.name, quantity, uploadedFile?.name);
   };
 
   const handleTextColorChange = (textColor: typeof TEXT_COLORS[0]) => {
     setSelectedText(textColor);
+    notifyChange(text, selectedBase.name, textColor.name, quantity, uploadedFile?.name);
+  };
+
+  const handleQuantityChange = (newQty: number) => {
+    const validQty = Math.max(1, Math.min(500, newQty));
+    setQuantity(validQty);
+    notifyChange(text, selectedBase.name, selectedText.name, validQty, uploadedFile?.name);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      const isImg = file.type.startsWith('image/');
+      const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
+      const fileData = { name: file.name, size: `${sizeMb} MB`, previewUrl };
+      setUploadedFile(fileData);
+      notifyChange(text, selectedBase.name, selectedText.name, quantity, file.name);
+    }
+  };
+
+  const removeUploadedFile = () => {
+    if (uploadedFile?.previewUrl) {
+      URL.revokeObjectURL(uploadedFile.previewUrl);
+    }
+    setUploadedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    notifyChange(text, selectedBase.name, selectedText.name, quantity, undefined);
+  };
+
+  const notifyChange = (t: string, b: string, tc: string, q: number, fn?: string) => {
     if (onPersonalizationChange) {
       onPersonalizationChange({
-        text,
-        baseColor: selectedBase.name,
-        textColor: textColor.name,
-        color: textColor.name,
+        text: t,
+        baseColor: b,
+        textColor: tc,
+        color: tc,
+        quantity: q,
+        uploadedFileName: fn,
       });
     }
   };
@@ -74,38 +117,45 @@ export default function PersonalizationPreview({
   const displayText = text.trim() ? text.toUpperCase() : 'YOUR NAME';
 
   const whatsappMessage = encodeURIComponent(
-    `Hi SenAZ 3D PRINTS! I would like to order a Custom 3D Printed Keychain.\n\n` +
+    `Hi SenAZ 3D PRINTS! I would like to order Custom 3D Printed Keychains.\n\n` +
     `• Custom Text: "${displayText}"\n` +
     `• Base Color: ${selectedBase.name}\n` +
     `• Text Color: ${selectedText.name}\n` +
-    `• Quantity: 1\n\n` +
-    `Please share pricing and estimated dispatch time.`
+    `• Order Quantity: ${quantity} unit${quantity > 1 ? 's' : ''}\n` +
+    (uploadedFile ? `• Custom Logo/Design Attached: Yes ("${uploadedFile.name}")\n` : '') +
+    `\nPlease share pricing, mockup confirmation, and estimated dispatch time.`
   );
 
   return (
-    <div className="bg-tech-card rounded-2xl border border-tech-border p-5 sm:p-6 space-y-6 shadow-2xl">
+    <div className="bg-tech-card rounded-2xl border border-tech-border p-5 sm:p-7 space-y-6 shadow-2xl">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-tech-border/80 pb-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-tech-accent" />
-          <h4 className="font-bold text-white text-sm font-sans tracking-wide">
-            Real 3D Keychain Customizer
-          </h4>
+        <div className="flex items-center gap-2.5">
+          <Sparkles className="w-5 h-5 text-tech-accent" />
+          <div>
+            <h4 className="font-bold text-white text-base font-sans tracking-wide">
+              Real 3D Keychain Customizer & Order Tool
+            </h4>
+            <p className="text-xs text-slate-400">Design online or upload custom 2D/3D logo files</p>
+          </div>
         </div>
-        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           Live 3D Render
         </span>
       </div>
 
       {/* REAL PHYSICAL KEYCHAIN STUDIO VIEW */}
-      <div className="relative w-full min-h-[220px] sm:min-h-[240px] bg-gradient-to-b from-[#090d16] to-[#04060a] rounded-xl border border-tech-border flex items-center justify-center p-6 overflow-hidden select-none">
+      <div className="relative w-full min-h-[230px] sm:min-h-[250px] bg-gradient-to-b from-[#0b0f19] to-[#04060a] rounded-xl border border-tech-border flex items-center justify-center p-6 overflow-hidden select-none">
         
         {/* Studio Background Grid & Spotlights */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-15 pointer-events-none" />
-        <div className="absolute top-0 inset-x-1/4 h-24 bg-tech-accent/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute bottom-2 left-6 text-[10px] font-mono text-slate-500 tracking-wider">
-          FDM DUAL-EXTRUSION • 100% INFILL
+        <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
+        <div className="absolute top-0 inset-x-1/4 h-28 bg-tech-accent/10 rounded-full blur-3xl pointer-events-none" />
+        
+        {/* Specs tag */}
+        <div className="absolute bottom-2.5 left-4 sm:left-6 text-[11px] font-mono text-slate-400 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-tech-accent" />
+          <span>FDM DUAL-EXTRUSION • REINFORCED INFILL</span>
         </div>
 
         {/* Realistic Keychain Object Floating Assembly */}
@@ -152,7 +202,7 @@ export default function PersonalizationPreview({
             </div>
 
             {/* Main Keychain Body Plate with 3D Textured Surface */}
-            <div className="relative px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center min-w-[140px] max-w-[280px] sm:max-w-[340px]">
+            <div className="relative px-6 sm:px-8 py-3.5 sm:py-4 flex items-center justify-center min-w-[150px] max-w-[280px] sm:max-w-[360px]">
               
               {/* Subtle 3D Layer Lines Simulation Texture */}
               <div
@@ -197,15 +247,15 @@ export default function PersonalizationPreview({
       </div>
 
       {/* CONTROLS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-1">
+      <div className="space-y-6 pt-2">
         
-        {/* Text Input */}
-        <div className="md:col-span-2">
-          <label className="block text-xs font-mono text-slate-300 mb-1.5 flex items-center justify-between">
-            <span className="flex items-center gap-1.5 font-semibold text-white">
-              <Type className="w-3.5 h-3.5 text-tech-accent" /> 1. Enter Name / Text
+        {/* 1. Custom Text Input */}
+        <div>
+          <label className="block text-xs font-mono text-slate-200 mb-1.5 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-bold text-white text-xs sm:text-sm">
+              <Type className="w-4 h-4 text-tech-accent" /> 1. Custom Text / Name
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">{text.length}/14 Characters</span>
+            <span className="text-xs text-slate-400 font-mono font-semibold">{text.length}/14 Characters</span>
           </label>
           <input
             type="text"
@@ -217,12 +267,17 @@ export default function PersonalizationPreview({
           />
         </div>
 
-        {/* Base Body Color Selection */}
+        {/* 2. Base Color Selection - WITH CLEAR, FULL NAMES */}
         <div>
-          <label className="block text-xs font-mono text-slate-300 mb-2 flex items-center gap-1.5 font-semibold text-white">
-            <Layers className="w-3.5 h-3.5 text-tech-accent" /> 2. Keychain Base Color
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="flex items-center justify-between mb-2">
+            <label className="flex items-center gap-1.5 font-bold text-white text-xs sm:text-sm">
+              <Layers className="w-4 h-4 text-tech-accent" /> 2. Keychain Base Color
+            </label>
+            <span className="text-xs font-mono font-semibold text-tech-accent bg-tech-bg px-2.5 py-0.5 rounded border border-tech-border">
+              Active: {selectedBase.name}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {BASE_COLORS.map((base) => {
               const isSelected = selectedBase.name === base.name;
               return (
@@ -230,30 +285,35 @@ export default function PersonalizationPreview({
                   key={base.name}
                   type="button"
                   onClick={() => handleBaseChange(base)}
-                  className={`p-2 rounded-lg text-xs font-mono border flex items-center gap-2 transition-all text-left ${
+                  className={`p-2.5 rounded-xl text-xs font-sans font-semibold border flex items-center gap-3 transition-all text-left shadow-sm ${
                     isSelected
-                      ? 'bg-tech-accent/15 border-tech-accent text-white shadow-sm'
-                      : 'bg-tech-bg border-tech-border text-slate-400 hover:border-slate-600'
+                      ? 'bg-tech-accent/15 border-tech-accent text-white ring-1 ring-tech-accent'
+                      : 'bg-tech-bg/90 border-tech-border text-slate-300 hover:border-slate-500 hover:bg-tech-card'
                   }`}
                 >
                   <span
-                    className="w-3.5 h-3.5 rounded-full border border-slate-500 shrink-0"
+                    className="w-4 h-4 rounded-full border-2 border-slate-400 shadow-sm shrink-0"
                     style={{ backgroundColor: base.hex }}
                   />
-                  <span className="truncate text-[11px]">{base.name.split(' ')[0]}</span>
-                  {isSelected && <Check className="w-3 h-3 text-tech-accent ml-auto shrink-0" />}
+                  <span className="truncate">{base.name}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-tech-accent ml-auto shrink-0" />}
                 </button>
               );
             })}
           </div>
         </div>
 
-        {/* Embossed Text Accent Color Selection */}
+        {/* 3. Raised Text Color Selection - WITH CLEAR, FULL NAMES */}
         <div>
-          <label className="block text-xs font-mono text-slate-300 mb-2 flex items-center gap-1.5 font-semibold text-white">
-            <Palette className="w-3.5 h-3.5 text-tech-accent" /> 3. Raised Text Color
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="flex items-center justify-between mb-2">
+            <label className="flex items-center gap-1.5 font-bold text-white text-xs sm:text-sm">
+              <Palette className="w-4 h-4 text-tech-accent" /> 3. Raised Text & Accent Color
+            </label>
+            <span className="text-xs font-mono font-semibold text-tech-accent bg-tech-bg px-2.5 py-0.5 rounded border border-tech-border">
+              Active: {selectedText.name}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
             {TEXT_COLORS.map((tc) => {
               const isSelected = selectedText.name === tc.name;
               return (
@@ -261,45 +321,178 @@ export default function PersonalizationPreview({
                   key={tc.name}
                   type="button"
                   onClick={() => handleTextColorChange(tc)}
-                  className={`p-2 rounded-lg text-xs font-mono border flex items-center gap-2 transition-all text-left ${
+                  className={`p-2.5 rounded-xl text-xs font-sans font-semibold border flex items-center gap-3 transition-all text-left shadow-sm ${
                     isSelected
-                      ? 'bg-tech-accent/15 border-tech-accent text-white shadow-sm'
-                      : 'bg-tech-bg border-tech-border text-slate-400 hover:border-slate-600'
+                      ? 'bg-tech-accent/15 border-tech-accent text-white ring-1 ring-tech-accent'
+                      : 'bg-tech-bg/90 border-tech-border text-slate-300 hover:border-slate-500 hover:bg-tech-card'
                   }`}
                 >
                   <span
-                    className="w-3.5 h-3.5 rounded-full border border-slate-500 shrink-0 shadow-sm"
+                    className="w-4 h-4 rounded-full border-2 border-slate-400 shadow-sm shrink-0"
                     style={{ backgroundColor: tc.hex }}
                   />
-                  <span className="truncate text-[11px]">{tc.name.split(' ')[0]}</span>
-                  {isSelected && <Check className="w-3 h-3 text-tech-accent ml-auto shrink-0" />}
+                  <span className="truncate">{tc.name}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 text-tech-accent ml-auto shrink-0" />}
                 </button>
               );
             })}
           </div>
         </div>
 
+        {/* 4. Quantity Selector & 5. Custom Design File Upload */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-tech-border/80">
+          
+          {/* Order Quantity Counter */}
+          <div className="bg-tech-bg/80 border border-tech-border p-4 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white font-mono uppercase tracking-wider">
+                Order Quantity
+              </span>
+              <span className="text-[11px] font-mono text-slate-400">Bulk packs available</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity <= 1}
+                className="w-10 h-10 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent flex items-center justify-center text-white disabled:opacity-40 disabled:hover:border-tech-border transition-colors shrink-0"
+                aria-label="Decrease quantity"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+
+              <div className="flex-1 bg-tech-card border border-tech-border rounded-lg py-2 px-3 text-center">
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={quantity}
+                  onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                  className="w-full bg-transparent text-center font-mono font-extrabold text-lg text-white focus:outline-none"
+                />
+                <span className="text-[10px] font-mono text-slate-400 block uppercase">
+                  {quantity === 1 ? 'Single Unit' : `${quantity} Units`}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleQuantityChange(quantity + 1)}
+                disabled={quantity >= 500}
+                className="w-10 h-10 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent flex items-center justify-center text-white transition-colors shrink-0"
+                aria-label="Increase quantity"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Quantity Chips */}
+            <div className="flex items-center gap-2 pt-1">
+              {[1, 5, 10, 25, 50].map((qty) => (
+                <button
+                  key={qty}
+                  type="button"
+                  onClick={() => handleQuantityChange(qty)}
+                  className={`flex-1 py-1 rounded text-[11px] font-mono border transition-all ${
+                    quantity === qty
+                      ? 'bg-tech-accent text-tech-bg font-bold border-tech-accent'
+                      : 'bg-tech-card border-tech-border text-slate-400 hover:text-white'
+                  }`}
+                >
+                  {qty}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Keychain Design Upload (Logo / Sketch / 3D Model) */}
+          <div className="bg-tech-bg/80 border border-tech-border p-4 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1.5">
+                <Upload className="w-3.5 h-3.5 text-tech-accent" /> Custom Design Upload
+              </span>
+              <span className="text-[11px] font-mono text-slate-400">Optional</span>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.svg,.pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+              id="keychain-design-uploader"
+            />
+
+            {!uploadedFile ? (
+              <label
+                htmlFor="keychain-design-uploader"
+                className="w-full border-2 border-dashed border-tech-border hover:border-tech-accent/80 bg-tech-card/50 rounded-lg p-3 flex flex-col items-center justify-center cursor-pointer transition-colors group text-center"
+              >
+                <Upload className="w-5 h-5 text-slate-400 group-hover:text-tech-accent mb-1 transition-colors" />
+                <span className="text-xs font-semibold text-slate-200">
+                  Click to upload Logo / Custom Shape
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono mt-0.5">
+                  Supports .stl, .obj, .png, .jpg, .svg (Max 25MB)
+                </span>
+              </label>
+            ) : (
+              <div className="bg-tech-card border border-emerald-500/40 rounded-lg p-2.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 overflow-hidden">
+                  {uploadedFile.previewUrl ? (
+                    <img
+                      src={uploadedFile.previewUrl}
+                      alt="Uploaded Preview"
+                      className="w-9 h-9 rounded object-cover border border-slate-700 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-emerald-400" />
+                    </div>
+                  )}
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-semibold text-white truncate">{uploadedFile.name}</p>
+                    <p className="text-[10px] font-mono text-emerald-400">{uploadedFile.size} • Ready</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={removeUploadedFile}
+                  className="p-1.5 rounded hover:bg-rose-950/50 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
+                  title="Remove file"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+        </div>
+
       </div>
 
       {/* Direct WhatsApp Order CTA */}
-      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-tech-border/80">
+      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 border-t border-tech-border/80">
         <div className="text-xs text-slate-400 flex items-center gap-2">
           <Shield className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Includes stainless steel split keyring & jump chain</span>
+          <span>Includes stainless steel split keyring & jump chain • Pan-India Dispatch</span>
         </div>
 
         <a
           href={`https://wa.me/918761053230?text=${whatsappMessage}`}
           target="_blank"
           rel="noreferrer"
-          className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-950/40 hover:scale-[1.02] active:scale-[0.98]"
+          className="px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-sm flex items-center justify-center gap-2.5 transition-all shadow-xl shadow-emerald-950/40 hover:scale-[1.02] active:scale-[0.98]"
         >
           <MessageCircle className="w-4 h-4" />
-          <span>Order This Design on WhatsApp</span>
+          <span>Order ({quantity} unit{quantity > 1 ? 's' : ''}) on WhatsApp</span>
         </a>
       </div>
 
     </div>
   );
 }
+
 
