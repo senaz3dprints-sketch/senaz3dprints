@@ -54,6 +54,36 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function PUT(req: NextRequest) {
+  try {
+    const isAuth = await isAuthenticatedAdmin(req);
+    if (!isAuth) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id, isActive, discountValue, minOrderValue, usageLimit } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Coupon ID required.' }, { status: 400 });
+    }
+
+    const updated = await db.coupon.update({
+      where: { id },
+      data: {
+        ...(isActive !== undefined && { isActive }),
+        ...(discountValue !== undefined && { discountValue: parseFloat(discountValue) }),
+        ...(minOrderValue !== undefined && { minOrderValue: parseFloat(minOrderValue) }),
+        ...(usageLimit !== undefined && { usageLimit: parseInt(usageLimit) }),
+      },
+    });
+
+    return NextResponse.json({ success: true, coupon: updated });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to update coupon.' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const isAuth = await isAuthenticatedAdmin(req);

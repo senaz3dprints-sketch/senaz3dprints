@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
 interface ProductDetailPageProps {

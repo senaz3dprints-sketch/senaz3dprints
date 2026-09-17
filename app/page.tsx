@@ -18,7 +18,9 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-export const revalidate = 0; // Dynamic rendering for fresh site content
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 
 export default async function HomePage() {
   let products: any[] = [];

@@ -2,6 +2,8 @@ import React, { Suspense } from 'react';
 import { db } from '@/lib/db';
 import ShopClient from './ShopClient';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
 export default async function ShopPage() {

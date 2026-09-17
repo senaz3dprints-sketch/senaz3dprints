@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   try {
@@ -14,7 +18,11 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ products });
+    const categories = await db.category.findMany({
+      orderBy: { displayOrder: 'asc' },
+    });
+
+    return NextResponse.json({ products, categories });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch products.' }, { status: 500 });
   }
@@ -87,6 +95,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    try {
+      revalidatePath('/');
+      revalidatePath('/shop');
+      revalidatePath('/admin/products');
+    } catch (e) {}
+
     return NextResponse.json({ success: true, product });
   } catch (error: any) {
     console.error('Create product error:', error);
@@ -121,6 +135,13 @@ export async function PUT(req: NextRequest) {
       data,
     });
 
+    try {
+      revalidatePath('/');
+      revalidatePath('/shop');
+      revalidatePath(`/shop/${updated.slug}`);
+      revalidatePath('/admin/products');
+    } catch (e) {}
+
     return NextResponse.json({ success: true, product: updated });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update product.' }, { status: 500 });
@@ -141,7 +162,15 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Product ID required.' }, { status: 400 });
     }
 
-    await db.product.delete({ where: { id } });
+    const deleted = await db.product.delete({ where: { id } });
+
+    try {
+      revalidatePath('/');
+      revalidatePath('/shop');
+      if (deleted?.slug) revalidatePath(`/shop/${deleted.slug}`);
+      revalidatePath('/admin/products');
+    } catch (e) {}
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete product.' }, { status: 500 });

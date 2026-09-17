@@ -34,6 +34,9 @@ export default function AdminProductsPage() {
       if (res.ok) {
         const data = await res.json();
         setProducts(data.products || []);
+        if (data.categories && data.categories.length > 0) {
+          setCategories(data.categories);
+        }
       }
     } catch (e) {
     } finally {
@@ -43,19 +46,6 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-    // Fetch categories for dropdown
-    fetch('/api/admin/products')
-      .then(() => {
-        // Mock standard categories fallback
-        setCategories([
-          { id: 'cat-1', name: 'Personalised' },
-          { id: 'cat-2', name: 'Keychains' },
-          { id: 'cat-3', name: 'Figures & Statues' },
-          { id: 'cat-4', name: 'Decor' },
-          { id: 'cat-5', name: 'Desk & Utility' },
-          { id: 'cat-6', name: 'Custom Prints' },
-        ]);
-      });
   }, []);
 
   const openAddModal = () => {

@@ -41,3 +41,24 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to update custom request status.' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const isAuth = await isAuthenticatedAdmin(req);
+    if (!isAuth) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Request ID required.' }, { status: 400 });
+    }
+
+    await db.customRequest.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to delete custom request.' }, { status: 500 });
+  }
+}

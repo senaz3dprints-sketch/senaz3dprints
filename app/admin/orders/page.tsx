@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, MessageCircle, CheckCircle, Clock, Truck, XCircle } from 'lucide-react';
+import { ShoppingBag, MessageCircle, CheckCircle, Clock, Truck, XCircle, Trash2 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -31,6 +31,12 @@ export default function AdminOrdersPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: newStatus }),
     });
+    if (res.ok) fetchOrders();
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+    if (!confirm(`Delete order ${id}? This cannot be undone.`)) return;
+    const res = await fetch(`/api/admin/orders?id=${id}`, { method: 'DELETE' });
     if (res.ok) fetchOrders();
   };
 
@@ -103,7 +109,7 @@ export default function AdminOrdersPage() {
                         <option value="CANCELLED">CANCELLED</option>
                       </select>
                     </td>
-                    <td className="p-3.5 text-right">
+                    <td className="p-3.5 text-right flex items-center justify-end gap-2">
                       <a
                         href={`https://wa.me/${ord.whatsapp}`}
                         target="_blank"
@@ -113,6 +119,13 @@ export default function AdminOrdersPage() {
                         <MessageCircle className="w-3.5 h-3.5" />
                         <span>Chat WhatsApp</span>
                       </a>
+                      <button
+                        onClick={() => handleDeleteOrder(ord.id)}
+                        className="p-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-lg hover:bg-rose-500/20 transition-colors"
+                        title="Delete Order"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </td>
                   </tr>
                 );

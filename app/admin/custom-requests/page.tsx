@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UploadCloud, FileText, Image as ImageIcon, MessageCircle, ExternalLink } from 'lucide-react';
+import { UploadCloud, FileText, Image as ImageIcon, MessageCircle, ExternalLink, Trash2 } from 'lucide-react';
 
 export default function AdminCustomRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -31,6 +31,12 @@ export default function AdminCustomRequestsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id, status: newStatus }),
     });
+    if (res.ok) fetchRequests();
+  };
+
+  const handleDeleteRequest = async (id: string) => {
+    if (!confirm(`Delete custom request ${id}? This cannot be undone.`)) return;
+    const res = await fetch(`/api/admin/custom-requests?id=${id}`, { method: 'DELETE' });
     if (res.ok) fetchRequests();
   };
 
@@ -112,7 +118,7 @@ export default function AdminCustomRequestsPage() {
                       <option value="REJECTED">REJECTED</option>
                     </select>
                   </td>
-                  <td className="p-3.5 text-right">
+                  <td className="p-3.5 text-right flex items-center justify-end gap-2">
                     <a
                       href={`https://wa.me/${req.whatsapp}`}
                       target="_blank"
@@ -122,6 +128,13 @@ export default function AdminCustomRequestsPage() {
                       <MessageCircle className="w-3.5 h-3.5" />
                       <span>Send Quote</span>
                     </a>
+                    <button
+                      onClick={() => handleDeleteRequest(req.id)}
+                      className="p-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-lg hover:bg-rose-500/20 transition-colors"
+                      title="Delete Request"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </td>
                 </tr>
               ))}

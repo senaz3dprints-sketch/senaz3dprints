@@ -54,6 +54,15 @@ export default function AdminCouponsPage() {
     }
   };
 
+  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+    const res = await fetch('/api/admin/coupons', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, isActive: !currentStatus }),
+    });
+    if (res.ok) fetchCoupons();
+  };
+
   const handleDeleteCoupon = async (id: string) => {
     if (!confirm('Delete coupon code?')) return;
     const res = await fetch(`/api/admin/coupons?id=${id}`, { method: 'DELETE' });
@@ -92,6 +101,7 @@ export default function AdminCouponsPage() {
                 <th className="p-3.5">Min Order</th>
                 <th className="p-3.5">Times Used</th>
                 <th className="p-3.5">Usage Limit</th>
+                <th className="p-3.5">Status</th>
                 <th className="p-3.5 text-right">Actions</th>
               </tr>
             </thead>
@@ -106,10 +116,24 @@ export default function AdminCouponsPage() {
                   <td className="p-3.5">₹{c.minOrderValue}</td>
                   <td className="p-3.5 font-bold">{c.timesUsed}</td>
                   <td className="p-3.5">{c.usageLimit}</td>
+                  <td className="p-3.5">
+                    <button
+                      onClick={() => handleToggleStatus(c.id, c.isActive)}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        c.isActive
+                          ? 'bg-emerald-500/20 text-emerald-400'
+                          : 'bg-slate-700 text-slate-400'
+                      }`}
+                      title="Click to toggle active status"
+                    >
+                      {c.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    </button>
+                  </td>
                   <td className="p-3.5 text-right">
                     <button
                       onClick={() => handleDeleteCoupon(c.id)}
-                      className="p-1.5 rounded hover:bg-tech-bg text-slate-400 hover:text-rose-400"
+                      className="p-1.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20"
+                      title="Delete Coupon"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
