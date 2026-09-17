@@ -83,6 +83,8 @@ export async function createOrderSheetRecord(order: {
   city: string;
   state: string;
   pincode: string;
+  subtotal?: number;
+  shippingFee?: number;
   totalAmount: number;
   discountAmount: number;
   couponCode?: string | null;
@@ -117,6 +119,10 @@ export async function createOrderSheetRecord(order: {
     timeStyle: 'short',
   });
 
+  const subtotalValue = typeof order.subtotal === 'number'
+    ? order.subtotal
+    : (order.totalAmount + order.discountAmount - (order.shippingFee || 0));
+
   const row = [
     order.id,                                                            // 1. Order ID
     istDate,                                                             // 2. Date & Time
@@ -125,7 +131,7 @@ export async function createOrderSheetRecord(order: {
     order.email || 'N/A',                                                // 5. Email Address
     `${order.address}, ${order.city}, ${order.state} - ${order.pincode}`, // 6. Full Address
     itemsSummary,                                                        // 7. Ordered Items & Quantities
-    order.totalAmount + order.discountAmount,                            // 8. Subtotal (₹)
+    subtotalValue,                                                       // 8. Subtotal (₹)
     order.discountAmount,                                                // 9. Discount (₹)
     order.totalAmount,                                                   // 10. Final Total (₹)
     order.couponCode || 'None',                                          // 11. Coupon Code

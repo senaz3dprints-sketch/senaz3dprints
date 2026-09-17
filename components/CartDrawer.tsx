@@ -28,7 +28,29 @@ export default function CartDrawer() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
+  const [shippingSettings, setShippingSettings] = useState<{
+    flatRate: number;
+    freeShippingThreshold: number;
+    shippingNote: string;
+  }>({
+    flatRate: 0,
+    freeShippingThreshold: 0,
+    shippingNote: 'Standard delivery in 3-5 business days across India',
+  });
+
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+
+  // Fetch live shipping settings
+  useEffect(() => {
+    fetch('/api/shipping')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          setShippingSettings(data.settings);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Auto-validate if referral code exists from URL or context on mount/cartTotal change
   useEffect(() => {
@@ -141,7 +163,11 @@ export default function CartDrawer() {
   };
 
   const discountAmount = appliedDiscount ? appliedDiscount.discountAmount : 0;
-  const finalTotal = Math.max(0, cartTotal - discountAmount);
+  const isFreeShipping =
+    shippingSettings.flatRate <= 0 ||
+    (shippingSettings.freeShippingThreshold > 0 && cartTotal >= shippingSettings.freeShippingThreshold);
+  const shippingFee = isFreeShipping ? 0 : shippingSettings.flatRate;
+  const finalTotal = Math.max(0, cartTotal - discountAmount + shippingFee);
 
   return (
     <>
@@ -313,6 +339,15 @@ export default function CartDrawer() {
                   )}
                 </div>
 
+                {/* Free shipping threshold progress helper */}
+                {shippingSettings.flatRate > 0 &&
+                  shippingSettings.freeShippingThreshold > 0 &&
+                  cartTotal < shippingSettings.freeShippingThreshold && (
+                    <div className="p-2 rounded bg-tech-bg border border-tech-border text-[11px] font-mono text-amber-300/90 flex items-center justify-between">
+                      <span>Add ₹{shippingSettings.freeShippingThreshold - cartTotal} more for FREE shipping!</span>
+                    </div>
+                  )}
+
                 {/* Price Breakdown */}
                 <div className="space-y-1.5 pt-2 border-t border-tech-border/60 text-xs font-mono">
                   <div className="flex justify-between text-slate-400">
@@ -327,7 +362,11 @@ export default function CartDrawer() {
                   )}
                   <div className="flex justify-between text-slate-400">
                     <span>Shipping</span>
-                    <span className="text-emerald-400 font-semibold">FREE</span>
+                    {shippingFee === 0 ? (
+                      <span className="text-emerald-400 font-semibold">FREE</span>
+                    ) : (
+                      <span className="text-slate-200 font-semibold">₹{shippingFee}</span>
+                    )}
                   </div>
                   <div className="flex justify-between text-sm font-bold text-white pt-1.5 border-t border-tech-border">
                     <span>Total Amount</span>
@@ -340,7 +379,7 @@ export default function CartDrawer() {
                   onClick={() => setIsCheckoutModalOpen(true)}
                   className="w-full py-3 rounded-lg bg-tech-accent text-tech-bg font-bold text-sm font-mono hover:bg-tech-accent/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-tech-accent/10"
                 >
-                  <span>Proceed to Checkout</span>
+                  <span>Proceed to Checkout • ₹{finalTotal}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
@@ -355,6 +394,8 @@ export default function CartDrawer() {
           appliedCoupon={appliedDiscount?.type === 'COUPON' ? appliedDiscount.code : undefined}
           referralCode={appliedDiscount?.type === 'REFERRAL' ? appliedDiscount.code : undefined}
           discountAmount={discountAmount}
+          shippingFee={shippingFee}
+          shippingSettings={shippingSettings}
           onClose={() => setIsCheckoutModalOpen(false)}
         />
       )}

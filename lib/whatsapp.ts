@@ -14,6 +14,7 @@ export interface OrderWhatsAppDetails {
   subtotal?: number;
   totalAmount: number;
   discountAmount?: number;
+  shippingFee?: number;
   couponCode?: string | null;
   referralCode?: string | null;
   address: string;
@@ -39,6 +40,7 @@ export function generateOrderWhatsAppUrl(
   const subtotal = order.subtotal || (order.totalAmount + (order.discountAmount || 0));
   const discount = order.discountAmount || 0;
   const appliedCode = order.couponCode ? `(Coupon: ${order.couponCode})` : (order.referralCode ? `(Referral: ${order.referralCode})` : '');
+  const shippingText = typeof order.shippingFee === 'number' && order.shippingFee > 0 ? `Rs. ${order.shippingFee}` : 'FREE';
 
   const text = `Hello *SenAZ 3D PRINTS*,
 
@@ -52,7 +54,7 @@ I placed an order on your website and would like to confirm production!
 ${itemDetailsText}
 *BILLING DETAILS:*
 - Subtotal: Rs. ${subtotal}
-${discount > 0 ? `- Discount Applied: -Rs. ${discount} ${appliedCode}\n` : ''}- Shipping / Delivery: FREE
+${discount > 0 ? `- Discount Applied: -Rs. ${discount} ${appliedCode}\n` : ''}- Shipping / Delivery: ${shippingText}
 *FINAL PAYABLE AMOUNT:* Rs. ${order.totalAmount}
 
 Please confirm order acceptance and estimated dispatch date. Thank you!`;

@@ -8,6 +8,12 @@ interface OrderModalProps {
   appliedCoupon?: string;
   referralCode?: string;
   discountAmount?: number;
+  shippingFee?: number;
+  shippingSettings?: {
+    flatRate: number;
+    freeShippingThreshold: number;
+    shippingNote: string;
+  };
   onClose: () => void;
 }
 
@@ -15,6 +21,8 @@ export default function OrderModal({
   appliedCoupon,
   referralCode,
   discountAmount = 0,
+  shippingFee: initialShippingFee,
+  shippingSettings: initialShippingSettings,
   onClose,
 }: OrderModalProps) {
   const { cart, cartTotal, clearCart, setIsCartOpen } = useCart();
@@ -28,6 +36,14 @@ export default function OrderModal({
   const [pincode, setPincode] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
 
+  const [shippingSettings, setShippingSettings] = useState(
+    initialShippingSettings || {
+      flatRate: 0,
+      freeShippingThreshold: 0,
+      shippingNote: 'Standard delivery in 3-5 business days across India',
+    }
+  );
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,10 +53,29 @@ export default function OrderModal({
     totalAmount: number;
     subtotal: number;
     discountAmount: number;
+    shippingFee: number;
   } | null>(null);
 
+  // Fetch shipping settings if not provided
+  React.useEffect(() => {
+    if (!initialShippingSettings) {
+      fetch('/api/shipping')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.settings) {
+            setShippingSettings(data.settings);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [initialShippingSettings]);
+
   const calculatedDiscount = Math.min(cartTotal, Math.max(0, discountAmount));
-  const finalTotal = Math.max(0, cartTotal - calculatedDiscount);
+  const isFreeShipping =
+    shippingSettings.flatRate <= 0 ||
+    (shippingSettings.freeShippingThreshold > 0 && cartTotal >= shippingSettings.freeShippingThreshold);
+  const calculatedShipping = initialShippingFee !== undefined ? initialShippingFee : (isFreeShipping ? 0 : shippingSettings.flatRate);
+  const finalTotal = Math.max(0, cartTotal - calculatedDiscount + calculatedShipping);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +118,7 @@ export default function OrderModal({
           totalAmount: data.totalAmount,
           subtotal: cartTotal,
           discountAmount: calculatedDiscount,
+          shippingFee: calculatedShipping,
         });
         clearCart();
       } else {
@@ -150,7 +186,11 @@ export default function OrderModal({
               )}
               <div className="flex justify-between text-slate-400">
                 <span>Shipping:</span>
-                <span className="text-emerald-400 font-semibold">FREE</span>
+                {orderSuccess.shippingFee > 0 ? (
+                  <span className="text-slate-200 font-semibold">₹{orderSuccess.shippingFee}</span>
+                ) : (
+                  <span className="text-emerald-400 font-semibold">FREE</span>
+                )}
               </div>
               <div className="flex justify-between text-white font-bold pt-1 border-t border-tech-border">
                 <span>Final Payable Amount:</span>
@@ -188,7 +228,9 @@ export default function OrderModal({
                 <span className="flex items-center gap-1.5 font-bold text-white">
                   <ShoppingBag className="w-3.5 h-3.5 text-tech-accent" /> Order Summary ({cart.length} {cart.length === 1 ? 'item' : 'items'})
                 </span>
-                <span className="text-[11px] text-slate-400">Free All-India Delivery</span>
+                <span className="text-[11px] text-slate-400">
+                  {calculatedShipping === 0 ? 'Free All-India Delivery' : shippingSettings.shippingNote}
+                </span>
               </div>
 
               {/* Items scroll */}
@@ -222,7 +264,11 @@ export default function OrderModal({
 
                 <div className="flex justify-between text-slate-400">
                   <span>Shipping Fee</span>
-                  <span className="text-emerald-400 font-semibold">FREE</span>
+                  {calculatedShipping === 0 ? (
+                    <span className="text-emerald-400 font-semibold">FREE</span>
+                  ) : (
+                    <span className="text-slate-200 font-semibold">₹{calculatedShipping}</span>
+                  )}
                 </div>
 
                 <div className="flex justify-between text-sm font-bold text-white pt-1.5 border-t border-tech-border">

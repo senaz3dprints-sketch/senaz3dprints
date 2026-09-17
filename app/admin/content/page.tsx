@@ -13,10 +13,16 @@ import {
   Plus,
   Trash2,
   Cpu,
+  Truck,
 } from 'lucide-react';
 
 export default function AdminContentPage() {
-  const [activeTab, setActiveTab] = useState<'homepage' | 'about' | 'contact' | 'faqs'>('homepage');
+  const [activeTab, setActiveTab] = useState<'homepage' | 'about' | 'contact' | 'faqs' | 'shipping'>('homepage');
+
+  // Shipping & Delivery States
+  const [shippingFlatRate, setShippingFlatRate] = useState(0);
+  const [shippingFreeThreshold, setShippingFreeThreshold] = useState(0);
+  const [shippingNote, setShippingNote] = useState('Standard delivery in 3-5 business days across India');
 
   // Homepage States
   const [heroTitle, setHeroTitle] = useState('Made to Print. Built for You.');
@@ -121,6 +127,18 @@ export default function AdminContentPage() {
         }
       })
       .finally(() => setLoading(false));
+
+    // Fetch Shipping Settings
+    fetch('/api/admin/shipping')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.settings) {
+          setShippingFlatRate(data.settings.flatRate || 0);
+          setShippingFreeThreshold(data.settings.freeShippingThreshold || 0);
+          if (data.settings.shippingNote) setShippingNote(data.settings.shippingNote);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -158,13 +176,24 @@ export default function AdminContentPage() {
         faqItems: faqs,
       };
 
-      const res = await fetch('/api/admin/content', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const [contentRes, shippingRes] = await Promise.all([
+        fetch('/api/admin/content', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }),
+        fetch('/api/admin/shipping', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            flatRate: Number(shippingFlatRate) || 0,
+            freeShippingThreshold: Number(shippingFreeThreshold) || 0,
+            shippingNote,
+          }),
+        }),
+      ]);
 
-      if (res.ok) {
+      if (contentRes.ok && shippingRes.ok) {
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 4000);
       }
@@ -196,7 +225,7 @@ export default function AdminContentPage() {
           Website Content Management System (CMS)
         </h1>
         <p className="text-xs text-slate-400 font-mono">
-          Edit all website copy, About Us story, tech specs, FAQs, and business contacts live
+          Edit all website copy, shipping rates, About Us story, tech specs, FAQs, and business contacts live
         </p>
       </div>
 
@@ -213,6 +242,19 @@ export default function AdminContentPage() {
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>Homepage Hero</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('shipping')}
+          className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center gap-2 ${
+            activeTab === 'shipping'
+              ? 'bg-tech-accent text-tech-bg shadow-md'
+              : 'bg-tech-card text-slate-300 hover:text-white border border-tech-border'
+          }`}
+        >
+          <Truck className="w-3.5 h-3.5" />
+          <span>Shipping & Delivery</span>
         </button>
 
         <button
@@ -314,6 +356,153 @@ export default function AdminContentPage() {
                   onChange={(e) => setSecondaryCtaText(e.target.value)}
                   className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
                 />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 2. SHIPPING & DELIVERY TAB */}
+        {activeTab === 'shipping' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="space-y-1">
+              <h3 className="font-bold text-white text-base font-sans flex items-center gap-2">
+                <Truck className="w-4 h-4 text-tech-accent" />
+                <span>Shipping Rates & Delivery Configuration</span>
+              </h3>
+              <p className="text-xs text-slate-400 font-mono">
+                Configure your nationwide delivery charges, free shipping qualification thresholds, and customer notifications.
+              </p>
+            </div>
+
+            {/* Quick 1-Click Presets */}
+            <div className="p-4 bg-tech-bg/70 rounded-xl border border-tech-border space-y-2.5">
+              <span className="text-xs font-mono font-bold text-slate-300">Quick Configuration Presets:</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShippingFlatRate(0);
+                    setShippingFreeThreshold(0);
+                    setShippingNote('Free All-India Delivery');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
+                >
+                  🎁 Free Delivery on All Orders
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShippingFlatRate(50);
+                    setShippingFreeThreshold(0);
+                    setShippingNote('Standard delivery in 3-5 business days (₹50)');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
+                >
+                  📦 Flat ₹50 All Orders
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShippingFlatRate(50);
+                    setShippingFreeThreshold(499);
+                    setShippingNote('Free delivery on orders above ₹499 (otherwise ₹50)');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
+                >
+                  🚀 Free Above ₹499 (₹50 otherwise)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShippingFlatRate(80);
+                    setShippingFreeThreshold(999);
+                    setShippingNote('Free delivery on orders above ₹999 (otherwise ₹80)');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
+                >
+                  ⚡ Free Above ₹999 (₹80 otherwise)
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono text-slate-300 mb-1 font-semibold">
+                  Standard Flat Shipping Fee (₹)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={shippingFlatRate}
+                  onChange={(e) => setShippingFlatRate(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                  placeholder="0 for 100% Free Shipping"
+                />
+                <span className="text-[11px] text-slate-500 font-mono mt-1 block">
+                  Set to 0 if all orders should have free delivery.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-slate-300 mb-1 font-semibold">
+                  Free Shipping Minimum Cart Value (₹)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={shippingFreeThreshold}
+                  onChange={(e) => setShippingFreeThreshold(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                  placeholder="0 to disable free threshold"
+                />
+                <span className="text-[11px] text-slate-500 font-mono mt-1 block">
+                  Example: 499 means orders of ₹499 or more get FREE delivery.
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono text-slate-300 mb-1 font-semibold">
+                Delivery Timeline & Customer Notice
+              </label>
+              <input
+                type="text"
+                value={shippingNote}
+                onChange={(e) => setShippingNote(e.target.value)}
+                placeholder="e.g. Standard delivery in 3-5 business days across India"
+                className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+              />
+            </div>
+
+            {/* Live Preview Box */}
+            <div className="p-4 rounded-xl bg-tech-bg border border-tech-border space-y-2">
+              <span className="text-xs font-mono font-bold text-tech-accent">Live Shipping Rule Preview:</span>
+              <div className="text-xs font-mono text-slate-300 space-y-1">
+                <p>
+                  • <strong>Default Shipping Fee:</strong>{' '}
+                  {shippingFlatRate === 0 ? (
+                    <span className="text-emerald-400 font-bold">FREE (₹0)</span>
+                  ) : (
+                    <span className="text-white font-bold">₹{shippingFlatRate}</span>
+                  )}
+                </p>
+                {shippingFlatRate > 0 && (
+                  <p>
+                    • <strong>Free Delivery Rule:</strong>{' '}
+                    {shippingFreeThreshold > 0 ? (
+                      <span className="text-emerald-400">
+                        Automatic FREE Delivery on cart totals of ₹{shippingFreeThreshold} or more.
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">No free shipping threshold (₹{shippingFlatRate} flat fee on every order).</span>
+                    )}
+                  </p>
+                )}
+                <p>
+                  • <strong>Notice Displayed to Customers:</strong> "{shippingNote}"
+                </p>
               </div>
             </div>
           </div>

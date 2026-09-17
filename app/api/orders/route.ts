@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createOrderSheetRecord, recordReferralSheetRecord } from '@/lib/google-sheets';
 import { generateOrderWhatsAppUrl } from '@/lib/whatsapp';
+import { getShippingSettings, calculateShippingFee } from '@/lib/shipping';
 
 export async function POST(req: NextRequest) {
   try {
@@ -127,8 +128,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Calculate Shipping Fee dynamically from Database Settings
+    const shippingSettings = await getShippingSettings();
+    const shippingFee = calculateShippingFee(subtotal, shippingSettings);
+
     // Final total calculation
-    const totalAmount = Math.max(0, subtotal - discountAmount);
+    const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);
 
     // Generate unique Order ID
     const randomSuffix = Math.floor(10000 + Math.random() * 90000);
@@ -167,6 +172,8 @@ export async function POST(req: NextRequest) {
         city: orderRecord.city,
         state: orderRecord.state,
         pincode: orderRecord.pincode,
+        subtotal,
+        shippingFee,
         totalAmount: orderRecord.totalAmount,
         discountAmount: orderRecord.discountAmount,
         couponCode: orderRecord.couponCode,
@@ -198,6 +205,7 @@ export async function POST(req: NextRequest) {
       subtotal,
       totalAmount: orderRecord.totalAmount,
       discountAmount: orderRecord.discountAmount,
+      shippingFee,
       couponCode: validCouponCode,
       referralCode: validReferralCode,
       address: orderRecord.address,
