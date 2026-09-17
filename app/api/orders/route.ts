@@ -51,12 +51,14 @@ export async function POST(req: NextRequest) {
 
       const itemPrice = dbProduct.price;
       const quantity = Math.max(1, parseInt(item.quantity) || 1);
+      const productShippingFee = typeof dbProduct.shippingFee === 'number' ? dbProduct.shippingFee : 0;
       subtotal += itemPrice * quantity;
 
       validatedItems.push({
         productId: dbProduct.id,
         name: dbProduct.name,
         price: itemPrice,
+        shippingFee: productShippingFee,
         quantity,
         color: item.color || null,
         size: item.size || null,
@@ -130,7 +132,10 @@ export async function POST(req: NextRequest) {
 
     // Calculate Shipping Fee dynamically from Database Settings
     const shippingSettings = await getShippingSettings();
-    const shippingFee = calculateShippingFee(subtotal, shippingSettings);
+    const shippingFee = calculateShippingFee(subtotal, shippingSettings, {
+      state,
+      items: validatedItems,
+    });
 
     // Final total calculation
     const totalAmount = Math.max(0, subtotal - discountAmount + shippingFee);

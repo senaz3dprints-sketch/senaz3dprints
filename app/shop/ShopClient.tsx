@@ -206,6 +206,7 @@ export default function ShopClient({ initialProducts, categories }: ShopClientPr
               isFeatured={product.isFeatured}
               isNew={product.isNew}
               personalizationEnabled={product.personalizationEnabled}
+              shippingFee={product.shippingFee}
               category={product.category}
             />
           ))}

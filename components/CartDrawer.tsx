@@ -4,6 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { X, Trash2, Tag, ArrowRight, ShoppingBag, Sparkles, Check } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import OrderModal from './OrderModal';
+import {
+  ShippingSettings,
+  calculateShippingFee,
+  DEFAULT_SHIPPING_SETTINGS,
+} from '@/lib/shipping-utils';
 
 export default function CartDrawer() {
   const {
@@ -28,15 +33,7 @@ export default function CartDrawer() {
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
-  const [shippingSettings, setShippingSettings] = useState<{
-    flatRate: number;
-    freeShippingThreshold: number;
-    shippingNote: string;
-  }>({
-    flatRate: 0,
-    freeShippingThreshold: 0,
-    shippingNote: 'Standard delivery in 3-5 business days across India',
-  });
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>(DEFAULT_SHIPPING_SETTINGS);
 
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
@@ -163,10 +160,9 @@ export default function CartDrawer() {
   };
 
   const discountAmount = appliedDiscount ? appliedDiscount.discountAmount : 0;
-  const isFreeShipping =
-    shippingSettings.flatRate <= 0 ||
-    (shippingSettings.freeShippingThreshold > 0 && cartTotal >= shippingSettings.freeShippingThreshold);
-  const shippingFee = isFreeShipping ? 0 : shippingSettings.flatRate;
+  const shippingFee = calculateShippingFee(cartTotal, shippingSettings, {
+    items: cart,
+  });
   const finalTotal = Math.max(0, cartTotal - discountAmount + shippingFee);
 
   return (
@@ -340,8 +336,7 @@ export default function CartDrawer() {
                 </div>
 
                 {/* Free shipping threshold progress helper */}
-                {shippingSettings.flatRate > 0 &&
-                  shippingSettings.freeShippingThreshold > 0 &&
+                {shippingSettings.freeShippingThreshold > 0 &&
                   cartTotal < shippingSettings.freeShippingThreshold && (
                     <div className="p-2 rounded bg-tech-bg border border-tech-border text-[11px] font-mono text-amber-300/90 flex items-center justify-between">
                       <span>Add ₹{shippingSettings.freeShippingThreshold - cartTotal} more for FREE shipping!</span>

@@ -14,15 +14,30 @@ import {
   Trash2,
   Cpu,
   Truck,
+  MapPin,
+  RotateCcw,
+  Sliders,
+  Package,
 } from 'lucide-react';
+import {
+  ShippingZone,
+  DEFAULT_SHIPPING_ZONES,
+  DEFAULT_SHIPPING_SETTINGS,
+  ALL_INDIAN_STATES,
+} from '@/lib/shipping-utils';
 
 export default function AdminContentPage() {
   const [activeTab, setActiveTab] = useState<'homepage' | 'about' | 'contact' | 'faqs' | 'shipping'>('homepage');
 
   // Shipping & Delivery States
-  const [shippingFlatRate, setShippingFlatRate] = useState(0);
+  const [shippingDefaultRate, setShippingDefaultRate] = useState(60);
   const [shippingFreeThreshold, setShippingFreeThreshold] = useState(0);
   const [shippingNote, setShippingNote] = useState('Standard delivery in 3-5 business days across India');
+  const [shippingCalculationMode, setShippingCalculationMode] = useState<
+    'MAX_OF_ZONE_AND_PRODUCTS' | 'ZONE_PLUS_PRODUCT_SURCHARGES' | 'ZONE_BASE'
+  >('MAX_OF_ZONE_AND_PRODUCTS');
+  const [shippingZones, setShippingZones] = useState<ShippingZone[]>(DEFAULT_SHIPPING_ZONES);
+  const [selectedStateToAdd, setSelectedStateToAdd] = useState<{ [zoneId: string]: string }>({});
 
   // Homepage States
   const [heroTitle, setHeroTitle] = useState('Made to Print. Built for You.');
@@ -133,9 +148,12 @@ export default function AdminContentPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.settings) {
-          setShippingFlatRate(data.settings.flatRate || 0);
-          setShippingFreeThreshold(data.settings.freeShippingThreshold || 0);
-          if (data.settings.shippingNote) setShippingNote(data.settings.shippingNote);
+          const s = data.settings;
+          setShippingDefaultRate(typeof s.defaultRate === 'number' ? s.defaultRate : (typeof s.flatRate === 'number' ? s.flatRate : 60));
+          setShippingFreeThreshold(typeof s.freeShippingThreshold === 'number' ? s.freeShippingThreshold : 0);
+          if (s.shippingNote) setShippingNote(s.shippingNote);
+          if (s.calculationMode) setShippingCalculationMode(s.calculationMode);
+          if (Array.isArray(s.zones) && s.zones.length > 0) setShippingZones(s.zones);
         }
       })
       .catch(() => {});
@@ -186,9 +204,11 @@ export default function AdminContentPage() {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            flatRate: Number(shippingFlatRate) || 0,
+            defaultRate: Number(shippingDefaultRate) || 0,
             freeShippingThreshold: Number(shippingFreeThreshold) || 0,
             shippingNote,
+            calculationMode: shippingCalculationMode,
+            zones: shippingZones,
           }),
         }),
       ]);
@@ -364,14 +384,30 @@ export default function AdminContentPage() {
         {/* 2. SHIPPING & DELIVERY TAB */}
         {activeTab === 'shipping' && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="space-y-1">
-              <h3 className="font-bold text-white text-base font-sans flex items-center gap-2">
-                <Truck className="w-4 h-4 text-tech-accent" />
-                <span>Shipping Rates & Delivery Configuration</span>
-              </h3>
-              <p className="text-xs text-slate-400 font-mono">
-                Configure your nationwide delivery charges, free shipping qualification thresholds, and customer notifications.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tech-border/60 pb-3">
+              <div className="space-y-1">
+                <h3 className="font-bold text-white text-base font-sans flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-tech-accent" />
+                  <span>Shipping Rates & Regional Delivery Configuration</span>
+                </h3>
+                <p className="text-xs text-slate-400 font-mono">
+                  Configure nationwide regional delivery charges (Option B), individual product overrides (Option A), and free delivery thresholds.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShippingZones(DEFAULT_SHIPPING_ZONES);
+                  setShippingDefaultRate(60);
+                  setShippingFreeThreshold(0);
+                  setShippingCalculationMode('MAX_OF_ZONE_AND_PRODUCTS');
+                }}
+                className="self-start sm:self-auto px-3 py-1.5 rounded-lg bg-tech-bg hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 border border-tech-border text-xs font-mono flex items-center gap-1.5 transition-colors"
+                title="Reset all zones and rates to factory defaults"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Defaults</span>
+              </button>
             </div>
 
             {/* Quick 1-Click Presets */}
@@ -381,69 +417,118 @@ export default function AdminContentPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setShippingFlatRate(0);
+                    setShippingDefaultRate(0);
                     setShippingFreeThreshold(0);
-                    setShippingNote('Free All-India Delivery');
+                    setShippingZones(shippingZones.map((z) => ({ ...z, rate: 0 })));
+                    setShippingNote('Free All-India Delivery on all orders');
                   }}
                   className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
                 >
-                  🎁 Free Delivery on All Orders
+                  🎁 Free Delivery for Everyone
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setShippingFlatRate(50);
-                    setShippingFreeThreshold(0);
-                    setShippingNote('Standard delivery in 3-5 business days (₹50)');
-                  }}
-                  className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
-                >
-                  📦 Flat ₹50 All Orders
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShippingFlatRate(50);
+                    setShippingZones(DEFAULT_SHIPPING_ZONES);
+                    setShippingDefaultRate(60);
                     setShippingFreeThreshold(499);
+                    setShippingCalculationMode('MAX_OF_ZONE_AND_PRODUCTS');
+                    setShippingNote('Free delivery on orders above ₹499 (NE: ₹40, Metro: ₹60, ROI: ₹75)');
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors text-tech-accent border-tech-accent/40"
+                >
+                  🚚 Standard Regional + Free Above ₹499 (Recommended)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShippingDefaultRate(50);
+                    setShippingFreeThreshold(499);
+                    setShippingZones(shippingZones.map((z) => ({ ...z, rate: 50 })));
                     setShippingNote('Free delivery on orders above ₹499 (otherwise ₹50)');
                   }}
                   className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
                 >
-                  🚀 Free Above ₹499 (₹50 otherwise)
+                  🚀 Flat ₹50 + Free Above ₹499
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setShippingFlatRate(80);
+                    setShippingDefaultRate(70);
                     setShippingFreeThreshold(999);
-                    setShippingNote('Free delivery on orders above ₹999 (otherwise ₹80)');
+                    setShippingZones(shippingZones.map((z) => ({ ...z, rate: 70 })));
+                    setShippingNote('Free delivery on orders above ₹999 (otherwise ₹70)');
                   }}
                   className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border text-slate-200 text-xs font-mono border border-tech-border transition-colors"
                 >
-                  ⚡ Free Above ₹999 (₹80 otherwise)
+                  ⚡ Flat ₹70 + Free Above ₹999
                 </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-mono text-slate-300 mb-1 font-semibold">
-                  Standard Flat Shipping Fee (₹)
+            {/* Dual Calculation Strategy Selector */}
+            <div className="p-4 rounded-xl bg-tech-card border border-tech-border space-y-3">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-tech-accent" />
+                <label className="text-xs font-mono text-slate-200 font-bold">
+                  Calculation Logic (Regional Zones & Individual Product Rates):
                 </label>
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={shippingFlatRate}
-                  onChange={(e) => setShippingFlatRate(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
-                  placeholder="0 for 100% Free Shipping"
-                />
-                <span className="text-[11px] text-slate-500 font-mono mt-1 block">
-                  Set to 0 if all orders should have free delivery.
-                </span>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div
+                  onClick={() => setShippingCalculationMode('MAX_OF_ZONE_AND_PRODUCTS')}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    shippingCalculationMode === 'MAX_OF_ZONE_AND_PRODUCTS'
+                      ? 'bg-tech-accent/10 border-tech-accent shadow-sm shadow-tech-accent/10'
+                      : 'bg-tech-bg/50 border-tech-border hover:border-slate-600'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold font-mono text-white">Hybrid Smart Max</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-tech-accent/20 text-tech-accent font-semibold">Recommended</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-mono leading-relaxed">
+                    Takes the <strong>higher</strong> of the destination Zone Rate OR individual product shipping charge. Ideal for standard orders with occasional bulky items.
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setShippingCalculationMode('ZONE_PLUS_PRODUCT_SURCHARGES')}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    shippingCalculationMode === 'ZONE_PLUS_PRODUCT_SURCHARGES'
+                      ? 'bg-tech-accent/10 border-tech-accent shadow-sm shadow-tech-accent/10'
+                      : 'bg-tech-bg/50 border-tech-border hover:border-slate-600'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold font-mono text-white">Zone + Product Surcharge</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-mono leading-relaxed">
+                    Charges the base Regional Zone rate <strong>plus</strong> any specific product extra shipping fees added in the catalog.
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setShippingCalculationMode('ZONE_BASE')}
+                  className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                    shippingCalculationMode === 'ZONE_BASE'
+                      ? 'bg-tech-accent/10 border-tech-accent shadow-sm shadow-tech-accent/10'
+                      : 'bg-tech-bg/50 border-tech-border hover:border-slate-600'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold font-mono text-white">Zone Base Only</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-mono leading-relaxed">
+                    Strictly applies the destination Zone delivery rate, ignoring individual product fees.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Global Thresholds & Fallback */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono text-slate-300 mb-1 font-semibold">
                   Free Shipping Minimum Cart Value (₹)
@@ -458,7 +543,25 @@ export default function AdminContentPage() {
                   placeholder="0 to disable free threshold"
                 />
                 <span className="text-[11px] text-slate-500 font-mono mt-1 block">
-                  Example: 499 means orders of ₹499 or more get FREE delivery.
+                  e.g. 499 means orders of ₹499 or more receive 100% FREE delivery. Set to 0 to disable.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono text-slate-300 mb-1 font-semibold">
+                  Fallback Delivery Rate (₹)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={shippingDefaultRate}
+                  onChange={(e) => setShippingDefaultRate(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                  placeholder="60"
+                />
+                <span className="text-[11px] text-slate-500 font-mono mt-1 block">
+                  Used if a customer's state does not match any configured regional zone.
                 </span>
               </div>
             </div>
@@ -476,31 +579,207 @@ export default function AdminContentPage() {
               />
             </div>
 
+            {/* Regional Shipping Zones Management */}
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-white font-sans flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-tech-accent" />
+                    <span>Regional Destination Zones ({shippingZones.length})</span>
+                  </h4>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Define delivery rates per geographical cluster and state assignments.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newId = `custom_zone_${Date.now()}`;
+                    setShippingZones([
+                      ...shippingZones,
+                      { id: newId, name: 'Custom Regional Zone', states: [], rate: 50 },
+                    ]);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-tech-card hover:bg-tech-border border border-tech-border text-xs font-mono text-white flex items-center gap-1.5 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5 text-tech-accent" />
+                  <span>Add Zone</span>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {shippingZones.map((zone, zIndex) => (
+                  <div
+                    key={zone.id || zIndex}
+                    className="p-4 rounded-xl bg-tech-card border border-tech-border space-y-3.5 shadow-sm"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-tech-border/60 pb-3">
+                      <div className="flex-1">
+                        <label className="block text-[11px] font-mono text-slate-400 mb-1">Zone Name</label>
+                        <input
+                          type="text"
+                          value={zone.name}
+                          onChange={(e) => {
+                            const updated = [...shippingZones];
+                            updated[zIndex].name = e.target.value;
+                            setShippingZones(updated);
+                          }}
+                          className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-1.5 text-xs text-white font-semibold focus:outline-none focus:border-tech-accent"
+                          placeholder="e.g. Assam & North East (Local Zone)"
+                        />
+                      </div>
+
+                      <div className="w-full sm:w-44">
+                        <label className="block text-[11px] font-mono text-slate-400 mb-1">Delivery Charge (₹)</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-2 text-xs font-mono text-slate-400">₹</span>
+                          <input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={zone.rate}
+                            onChange={(e) => {
+                              const updated = [...shippingZones];
+                              updated[zIndex].rate = Math.max(0, parseInt(e.target.value) || 0);
+                              setShippingZones(updated);
+                            }}
+                            className="w-full bg-tech-bg border border-tech-border rounded-lg pl-7 pr-3 py-1.5 text-xs text-white font-mono font-bold focus:outline-none focus:border-tech-accent"
+                          />
+                        </div>
+                      </div>
+
+                      {shippingZones.length > 1 && (
+                        <div className="sm:self-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShippingZones(shippingZones.filter((_, idx) => idx !== zIndex));
+                            }}
+                            className="p-2 rounded-lg bg-tech-bg hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-tech-border transition-colors"
+                            title="Delete Zone"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* States List in Zone */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+                        <span>Assigned States & UTs ({zone.states.length}):</span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {zone.states.map((st, sIndex) => (
+                          <span
+                            key={st}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-tech-bg border border-tech-border text-[11px] font-mono text-slate-200"
+                          >
+                            <span>{st}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...shippingZones];
+                                updated[zIndex].states = updated[zIndex].states.filter((_, idx) => idx !== sIndex);
+                                setShippingZones(updated);
+                              }}
+                              className="text-slate-400 hover:text-rose-400 transition-colors"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+
+                        {zone.states.length === 0 && (
+                          <span className="text-xs text-amber-400/80 font-mono italic">
+                            No states assigned yet.
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Add State to Zone */}
+                      <div className="pt-2 flex items-center gap-2 max-w-sm">
+                        <select
+                          value={selectedStateToAdd[zone.id] || ''}
+                          onChange={(e) => {
+                            setSelectedStateToAdd({
+                              ...selectedStateToAdd,
+                              [zone.id]: e.target.value,
+                            });
+                          }}
+                          className="bg-tech-bg border border-tech-border rounded-lg px-2.5 py-1 text-xs text-slate-200 font-mono focus:outline-none focus:border-tech-accent flex-1"
+                        >
+                          <option value="">+ Select State to Add...</option>
+                          {ALL_INDIAN_STATES.filter((st) => !zone.states.includes(st)).map((st) => (
+                            <option key={st} value={st}>
+                              {st}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          disabled={!selectedStateToAdd[zone.id]}
+                          onClick={() => {
+                            const stateToAdd = selectedStateToAdd[zone.id];
+                            if (!stateToAdd) return;
+                            const updated = [...shippingZones];
+                            if (!updated[zIndex].states.includes(stateToAdd)) {
+                              updated[zIndex].states.push(stateToAdd);
+                              setShippingZones(updated);
+                            }
+                            setSelectedStateToAdd({
+                              ...selectedStateToAdd,
+                              [zone.id]: '',
+                            });
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-tech-accent text-tech-bg text-xs font-mono font-bold hover:bg-tech-accent/90 disabled:opacity-40 transition-colors"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {/* Live Preview Box */}
-            <div className="p-4 rounded-xl bg-tech-bg border border-tech-border space-y-2">
-              <span className="text-xs font-mono font-bold text-tech-accent">Live Shipping Rule Preview:</span>
-              <div className="text-xs font-mono text-slate-300 space-y-1">
+            <div className="p-4 rounded-xl bg-tech-bg border border-tech-border space-y-2.5">
+              <span className="text-xs font-mono font-bold text-tech-accent flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5" />
+                <span>Live Shipping Rules Summary:</span>
+              </span>
+              <div className="text-xs font-mono text-slate-300 space-y-1.5 leading-relaxed">
                 <p>
-                  • <strong>Default Shipping Fee:</strong>{' '}
-                  {shippingFlatRate === 0 ? (
-                    <span className="text-emerald-400 font-bold">FREE (₹0)</span>
+                  • <strong>Calculation Mode:</strong>{' '}
+                  <span className="text-white font-semibold">{shippingCalculationMode}</span>
+                </p>
+                <p>
+                  • <strong>Free Delivery Rule:</strong>{' '}
+                  {shippingFreeThreshold > 0 ? (
+                    <span className="text-emerald-400 font-semibold">
+                      Orders of ₹{shippingFreeThreshold} or more receive FREE Shipping nationwide.
+                    </span>
                   ) : (
-                    <span className="text-white font-bold">₹{shippingFlatRate}</span>
+                    <span className="text-slate-400">No free shipping threshold configured.</span>
                   )}
                 </p>
-                {shippingFlatRate > 0 && (
-                  <p>
-                    • <strong>Free Delivery Rule:</strong>{' '}
-                    {shippingFreeThreshold > 0 ? (
-                      <span className="text-emerald-400">
-                        Automatic FREE Delivery on cart totals of ₹{shippingFreeThreshold} or more.
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">No free shipping threshold (₹{shippingFlatRate} flat fee on every order).</span>
-                    )}
-                  </p>
-                )}
-                <p>
+                <div className="pt-1">
+                  <p className="text-slate-400 mb-1">• <strong>Active Regional Rates:</strong></p>
+                  <ul className="list-disc list-inside space-y-1 pl-2 text-[11px] text-slate-300">
+                    {shippingZones.map((z) => (
+                      <li key={z.id || z.name}>
+                        <strong className="text-white">{z.name}:</strong> ₹{z.rate}{' '}
+                        <span className="text-slate-500">({z.states.length} states)</span>
+                      </li>
+                    ))}
+                    <li>
+                      <strong className="text-white">Unlisted / Fallback State:</strong> ₹{shippingDefaultRate}
+                    </li>
+                  </ul>
+                </div>
+                <p className="pt-1 text-slate-400">
                   • <strong>Notice Displayed to Customers:</strong> "{shippingNote}"
                 </p>
               </div>

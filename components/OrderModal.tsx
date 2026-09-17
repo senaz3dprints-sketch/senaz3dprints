@@ -1,19 +1,22 @@
 'use client';
 
-import React, { useState } from 'react';
-import { X, MessageCircle, CheckCircle, ShieldCheck, AlertCircle, ShoppingBag, Sparkles, Tag, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, MessageCircle, CheckCircle, ShieldCheck, AlertCircle, ShoppingBag, Sparkles, Tag, ArrowRight, Truck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import {
+  ShippingSettings,
+  calculateShippingFee,
+  findZoneForState,
+  ALL_INDIAN_STATES,
+  DEFAULT_SHIPPING_SETTINGS,
+} from '@/lib/shipping-utils';
 
 interface OrderModalProps {
   appliedCoupon?: string;
   referralCode?: string;
   discountAmount?: number;
   shippingFee?: number;
-  shippingSettings?: {
-    flatRate: number;
-    freeShippingThreshold: number;
-    shippingNote: string;
-  };
+  shippingSettings?: ShippingSettings;
   onClose: () => void;
 }
 
@@ -36,12 +39,8 @@ export default function OrderModal({
   const [pincode, setPincode] = useState('');
   const [orderNotes, setOrderNotes] = useState('');
 
-  const [shippingSettings, setShippingSettings] = useState(
-    initialShippingSettings || {
-      flatRate: 0,
-      freeShippingThreshold: 0,
-      shippingNote: 'Standard delivery in 3-5 business days across India',
-    }
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>(
+    initialShippingSettings || DEFAULT_SHIPPING_SETTINGS
   );
 
   const [loading, setLoading] = useState(false);
@@ -57,7 +56,7 @@ export default function OrderModal({
   } | null>(null);
 
   // Fetch shipping settings if not provided
-  React.useEffect(() => {
+  useEffect(() => {
     if (!initialShippingSettings) {
       fetch('/api/shipping')
         .then((res) => res.json())
@@ -71,10 +70,11 @@ export default function OrderModal({
   }, [initialShippingSettings]);
 
   const calculatedDiscount = Math.min(cartTotal, Math.max(0, discountAmount));
-  const isFreeShipping =
-    shippingSettings.flatRate <= 0 ||
-    (shippingSettings.freeShippingThreshold > 0 && cartTotal >= shippingSettings.freeShippingThreshold);
-  const calculatedShipping = initialShippingFee !== undefined ? initialShippingFee : (isFreeShipping ? 0 : shippingSettings.flatRate);
+  const calculatedShipping = calculateShippingFee(cartTotal, shippingSettings, {
+    state,
+    items: cart,
+  });
+  const matchedZone = findZoneForState(state, shippingSettings?.zones);
   const finalTotal = Math.max(0, cartTotal - calculatedDiscount + calculatedShipping);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -359,16 +359,27 @@ export default function OrderModal({
 
               <div>
                 <label className="block text-xs font-mono text-slate-300 mb-1">
-                  State <span className="text-rose-400">*</span>
+                  State / UT <span className="text-rose-400">*</span>
                 </label>
                 <input
                   type="text"
+                  list="indian-states-datalist"
                   required
-                  placeholder="Karnataka"
+                  placeholder="Assam, Karnataka, etc."
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                   className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent"
                 />
+                <datalist id="indian-states-datalist">
+                  {ALL_INDIAN_STATES.map((st) => (
+                    <option key={st} value={st} />
+                  ))}
+                </datalist>
+                {state && matchedZone && (
+                  <span className="text-[10px] font-mono text-tech-accent block mt-0.5 truncate">
+                    🚚 {matchedZone.name.split('(')[0].trim()} (₹{matchedZone.rate})
+                  </span>
+                )}
               </div>
 
               <div>

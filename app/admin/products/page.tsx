@@ -36,6 +36,7 @@ export default function AdminProductsPage() {
   const [slug, setSlug] = useState('');
   const [price, setPrice] = useState('');
   const [compareAtPrice, setCompareAtPrice] = useState('');
+  const [shippingFee, setShippingFee] = useState('0');
   const [categoryId, setCategoryId] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [fullDescription, setFullDescription] = useState('');
@@ -146,6 +147,7 @@ export default function AdminProductsPage() {
     setSlug('');
     setPrice('');
     setCompareAtPrice('');
+    setShippingFee('0');
     setCategoryId(categories[0]?.id || '');
     setShortDescription('');
     setFullDescription('');
@@ -171,6 +173,7 @@ export default function AdminProductsPage() {
     setSlug(p.slug || '');
     setPrice(p.price.toString());
     setCompareAtPrice(p.compareAtPrice ? p.compareAtPrice.toString() : '');
+    setShippingFee(p.shippingFee !== undefined && p.shippingFee !== null ? p.shippingFee.toString() : '0');
     setCategoryId(p.categoryId);
     setShortDescription(p.shortDescription || '');
     setFullDescription(p.fullDescription || '');
@@ -275,6 +278,7 @@ export default function AdminProductsPage() {
       slug: slug.trim() || undefined,
       price: parseFloat(price) || 0,
       compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+      shippingFee: parseFloat(shippingFee) || 0,
       categoryId: categoryId || categories[0]?.id,
       shortDescription,
       fullDescription,
@@ -382,6 +386,7 @@ export default function AdminProductsPage() {
                 <th className="p-3.5">Product</th>
                 <th className="p-3.5">Category</th>
                 <th className="p-3.5">Price</th>
+                <th className="p-3.5">Shipping</th>
                 <th className="p-3.5">Material</th>
                 <th className="p-3.5">Stock</th>
                 <th className="p-3.5">Personalise</th>
@@ -468,6 +473,13 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="p-3.5">{p.category?.name || 'Category'}</td>
                     <td className="p-3.5 font-bold text-tech-accent">₹{p.price}</td>
+                    <td className="p-3.5">
+                      {p.shippingFee && p.shippingFee > 0 ? (
+                        <span className="text-amber-300 font-bold">₹{p.shippingFee}</span>
+                      ) : (
+                        <span className="text-slate-500">Zone / Default</span>
+                      )}
+                    </td>
                     <td className="p-3.5">{p.material}</td>
                     <td className="p-3.5 font-bold">{p.stockQuantity}</td>
                     <td className="p-3.5">
@@ -560,7 +572,7 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs font-mono text-slate-300 mb-1">Category *</label>
                     <select
@@ -590,7 +602,7 @@ export default function AdminProductsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono text-slate-300 mb-1">Original Price (₹)</label>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">Compare Price (₹)</label>
                     <input
                       type="number"
                       value={compareAtPrice}
@@ -598,6 +610,21 @@ export default function AdminProductsPage() {
                       placeholder="e.g. 499"
                       className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono text-slate-300 mb-1">
+                      Shipping Fee (₹)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={shippingFee}
+                      onChange={(e) => setShippingFee(e.target.value)}
+                      placeholder="0 = Default / Zone"
+                      className="w-full bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                    <span className="text-[10px] text-slate-500 font-mono">0 for store/zone rate</span>
                   </div>
                 </div>
               </div>

@@ -69,6 +69,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       name: product.name,
       image: selectedImage,
       price: product.price,
+      shippingFee: product.shippingFee || 0,
       quantity,
       color: selectedColor,
       size: selectedSize,
@@ -311,6 +312,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 material={rel.material}
                 colors={rel.colors}
                 personalizationEnabled={rel.personalizationEnabled}
+                shippingFee={rel.shippingFee}
               />
             ))}
           </div>

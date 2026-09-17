@@ -134,6 +134,7 @@ export default async function HomePage() {
               isFeatured={product.isFeatured}
               isNew={product.isNew}
               personalizationEnabled={product.personalizationEnabled}
+              shippingFee={product.shippingFee}
               category={product.category}
             />
           ))}

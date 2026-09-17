@@ -19,6 +19,7 @@ export interface ProductCardProps {
   isFeatured?: boolean;
   isNew?: boolean;
   personalizationEnabled?: boolean;
+  shippingFee?: number | null;
   category?: { name: string; slug: string };
 }
 
@@ -35,6 +36,7 @@ export default function ProductCard({
   isFeatured,
   isNew,
   personalizationEnabled,
+  shippingFee,
   category,
 }: ProductCardProps) {
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
@@ -179,6 +181,7 @@ export default function ProductCard({
                   name,
                   image: primaryImage,
                   price,
+                  shippingFee: shippingFee || 0,
                   quantity: 1,
                   color: colorList[0] || 'Default',
                 })

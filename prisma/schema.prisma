@@ -36,6 +36,7 @@ model Product {
   material              String   @default("PLA+")
   weight                String?
   dimensions            String?
+  shippingFee           Float?   @default(0)
   stockQuantity         Int      @default(10)
   stockStatus           String   @default("IN_STOCK") // IN_STOCK, LOW_STOCK, OUT_OF_STOCK
   isFeatured            Boolean  @default(false)

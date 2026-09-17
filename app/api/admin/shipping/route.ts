@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
-import { getShippingSettings } from '@/lib/shipping';
+import { getShippingSettings, DEFAULT_SHIPPING_ZONES } from '@/lib/shipping';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -28,14 +28,18 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const flatRate = Math.max(0, Number(body.flatRate) || 0);
+    const defaultRate = Math.max(0, Number(body.defaultRate) || 0);
     const freeShippingThreshold = Math.max(0, Number(body.freeShippingThreshold) || 0);
     const shippingNote = (body.shippingNote || '').trim() || 'Standard delivery in 3-5 business days across India';
+    const calculationMode = body.calculationMode || 'MAX_OF_ZONE_AND_PRODUCTS';
+    const zones = Array.isArray(body.zones) && body.zones.length > 0 ? body.zones : DEFAULT_SHIPPING_ZONES;
 
     const payload = {
-      flatRate,
+      defaultRate,
       freeShippingThreshold,
       shippingNote,
+      calculationMode,
+      zones,
     };
 
     const updated = await db.siteContent.upsert({

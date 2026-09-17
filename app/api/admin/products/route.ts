@@ -44,6 +44,7 @@ export async function POST(req: NextRequest) {
       categoryId,
       price,
       compareAtPrice,
+      shippingFee,
       images,
       colors,
       sizes,
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
         categoryId,
         price: parseFloat(price),
         compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        shippingFee: shippingFee !== undefined && shippingFee !== '' ? parseFloat(shippingFee) : 0,
         images: typeof images === 'string' ? images : JSON.stringify(images || []),
         colors: typeof colors === 'string' ? colors : JSON.stringify(colors || []),
         sizes: typeof sizes === 'string' ? sizes : JSON.stringify(sizes || []),
@@ -122,8 +124,9 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Product ID required.' }, { status: 400 });
     }
 
-    if (data.price) data.price = parseFloat(data.price);
-    if (data.compareAtPrice) data.compareAtPrice = parseFloat(data.compareAtPrice);
+    if (data.price !== undefined) data.price = parseFloat(data.price);
+    if (data.compareAtPrice !== undefined) data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
+    if (data.shippingFee !== undefined) data.shippingFee = data.shippingFee !== '' && data.shippingFee !== null ? parseFloat(data.shippingFee) : 0;
     if (data.stockQuantity !== undefined) data.stockQuantity = parseInt(data.stockQuantity);
     if (data.images && typeof data.images !== 'string') data.images = JSON.stringify(data.images);
     if (data.colors && typeof data.colors !== 'string') data.colors = JSON.stringify(data.colors);
