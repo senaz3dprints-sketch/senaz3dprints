@@ -142,7 +142,7 @@ export default function PersonalizationPreview({
       <div className="p-3 rounded-lg bg-tech-bg/80 border border-tech-border/80 flex items-start gap-2.5 text-xs text-slate-400 leading-relaxed font-sans">
         <Info className="w-4 h-4 text-tech-accent shrink-0 mt-0.5" />
         <p>
-          <span className="font-semibold text-slate-300">Note:</span> Final physical appearance may vary slightly depending on print layer height (0.12mm default) and filament material density.
+          <span className="font-semibold text-slate-300">Note:</span> Final physical appearance may vary slightly depending on print layer height and filament material density.
         </p>
       </div>
     </div>

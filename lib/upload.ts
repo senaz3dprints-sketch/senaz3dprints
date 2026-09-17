@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const ALLOWED_3D_EXTENSIONS = ['.stl', '.obj', '.3mf'];
+const ALLOWED_3D_EXTENSIONS = ['.stl', '.obj', '.3mf', '.step', '.stp', '.gcode'];
 const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
 
 const MAX_3D_FILE_SIZE = 25 * 1024 * 1024; // 25 MB

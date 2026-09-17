@@ -13,7 +13,7 @@ interface HeroSectionProps {
 
 export default function HeroSection({
   title = 'Made to Print.\nBuilt for You.',
-  subtitle = 'Custom 3D printed products, personalised creations and functional designs made to your specifications.',
+  subtitle = 'Custom 3D printed products, personalized designs, and high-precision functional parts made to your exact specifications. Available in PLA/PLA+, PETG, TPU, ASA, ABS, and Nylon.',
   primaryCta = 'Shop Products',
   secondaryCta = 'Get a Custom Print',
 }: HeroSectionProps) {

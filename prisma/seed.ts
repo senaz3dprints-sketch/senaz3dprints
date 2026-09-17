@@ -91,7 +91,7 @@ async function main() {
       ]),
       colors: JSON.stringify(['Arctic White', 'Matte Black', 'Electric Blue', 'Ruby Red', 'Emerald Green']),
       sizes: JSON.stringify(['Standard (75mm)', 'Large (95mm)']),
-      material: 'PLA+ Tough Resin-Infused',
+      material: 'Premium PLA+',
       weight: '18g',
       dimensions: '75 x 22 x 6 mm',
       stockQuantity: 45,
@@ -106,7 +106,7 @@ async function main() {
       name: 'Low-Poly Dragon Desk Statue',
       slug: 'low-poly-dragon-desk-statue',
       shortDescription: 'Striking geometric low-poly dragon figurine with metallic sheen finish.',
-      fullDescription: 'Designed for modern workspace aesthetics. This geometric dragon statue features sharp light-refracting facets printed at 0.12mm precision layer height.',
+      fullDescription: 'Designed for modern workspace aesthetics. This geometric dragon statue features sharp light-refracting facets printed at high precision layer height.',
       categoryId: categories['figures'].id,
       price: 699,
       compareAtPrice: 899,
@@ -291,24 +291,24 @@ async function main() {
   // 6. Create Initial Site Content (Editable Content)
   const defaultHomepageContent = {
     heroTitle: "Made to Print. Built for You.",
-    heroSubtitle: "Custom 3D printed products, personalised designs and functional creations made to your exact specifications.",
+    heroSubtitle: "Custom 3D printed products, personalized designs, and high-precision functional parts made to your exact specifications. Available in PLA/PLA+, PETG, TPU, ASA, ABS, and Nylon.",
     primaryCtaText: "Shop Products",
     secondaryCtaText: "Get a Custom Print",
-    aboutTitle: "Precision FDM & Resin 3D Printing Service in India",
+    aboutTitle: "Precision FDM 3D Printing Service in India",
     aboutSubtitle: "Engineered for durability, surface smoothness, and dimensional accuracy.",
     whyUsPoints: [
-      { title: "Sub-Millimeter Precision", text: "Calibrated high-speed FDM printers operating at 0.12mm to 0.20mm layer height." },
-      { title: "Premium Engineering Filaments", text: "We print using high-grade PLA+, PETG, TPU flex, and toughness-reinforced resins." },
+      { title: "High Precision Calibration", text: "Calibrated high-speed FDM printers operating at high precision layer height." },
+      { title: "Premium Engineering Filaments", text: "We print using high-grade PLA/PLA+, PETG, TPU, ASA, ABS, and Nylon." },
       { title: "Instant WhatsApp Ordering", text: "No tedious registration. Direct human confirmation & live order updates via WhatsApp." },
-      { title: "Custom CAD & File Support", text: "Upload your own .stl, .obj, .3mf files or sketch ideas for rapid custom quotes." }
+      { title: "Custom CAD & File Support", text: "Upload your own .stl, .obj, .3mf, .step, .gcode files or sketch ideas for rapid custom quotes." }
     ],
     contactWhatsapp: "918761053230",
     contactEmail: "senaz3dprints@gmail.com",
     instagramUrl: "https://instagram.com/senaz3dprints",
     faqItems: [
-      { question: "What materials do you use for 3D printing?", answer: "We primarily print with PLA+ (eco-friendly, high stiffness), PETG (heat & water resistant), TPU (flexible rubber-like), and high-resolution Resin for detailed figurines." },
+      { question: "What materials do you use for 3D printing?", answer: "We print with PLA / PLA+ / Pro / Rapid PLA, PETG, TPU, ABS, ASA, and Nylon (PA) for functional and durable prints." },
       { question: "How long does custom 3D printing take?", answer: "Most standard catalog products ship within 24-48 hours. Custom CAD designs and complex 3D model requests take 2-4 business days depending on print hours." },
-      { question: "Can I send my own 3D model file?", answer: "Yes! Visit our /custom-printing page to upload your .stl, .obj, or .3mf model files along with your preferred material and color." },
+      { question: "Can I send my own 3D model file?", answer: "Yes! Visit our /custom-printing page to upload your .stl, .obj, .3mf, .step, or .gcode model files along with your preferred material and color." },
       { question: "How does payment work?", answer: "Once you place an order or custom print request on our website, you will be redirected to WhatsApp where we confirm stock, final text previews, and send secure payment options (UPI, GPay, PhonePe, NetBanking)." }
     ]
   };

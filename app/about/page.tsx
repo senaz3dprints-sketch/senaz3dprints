@@ -12,7 +12,7 @@ export default function AboutPage() {
           <span>About SenAZ 3D PRINTS</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold text-white font-sans tracking-tight leading-tight">
-          Precision FDM & Resin 3D Printing in India.
+          Precision FDM 3D Printing in India.
         </h1>
         <p className="text-base text-slate-300 font-sans leading-relaxed">
           SenAZ 3D PRINTS (`senaz3dprints.in`) is an engineering-focused micro manufacturing print studio dedicated to high-precision personalized keychains, desk accessories, figures, and custom 3D model manufacturing.
@@ -25,7 +25,7 @@ export default function AboutPage() {
           <div className="w-10 h-10 rounded-lg bg-tech-bg border border-tech-border flex items-center justify-center">
             <Cpu className="w-5 h-5 text-tech-accent" />
           </div>
-          <h3 className="text-lg font-bold text-white font-sans">0.12mm Calibration</h3>
+          <h3 className="text-lg font-bold text-white font-sans">High Precision Calibration</h3>
           <p className="text-xs text-slate-400 leading-relaxed font-sans">
             Our FDM print beds are auto-mesh leveled and calibrated to sub-millimeter tolerances for clean surface finishes.
           </p>
@@ -37,7 +37,7 @@ export default function AboutPage() {
           </div>
           <h3 className="text-lg font-bold text-white font-sans">Tough Engineering Polymers</h3>
           <p className="text-xs text-slate-400 leading-relaxed font-sans">
-            We exclusively use eco-friendly PLA+, heat-resistant PETG, flexible TPU rubber, and tough resin polymers.
+            We exclusively use high-grade PLA/PLA+, heat-resistant PETG, flexible TPU rubber, ASA, ABS, and technical Nylon polymers.
           </p>
         </div>
 

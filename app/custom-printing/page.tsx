@@ -9,7 +9,9 @@ export default function CustomPrintingPage() {
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
   const [productType, setProductType] = useState('Custom Prototype / STL');
-  const [materialPreference, setMaterialPreference] = useState('PLA+ High Stiffness');
+  const [materialPreference, setMaterialPreference] = useState(
+    'PLA / PLA+ / Pro / Rapid PLA — Standard & High Speed (Recommended)'
+  );
   const [colorPreference, setColorPreference] = useState('Arctic White');
   const [quantity, setQuantity] = useState(1);
   const [dimensions, setDimensions] = useState('');
@@ -79,7 +81,7 @@ export default function CustomPrintingPage() {
       <div className="text-center space-y-3 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-tech-accent/10 border border-tech-accent/30 text-xs font-mono text-tech-accent">
           <FileCode className="w-3.5 h-3.5" />
-          <span>Industrial FDM & Resin Printing</span>
+          <span>Industrial High-Precision FDM Printing</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-sans tracking-tight">
           Have a 3D idea?
@@ -180,10 +182,10 @@ export default function CustomPrintingPage() {
           {/* File Uploaders */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
             <FileUpload
-              label="1. Upload 3D File (.stl, .obj, .3mf)"
-              acceptTypes=".stl,.obj,.3mf"
+              label="1. Upload 3D File (.stl, .obj, .3mf, .step, .gcode)"
+              acceptTypes=".stl,.obj,.3mf,.step,.stp,.gcode"
               maxSizeMb={25}
-              allowedExtensionsText=".stl, .obj, .3mf"
+              allowedExtensionsText=".stl, .obj, .3mf, .step, .gcode"
               onFileSelect={(f) => setFile3d(f)}
             />
 
@@ -224,10 +226,24 @@ export default function CustomPrintingPage() {
                 onChange={(e) => setMaterialPreference(e.target.value)}
                 className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
               >
-                <option value="PLA+ High Stiffness">PLA+ High Stiffness (Recommended)</option>
-                <option value="PETG Heat & Water Resistant">PETG Heat & Water Resistant</option>
-                <option value="TPU Rubber Flexible">TPU Rubber Flexible</option>
-                <option value="Resin High Detail">Resin High Detail</option>
+                <option value="PLA / PLA+ / Pro / Rapid PLA — Standard & High Speed (Recommended)">
+                  PLA / PLA+ / Pro / Rapid PLA — Standard & High Speed (Recommended)
+                </option>
+                <option value="PETG — Heat & Water Resistant">
+                  PETG — Heat & Water Resistant
+                </option>
+                <option value="TPU — Rubber Flexible">
+                  TPU — Rubber Flexible
+                </option>
+                <option value="ABS — Impact & Heat Resistant">
+                  ABS — Impact & Heat Resistant
+                </option>
+                <option value="ASA — UV & Outdoor Weather Resistant">
+                  ASA — UV & Outdoor Weather Resistant
+                </option>
+                <option value="Nylon (PA) — High Strength & Wear Resistant">
+                  Nylon (PA) — High Strength & Wear Resistant
+                </option>
               </select>
             </div>
 

@@ -6,12 +6,12 @@ import { FileText, Save, CheckCircle, AlertCircle } from 'lucide-react';
 export default function AdminContentPage() {
   const [heroTitle, setHeroTitle] = useState('Made to Print. Built for You.');
   const [heroSubtitle, setHeroSubtitle] = useState(
-    'Custom 3D printed products, personalised designs and functional creations made to your specifications.'
+    'Custom 3D printed products, personalized designs, and high-precision functional parts made to your exact specifications. Available in PLA/PLA+, PETG, TPU, ASA, ABS, and Nylon.'
   );
   const [primaryCtaText, setPrimaryCtaText] = useState('Shop Products');
   const [secondaryCtaText, setSecondaryCtaText] = useState('Get a Custom Print');
-  const [contactWhatsapp, setContactWhatsapp] = useState('919876543210');
-  const [contactEmail, setContactEmail] = useState('support@senaz3dprints.in');
+  const [contactWhatsapp, setContactWhatsapp] = useState('918761053230');
+  const [contactEmail, setContactEmail] = useState('senaz3dprints@gmail.com');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -50,7 +50,7 @@ export default function AdminContentPage() {
           {
             question: 'What materials do you use for 3D printing?',
             answer:
-              'We primarily print with PLA+ (eco-friendly, high stiffness), PETG (heat & water resistant), TPU (flexible rubber-like), and high-resolution Resin for detailed figurines.',
+              'We primarily print with PLA/PLA+, PETG (heat & water resistant), TPU (flexible rubber), ASA (UV resistant), ABS (impact resistant), and Nylon (PA) for high strength technical & functional parts.',
           },
           {
             question: 'How long does custom 3D printing take?',
@@ -60,7 +60,7 @@ export default function AdminContentPage() {
           {
             question: 'Can I send my own 3D model file?',
             answer:
-              'Yes! Visit our /custom-printing page to upload your .stl, .obj, or .3mf model files along with your preferred material and color.',
+              'Yes! Visit our /custom-printing page to upload your .stl, .obj, .3mf, .step, or .gcode model files along with your preferred material and color.',
           },
           {
             question: 'How does payment work?',

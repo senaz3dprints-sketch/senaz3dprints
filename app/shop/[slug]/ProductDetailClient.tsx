@@ -282,7 +282,7 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                 </div>
               )}
               <div>
-                Print Resolution: <span className="text-tech-accent font-semibold">0.12mm</span>
+                Print Resolution: <span className="text-tech-accent font-semibold">High Precision</span>
               </div>
             </div>
           </div>

@@ -27,12 +27,12 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
-              Custom 3D printed products, personalized designs, and high-precision functional parts made to your exact specifications. High-density PLA+, PETG, and Tough Resin prints.
+              Custom 3D printed products, personalized designs, and high-precision functional parts made to your exact specifications. Available in PLA/PLA+, PETG, TPU, ASA, ABS, and Nylon.
             </p>
             <div className="flex items-center gap-4 text-xs font-mono text-slate-300">
               <div className="flex items-center gap-1.5 bg-tech-card px-2.5 py-1 rounded border border-tech-border">
                 <Cpu className="w-3.5 h-3.5 text-tech-accent" />
-                <span>0.12mm Precision</span>
+                <span>High Precision</span>
               </div>
               <div className="flex items-center gap-1.5 bg-tech-card px-2.5 py-1 rounded border border-tech-border">
                 <ShieldCheck className="w-3.5 h-3.5 text-tech-accent" />

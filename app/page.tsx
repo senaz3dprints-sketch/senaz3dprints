@@ -56,14 +56,14 @@ export default async function HomePage() {
   let content = {
     heroTitle: 'Made to Print. Built for You.',
     heroSubtitle:
-      'Custom 3D printed products, personalised designs and functional creations made to your specifications.',
+      'Custom 3D printed products, personalized designs, and high-precision functional parts made to your exact specifications. Available in PLA/PLA+, PETG, TPU, ASA, ABS, and Nylon.',
     primaryCtaText: 'Shop Products',
     secondaryCtaText: 'Get a Custom Print',
     faqItems: [
       {
         question: 'What materials do you use for 3D printing?',
         answer:
-          'We primarily print with PLA+ (eco-friendly, high stiffness), PETG (heat & water resistant), TPU (flexible rubber-like), and high-resolution Resin for detailed figurines.',
+          'We primarily print with PLA/PLA+, PETG (heat & water resistant), TPU (flexible rubber), ASA (UV resistant), ABS (impact resistant), and Nylon (PA) for high strength technical & functional parts.',
       },
       {
         question: 'How long does custom 3D printing take?',
@@ -73,7 +73,7 @@ export default async function HomePage() {
       {
         question: 'Can I send my own 3D model file?',
         answer:
-          'Yes! Visit our /custom-printing page to upload your .stl, .obj, or .3mf model files along with your preferred material and color.',
+          'Yes! Visit our /custom-printing page to upload your .stl, .obj, .3mf, .step, or .gcode model files along with your preferred material and color.',
       },
       {
         question: 'How does payment work?',
@@ -277,7 +277,7 @@ export default async function HomePage() {
             </span>
             <h3 className="text-lg font-semibold text-white font-sans">Print & Dispatch</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Printed at sub-millimeter precision on calibrated FDM/Resin printers, quality tested, and dispatched across India.
+              Printed with high precision on calibrated FDM printers, quality tested, and dispatched across India.
             </p>
           </div>
         </div>
@@ -292,7 +292,7 @@ export default async function HomePage() {
                 Engineering Quality
               </span>
               <h2 className="text-3xl font-extrabold text-white font-sans tracking-tight">
-                Why Choose SENAZ 3D PRINTS?
+                Why Choose SenAZ 3D PRINTS?
               </h2>
 
               <div className="space-y-4">
@@ -301,7 +301,7 @@ export default async function HomePage() {
                     <Layers className="w-5 h-5 text-tech-accent" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white text-sm">0.12mm Micro Layer Accuracy</h4>
+                    <h4 className="font-semibold text-white text-sm">Micro Layer Accuracy</h4>
                     <p className="text-xs text-slate-400 leading-relaxed mt-0.5">
                       Smooth surface finishes with minimal visible print lines.
                     </p>

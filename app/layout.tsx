@@ -8,7 +8,7 @@ import CartDrawer from '@/components/CartDrawer';
 export const metadata: Metadata = {
   title: 'SenAZ 3D PRINTS | Custom 3D Printed Products & STL Printing Service India',
   description:
-    'Custom 3D printed keychains, personalised name products, character figures, desk accessories, and custom 3D printing STL service in India. High precision FDM & Resin manufacturing.',
+    'Custom 3D printed keychains, personalised name products, character figures, desk accessories, and custom 3D printing STL service in India. High precision FDM manufacturing in PLA/PLA+, PETG, TPU, ASA, ABS, and Nylon.',
   metadataBase: new URL('https://senaz3dprints.in'),
   keywords: [
     '3D Printing India',

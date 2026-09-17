@@ -38,7 +38,7 @@ export default function GalleryPage() {
     {
       title: 'Chibi Mascot Desk Figurine',
       category: 'Figures',
-      material: 'Tough Resin',
+      material: 'Silk PLA / Nylon',
       image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=800&q=80',
     },
   ];
