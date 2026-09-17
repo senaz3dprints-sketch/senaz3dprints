@@ -30,7 +30,7 @@ export function generateOrderWhatsAppUrl(
   let itemDetailsText = '';
   order.items.forEach((item, index) => {
     itemDetailsText += `${index + 1}. *${item.name}*\n`;
-    itemDetailsText += `   Qty: ${item.quantity} | Unit Price: ₹${item.price}\n`;
+    itemDetailsText += `   Qty: ${item.quantity} | Unit Price: Rs. ${item.price}\n`;
     if (item.color) itemDetailsText += `   Color: ${item.color}\n`;
     if (item.size) itemDetailsText += `   Size: ${item.size}\n`;
     if (item.personalizedText) itemDetailsText += `   Custom Text: "${item.personalizedText}"\n`;
@@ -44,16 +44,16 @@ export function generateOrderWhatsAppUrl(
 
 I placed an order on your website and would like to confirm production!
 
-📦 *Order ID:* ${order.orderId}
-👤 *Customer:* ${order.customerName}
-📍 *Delivery Address:* ${order.address}, ${order.city} - ${order.pincode}
+*Order ID:* ${order.orderId}
+*Customer:* ${order.customerName}
+*Delivery Address:* ${order.address}, ${order.city} - ${order.pincode}
 
-🛒 *Ordered Items:*
+*Ordered Items:*
 ${itemDetailsText}
-🧾 *BILLING DETAILS:*
-• Subtotal: ₹${subtotal}
-${discount > 0 ? `• Discount Applied: -₹${discount} ${appliedCode}\n` : ''}• Shipping / Delivery: FREE
-💰 *FINAL PAYABLE AMOUNT:* ₹${order.totalAmount}
+*BILLING DETAILS:*
+- Subtotal: Rs. ${subtotal}
+${discount > 0 ? `- Discount Applied: -Rs. ${discount} ${appliedCode}\n` : ''}- Shipping / Delivery: FREE
+*FINAL PAYABLE AMOUNT:* Rs. ${order.totalAmount}
 
 Please confirm order acceptance and estimated dispatch date. Thank you!`;
 
@@ -70,7 +70,7 @@ export function generateProductInquiryUrl(
   const text = `Hello *SenAZ 3D PRINTS*,
 
 I have a question regarding this product:
-*${productName}* (Price: ₹${price})
+*${productName}* (Price: Rs. ${price})
 
 Could you please assist me with customization / delivery timeline details?`;
 
@@ -90,12 +90,12 @@ export function generateCustomRequestWhatsAppUrl(
 
 I submitted a Custom 3D Printing request!
 
-📋 *Request ID:* ${requestId}
-👤 *Name:* ${customerName}
-🛠️ *Product Type:* ${productType}
-🧪 *Material:* ${material}
+*Request ID:* ${requestId}
+*Name:* ${customerName}
+*Product Type:* ${productType}
+*Material:* ${material}
 
-I've uploaded my model/reference on your website. Looking forward to your quote!`;
+I have uploaded my model/reference on your website. Looking forward to your quote!`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
@@ -110,16 +110,16 @@ export function generateAdminToCustomerConfirmationWhatsAppUrl(order: {
   const cleanPhone = (order.customerPhone || '').replace(/[^0-9]/g, '');
   const phone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
 
-  const text = `Hello *${order.customerName}*! 👋
+  const text = `Hello *${order.customerName}*,
 
-Thank you for choosing *SenAZ 3D PRINTS*! 🎨✨
+Thank you for choosing *SenAZ 3D PRINTS*!
 
 We are pleased to confirm your order details:
-📦 *Order ID:* ${order.orderId}
-💰 *Total Amount:* ₹${order.totalAmount}
-📊 *Status:* ${order.status}
+*Order ID:* ${order.orderId}
+*Total Amount:* Rs. ${order.totalAmount}
+*Status:* ${order.status}
 
-Your order is now being processed in our precision 3D printing lab. We'll send you tracking updates as soon as it is dispatched!
+Your order is now being processed in our precision 3D printing lab. We will send you tracking updates as soon as it is dispatched!
 
 Best regards,
 *SenAZ 3D PRINTS*
@@ -127,4 +127,5 @@ https://senaz3dprints.in`;
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
+
 
