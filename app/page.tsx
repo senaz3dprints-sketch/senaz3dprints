@@ -15,12 +15,17 @@ import {
   Star,
   Printer,
   ChevronRight,
+  SlidersHorizontal,
+  PenTool,
+  Palette,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [products, categories, siteContentRecord] = await Promise.all([
+  const [products, personalizedProducts, categories, siteContentRecord] = await Promise.all([
+    // 1. Featured / Catalog Products
     db.product.findMany({
       where: { isPublished: true },
       select: {
@@ -48,13 +53,54 @@ export default async function HomePage() {
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
       take: 8,
     }).catch(() => []),
+
+    // 2. Personalized / Customized Products
+    db.product.findMany({
+      where: {
+        isPublished: true,
+        OR: [
+          { personalizationEnabled: true },
+          { name: { contains: 'custom', mode: 'insensitive' } },
+          { name: { contains: 'name', mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        shortDescription: true,
+        price: true,
+        compareAtPrice: true,
+        images: true,
+        material: true,
+        colors: true,
+        isFeatured: true,
+        isNew: true,
+        personalizationEnabled: true,
+        shippingFee: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+      take: 4,
+    }).catch(() => []),
+
+    // 3. Categories
     db.category.findMany({
       orderBy: { displayOrder: 'asc' },
     }).catch(() => []),
+
+    // 4. Site Content
     db.siteContent.findUnique({
       where: { key: 'homepage' },
     }).catch(() => null),
   ]);
+
   let content = {
     heroTitle: 'Made to Print. Built for You.',
     heroSubtitle:
@@ -101,7 +147,99 @@ export default async function HomePage() {
         secondaryCta={content.secondaryCtaText}
       />
 
-      {/* 2. FEATURED PRODUCTS CATALOG */}
+      {/* 2. DEDICATED PERSONALIZED & CUSTOM 3D GIFTS SECTION */}
+      {personalizedProducts.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative rounded-3xl bg-gradient-to-br from-brand-950/60 via-tech-card/80 to-tech-bg border border-tech-accent/30 p-6 sm:p-10 shadow-2xl overflow-hidden">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-0 right-1/4 w-96 h-96 bg-tech-accent/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative z-10 space-y-8">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-tech-border/60 pb-6">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tech-accent/10 border border-tech-accent/40 text-xs font-mono text-tech-accent font-semibold mb-2">
+                    <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                    <span>Personalized & Custom Crafted</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-sans tracking-tight">
+                    Custom Name & Photo 3D Prints
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-300 font-sans mt-1 max-w-2xl">
+                    Add your name, custom text, favorite logo, or transform personal photos into stunning 3D printed keepsakes.
+                  </p>
+                </div>
+
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono text-tech-accent hover:text-white font-semibold transition-colors shrink-0"
+                >
+                  <span>Explore All Personalised</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              {/* Highlight Perks Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-tech-bg/70 border border-tech-border/60">
+                  <div className="w-9 h-9 rounded-lg bg-tech-accent/10 border border-tech-accent/30 flex items-center justify-center shrink-0">
+                    <PenTool className="w-4 h-4 text-tech-accent" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-sans">Custom Name Engraving</h4>
+                    <p className="text-[11px] text-slate-400">High-contrast dual color text</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-tech-bg/70 border border-tech-border/60">
+                  <div className="w-9 h-9 rounded-lg bg-tech-accent/10 border border-tech-accent/30 flex items-center justify-center shrink-0">
+                    <Palette className="w-4 h-4 text-tech-accent" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-sans">Choice of 20+ Filaments</h4>
+                    <p className="text-[11px] text-slate-400">Vibrant, silk & matte finishes</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-tech-bg/70 border border-tech-border/60">
+                  <div className="w-9 h-9 rounded-lg bg-tech-accent/10 border border-tech-accent/30 flex items-center justify-center shrink-0">
+                    <ImageIcon className="w-4 h-4 text-tech-accent" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-sans">2D Photo to 3D Statues</h4>
+                    <p className="text-[11px] text-slate-400">Turn photos into physical art</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personalized Products Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {personalizedProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    id={product.id}
+                    name={product.name}
+                    slug={product.slug}
+                    shortDescription={product.shortDescription}
+                    price={product.price}
+                    compareAtPrice={product.compareAtPrice}
+                    images={product.images}
+                    material={product.material}
+                    colors={product.colors}
+                    isFeatured={product.isFeatured}
+                    isNew={product.isNew}
+                    personalizationEnabled={product.personalizationEnabled}
+                    shippingFee={product.shippingFee}
+                    category={product.category}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* 3. FEATURED PRODUCTS CATALOG */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
           <div>
@@ -145,7 +283,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 3. PRODUCT CATEGORIES GRID */}
+      {/* 4. PRODUCT CATEGORIES GRID */}
       <section className="bg-tech-card/50 border-y border-tech-border py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
@@ -180,7 +318,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. CUSTOM 3D PRINTING SERVICE BANNER */}
+      {/* 5. CUSTOM 3D PRINTING SERVICE BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-950 via-tech-card to-tech-bg border border-tech-accent/30 p-8 sm:p-12 text-slate-100 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-2xl">
           <div className="space-y-4 max-w-2xl text-left">
