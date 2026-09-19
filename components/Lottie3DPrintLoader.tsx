@@ -1,7 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Sparkles } from 'lucide-react';
+
+// Dynamic import with SSR false for smooth client-side canvas/svg rendering
+const DotLottiePlayer = dynamic(
+  () => import('@dotlottie/react-player').then((mod) => mod.DotLottiePlayer),
+  { ssr: false }
+);
 
 interface Lottie3DPrintLoaderProps {
   label?: string;
@@ -12,7 +19,12 @@ export default function Lottie3DPrintLoader({
   label = 'Fabricating & Loading 3D Models...',
   size = 'md',
 }: Lottie3DPrintLoaderProps) {
-  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [animLoaded, setAnimLoaded] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const dimensionMap = {
     sm: { width: 140, height: 140 },
@@ -34,19 +46,29 @@ export default function Lottie3DPrintLoader({
         className="relative flex items-center justify-center overflow-hidden rounded-2xl bg-tech-card/30 border border-tech-border/60 shadow-2xl backdrop-blur-sm"
         style={{ width: `${currentDim.width}px`, height: `${currentDim.height}px` }}
       >
-        {/* LottieFiles Embed Player */}
-        <iframe
-          src="https://embed.lottiefiles.com/animation/VnMho8xoAH"
-          title="3D Print Animation"
-          className={`w-full h-full border-0 pointer-events-none transition-opacity duration-500 ${
-            iframeLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={() => setIframeLoaded(true)}
-          loading="eager"
-        />
+        {/* DotLottie Native Player */}
+        {mounted && (
+          <div
+            className={`w-full h-full flex items-center justify-center transition-opacity duration-500 ${
+              animLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <DotLottiePlayer
+              src="/animations/3d-print.lottie"
+              autoplay
+              loop
+              onEvent={(event: string) => {
+                if (event === 'ready' || event === 'play' || event === 'frame') {
+                  setAnimLoaded(true);
+                }
+              }}
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
+        )}
 
-        {/* High-Precision SVG 3D Printer Animation (Instant fallback & background while iframe loads) */}
-        {!iframeLoaded && (
+        {/* High-Precision SVG 3D Printer Animation (Instant fallback while loading) */}
+        {(!mounted || !animLoaded) && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
             <svg
               viewBox="0 0 160 160"
