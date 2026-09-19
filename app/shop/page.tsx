@@ -2,7 +2,8 @@ import React, { Suspense } from 'react';
 import { db } from '@/lib/db';
 import ShopClient from './ShopClient';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function ShopPage() {
   let categories: any[] = [];

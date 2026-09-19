@@ -3,7 +3,8 @@ import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from './ProductDetailClient';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface ProductDetailPageProps {
   params: {

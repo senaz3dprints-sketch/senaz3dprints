@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
+import { revalidatePath } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -73,6 +74,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    try {
+      revalidatePath('/', 'layout');
+      revalidatePath('/shop');
+      revalidatePath('/admin/categories');
+      revalidatePath('/admin/products');
+    } catch (e) {}
+
     return NextResponse.json({ success: true, category });
   } catch (error) {
     console.error('Failed to create category:', error);
@@ -131,6 +139,13 @@ export async function PUT(req: NextRequest) {
       },
     });
 
+    try {
+      revalidatePath('/', 'layout');
+      revalidatePath('/shop');
+      revalidatePath('/admin/categories');
+      revalidatePath('/admin/products');
+    } catch (e) {}
+
     return NextResponse.json({ success: true, category });
   } catch (error) {
     console.error('Failed to update category:', error);
@@ -169,6 +184,13 @@ export async function DELETE(req: NextRequest) {
     await db.category.delete({
       where: { id },
     });
+
+    try {
+      revalidatePath('/', 'layout');
+      revalidatePath('/shop');
+      revalidatePath('/admin/categories');
+      revalidatePath('/admin/products');
+    } catch (e) {}
 
     return NextResponse.json({ success: true, message: 'Category deleted successfully.' });
   } catch (error) {
