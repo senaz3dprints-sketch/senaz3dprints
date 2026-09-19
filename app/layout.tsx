@@ -21,6 +21,18 @@ export const metadata: Metadata = {
     '3D Printed Statues',
     'Desk Accessories',
   ],
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/images/logo-icon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png' },
+      { url: '/images/logo-icon.png' },
+    ],
+  },
   openGraph: {
     title: 'SenAZ 3D PRINTS | Made to Print. Built for You.',
     description:
