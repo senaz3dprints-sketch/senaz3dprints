@@ -21,18 +21,11 @@ async function main() {
   // 2. Create Categories
   const categoriesData = [
     {
-      name: 'Personalised',
-      slug: 'personalised',
-      description: 'Custom nameplates, engraved tags, personalized desk objects and gifts.',
-      image: 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80',
-      displayOrder: 1,
-    },
-    {
       name: 'Keychains',
       slug: 'keychains',
       description: 'Custom text keychains, lithophanes, monogram tags, and fidget keyrings.',
       image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80',
-      displayOrder: 2,
+      displayOrder: 1,
     },
     {
       name: 'Figures & Statues',
