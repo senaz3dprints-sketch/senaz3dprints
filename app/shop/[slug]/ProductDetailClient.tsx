@@ -49,6 +49,20 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const { addToCart } = useCart();
 
+  // Safely parse image list
+  let initialImageList: string[] = [];
+  try {
+    initialImageList = typeof product.images === 'string' ? JSON.parse(product.images) : (Array.isArray(product.images) ? product.images : []);
+  } catch (e) {
+    initialImageList = [];
+  }
+  if (!initialImageList.length && product.image) {
+    initialImageList = [product.image];
+  }
+  if (!initialImageList.length) {
+    initialImageList = ['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'];
+  }
+
   const colorList: string[] = Array.isArray(product.colors)
     ? product.colors
     : typeof product.colors === 'string'
@@ -61,9 +75,7 @@ export default function ProductDetailClient({
     ? JSON.parse(product.sizes || '[]')
     : [];
 
-  const [selectedImage, setSelectedImage] = useState(
-    product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'
-  );
+  const [selectedImage, setSelectedImage] = useState(initialImageList[0]);
   const [selectedColor, setSelectedColor] = useState(
     colorList[0] || 'Default'
   );
@@ -110,13 +122,7 @@ export default function ProductDetailClient({
     personalizedText: isPersonalizationActive && personalizedText.trim() ? personalizedText.trim().toUpperCase() : undefined,
   });
 
-  // Parse Images JSON for gallery fallback
-  let imageList: string[] = [];
-  try {
-    imageList = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || [selectedImage]);
-  } catch (e) {
-    imageList = [product.images || selectedImage];
-  }
+  const imageList = initialImageList;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
