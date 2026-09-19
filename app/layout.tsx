@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import React, { Suspense } from 'react';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
+import TopProgressBar from '@/components/TopProgressBar';
 
 export const metadata: Metadata = {
   title: 'SenAZ 3D PRINTS | Custom 3D Printed Products & STL Printing Service India',
@@ -34,6 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen flex flex-col bg-tech-bg text-slate-100 font-sans">
+        <Suspense fallback={null}>
+          <TopProgressBar />
+        </Suspense>
         <CartProvider>
           <Navbar />
           <main className="flex-1">{children}</main>
