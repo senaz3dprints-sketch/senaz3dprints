@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, ShoppingBag, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { getFilamentColorStyle } from '@/lib/colors';
 
 export interface ProductCardProps {
   id: string;
@@ -134,16 +135,20 @@ export default function ProductCard({
         {colorList.length > 0 && (
           <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
             <span className="text-[10px]">Colors:</span>
-            <div className="flex gap-1">
-              {colorList.slice(0, 4).map((col, idx) => (
-                <span
-                  key={idx}
-                  title={col}
-                  className="w-2.5 h-2.5 rounded-full border border-slate-600 bg-slate-500"
-                />
-              ))}
-              {colorList.length > 4 && (
-                <span className="text-[10px] text-slate-500">+{colorList.length - 4}</span>
+            <div className="flex items-center gap-1">
+              {colorList.slice(0, 5).map((col, idx) => {
+                const style = getFilamentColorStyle(col);
+                return (
+                  <span
+                    key={idx}
+                    title={col}
+                    className="w-3 h-3 rounded-full border border-slate-700 shadow-sm shrink-0"
+                    style={{ background: style.background, borderColor: style.border }}
+                  />
+                );
+              })}
+              {colorList.length > 5 && (
+                <span className="text-[10px] text-slate-500">+{colorList.length - 5}</span>
               )}
             </div>
           </div>

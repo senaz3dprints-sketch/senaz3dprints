@@ -20,6 +20,7 @@ import {
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
 import { generateProductInquiryUrl } from '@/lib/whatsapp';
+import { getFilamentColorStyle } from '@/lib/colors';
 
 interface ProductDetailClientProps {
   product: any;
@@ -346,24 +347,40 @@ export default function ProductDetailClient({
 
           {/* Standard Color Selector (if personalization not active and product has colors) */}
           {!isPersonalizationActive && colorList.length > 0 && (
-            <div className="space-y-2">
-              <label className="block text-xs font-mono text-slate-300 font-semibold">
-                Available Colors:
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {colorList.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setSelectedColor(color)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-mono border transition-all ${
-                      selectedColor === color
-                        ? 'bg-tech-accent/20 border-tech-accent text-tech-accent font-semibold'
-                        : 'bg-tech-card border-tech-border text-slate-300 hover:border-slate-500'
-                    }`}
-                  >
-                    {color}
-                  </button>
-                ))}
+            <div className="space-y-2.5 p-3.5 bg-tech-card/50 rounded-xl border border-tech-border">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-tech-accent" />
+                  <span>Choose Filament Color:</span>
+                </label>
+                <span className="text-xs font-mono text-tech-accent font-bold">
+                  {selectedColor}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {colorList.map((color) => {
+                  const style = getFilamentColorStyle(color);
+                  const isSelected = selectedColor === color;
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-2 transition-all ${
+                        isSelected
+                          ? 'bg-tech-accent/20 border-tech-accent text-white shadow-md shadow-tech-accent/10 ring-1 ring-tech-accent font-bold'
+                          : 'bg-tech-card border-tech-border text-slate-300 hover:border-slate-500 hover:text-white'
+                      }`}
+                    >
+                      <span
+                        className="w-3.5 h-3.5 rounded-full border border-slate-700 shrink-0 shadow-sm"
+                        style={{ background: style.background, borderColor: style.border }}
+                      />
+                      <span>{color}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

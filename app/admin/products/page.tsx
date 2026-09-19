@@ -16,7 +16,9 @@ import {
   ArrowUp,
   ArrowDown,
   RefreshCw,
+  Palette,
 } from 'lucide-react';
+import { STANDARD_FILAMENT_COLORS, getFilamentColorStyle } from '@/lib/colors';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -50,6 +52,8 @@ export default function AdminProductsPage() {
   const [isNew, setIsNew] = useState(false);
   const [isPublished, setIsPublished] = useState(true);
   const [personalizationEnabled, setPersonalizationEnabled] = useState(false);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [customColorInput, setCustomColorInput] = useState('');
 
   // Image Upload State
   const [images, setImages] = useState<string[]>([]);
@@ -161,6 +165,8 @@ export default function AdminProductsPage() {
     setIsNew(true);
     setIsPublished(true);
     setPersonalizationEnabled(false);
+    setSelectedColors(['Matte Black', 'Pure White', 'Stealth Grey', 'Silk Gold']);
+    setCustomColorInput('');
     setImages(['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80']);
     setImageUrlInput('');
     setUploadError('');
@@ -188,6 +194,16 @@ export default function AdminProductsPage() {
     setIsPublished(p.isPublished !== undefined ? !!p.isPublished : true);
     setPersonalizationEnabled(!!p.personalizationEnabled);
 
+    // Parse Colors
+    let parsedColors: string[] = [];
+    try {
+      parsedColors = typeof p.colors === 'string' ? JSON.parse(p.colors) : (Array.isArray(p.colors) ? p.colors : []);
+    } catch (e) {
+      parsedColors = [];
+    }
+    setSelectedColors(parsedColors);
+    setCustomColorInput('');
+
     let parsedImages = [];
     try {
       parsedImages = JSON.parse(p.images);
@@ -198,6 +214,15 @@ export default function AdminProductsPage() {
     setImageUrlInput('');
     setUploadError('');
     setModalOpen(true);
+  };
+
+  const handleAddCustomColor = () => {
+    const trimmed = customColorInput.trim();
+    if (!trimmed) return;
+    if (!selectedColors.includes(trimmed)) {
+      setSelectedColors([...selectedColors, trimmed]);
+    }
+    setCustomColorInput('');
   };
 
   const processImageFile = (file: File): Promise<string> => {
@@ -292,6 +317,7 @@ export default function AdminProductsPage() {
       isNew,
       isPublished,
       personalizationEnabled,
+      colors: selectedColors,
       images,
     };
 
@@ -386,6 +412,7 @@ export default function AdminProductsPage() {
                 <th className="p-3.5">Product</th>
                 <th className="p-3.5">Category</th>
                 <th className="p-3.5">Price</th>
+                <th className="p-3.5">Colors</th>
                 <th className="p-3.5">Shipping</th>
                 <th className="p-3.5">Material</th>
                 <th className="p-3.5">Stock</th>
@@ -405,6 +432,14 @@ export default function AdminProductsPage() {
                 const primary = imgList[0] || '';
                 const isDragging = draggedIndex === index;
                 const isDragOver = dragOverIndex === index && draggedIndex !== index;
+
+                // Parse Colors for table preview
+                let pColors: string[] = [];
+                try {
+                  pColors = typeof p.colors === 'string' ? JSON.parse(p.colors) : (Array.isArray(p.colors) ? p.colors : []);
+                } catch (e) {
+                  pColors = [];
+                }
 
                 return (
                   <tr
@@ -473,6 +508,28 @@ export default function AdminProductsPage() {
                     </td>
                     <td className="p-3.5">{p.category?.name || 'Category'}</td>
                     <td className="p-3.5 font-bold text-tech-accent">₹{p.price}</td>
+                    <td className="p-3.5">
+                      {pColors.length === 0 ? (
+                        <span className="text-slate-500">None</span>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          {pColors.slice(0, 4).map((c, ci) => {
+                            const style = getFilamentColorStyle(c);
+                            return (
+                              <span
+                                key={ci}
+                                title={c}
+                                className="w-3 h-3 rounded-full border border-slate-700 shrink-0"
+                                style={{ background: style.background, borderColor: style.border }}
+                              />
+                            );
+                          })}
+                          {pColors.length > 4 && (
+                            <span className="text-[10px] text-slate-400">+{pColors.length - 4}</span>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td className="p-3.5">
                       {p.shippingFee && p.shippingFee > 0 ? (
                         <span className="text-amber-300 font-bold">₹{p.shippingFee}</span>
@@ -713,10 +770,148 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Section 3: Descriptions */}
+              {/* Section 3: Color Palette Panel */}
+              <div className="space-y-3 bg-tech-bg/50 p-4 rounded-xl border border-tech-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-tech-border/80 pb-2.5">
+                  <div>
+                    <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider flex items-center gap-1.5">
+                      <Palette className="w-3.5 h-3.5 text-tech-accent" />
+                      <span>3. Available Filament Color Options</span>
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Choose which filament colors customers can select when buying this product.
+                    </p>
+                  </div>
+
+                  {/* Preset Buttons */}
+                  <div className="flex items-center gap-1.5 text-[11px] font-mono">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const common = ['Matte Black', 'Pure White', 'Stealth Grey', 'Silk Gold', 'Fire Red', 'Royal Blue'];
+                        setSelectedColors(Array.from(new Set([...selectedColors, ...common])));
+                      }}
+                      className="px-2 py-1 bg-tech-card hover:bg-tech-card/80 border border-tech-border text-slate-300 rounded text-[10px] transition-colors"
+                    >
+                      + Common
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedColors(STANDARD_FILAMENT_COLORS.map((c) => c.name))}
+                      className="px-2 py-1 bg-tech-card hover:bg-tech-card/80 border border-tech-border text-tech-accent rounded text-[10px] transition-colors"
+                    >
+                      Select All
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedColors([])}
+                      className="px-2 py-1 bg-tech-card hover:bg-rose-500/20 border border-tech-border text-rose-400 rounded text-[10px] transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                {/* Standard Filament Swatches Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1 max-h-52 overflow-y-auto pr-1">
+                  {STANDARD_FILAMENT_COLORS.map((color) => {
+                    const isSelected = selectedColors.includes(color.name);
+                    return (
+                      <button
+                        key={color.name}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedColors(selectedColors.filter((c) => c !== color.name));
+                          } else {
+                            setSelectedColors([...selectedColors, color.name]);
+                          }
+                        }}
+                        className={`px-2.5 py-2 rounded-lg border text-left flex items-center gap-2 transition-all ${
+                          isSelected
+                            ? 'bg-tech-accent/15 border-tech-accent text-white shadow-sm ring-1 ring-tech-accent/50 font-semibold'
+                            : 'bg-tech-card border-tech-border text-slate-400 hover:border-slate-500 hover:text-slate-200'
+                        }`}
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full border border-slate-700 shrink-0 shadow-sm flex items-center justify-center"
+                          style={{ background: color.hex, borderColor: color.border }}
+                        >
+                          {isSelected && (
+                            <Check className={`w-2.5 h-2.5 ${color.isDark ? 'text-white' : 'text-black'}`} />
+                          )}
+                        </span>
+                        <span className="text-[11px] font-mono truncate">{color.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Color Input */}
+                <div className="pt-2 border-t border-tech-border/60">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Add custom color (e.g. Silk Rose Gold, Marble PLA)..."
+                      value={customColorInput}
+                      onChange={(e) => setCustomColorInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomColor();
+                        }
+                      }}
+                      className="flex-1 bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomColor}
+                      className="px-3 py-2 bg-tech-card border border-tech-border hover:border-tech-accent text-slate-200 hover:text-white rounded-lg text-xs font-mono font-bold transition-all shrink-0"
+                    >
+                      + Add Color
+                    </button>
+                  </div>
+                </div>
+
+                {/* Selected Colors Chips Preview */}
+                {selectedColors.length > 0 && (
+                  <div className="pt-2">
+                    <div className="text-[10px] font-mono text-slate-400 mb-1.5 flex items-center justify-between">
+                      <span>Active for Product ({selectedColors.length} colors):</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedColors.map((colorName) => {
+                        const style = getFilamentColorStyle(colorName);
+                        return (
+                          <span
+                            key={colorName}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-tech-card border border-tech-accent/40 text-white text-[11px] font-mono shadow-sm"
+                          >
+                            <span
+                              className="w-2.5 h-2.5 rounded-full border border-slate-700 shrink-0"
+                              style={{ background: style.background, borderColor: style.border }}
+                            />
+                            <span>{colorName}</span>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedColors(selectedColors.filter((c) => c !== colorName))}
+                              className="hover:text-rose-400 text-slate-400 ml-0.5"
+                              title="Remove"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 4: Descriptions */}
               <div className="space-y-3 bg-tech-bg/50 p-4 rounded-xl border border-tech-border">
                 <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
-                  3. Product Descriptions
+                  4. Product Descriptions
                 </h4>
 
                 <div>
@@ -743,10 +938,10 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Section 4: Feature Toggles */}
+              {/* Section 5: Feature Toggles */}
               <div className="p-4 bg-tech-bg/50 rounded-xl border border-tech-border space-y-3">
                 <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
-                  4. Visibility & Feature Options
+                  5. Visibility & Feature Options
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
@@ -792,10 +987,10 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              {/* Section 5: Image Upload & Management UI */}
+              {/* Section 6: Image Upload & Management UI */}
               <div className="space-y-3 bg-tech-bg/50 p-4 rounded-xl border border-tech-border">
                 <h4 className="text-xs font-mono font-bold text-tech-accent uppercase tracking-wider">
-                  5. Product Photos & Media
+                  6. Product Photos & Media
                 </h4>
 
                 {uploadError && (
