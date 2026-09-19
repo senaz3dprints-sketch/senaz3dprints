@@ -58,11 +58,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/gallery" className="hover:text-tech-accent transition-colors">
-                  Gallery & Showcase
-                </Link>
-              </li>
-              <li>
                 <Link href="/about" className="hover:text-tech-accent transition-colors">
                   About SenAZ
                 </Link>
