@@ -124,6 +124,14 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Product ID required.' }, { status: 400 });
     }
 
+    if (data.slug) {
+      data.slug = data.slug
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    } else if (data.name && !data.slug) {
+      // Keep existing slug if not provided, or generate if needed
+    }
     if (data.price !== undefined) data.price = parseFloat(data.price);
     if (data.compareAtPrice !== undefined) data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
     if (data.shippingFee !== undefined) data.shippingFee = data.shippingFee !== '' && data.shippingFee !== null ? parseFloat(data.shippingFee) : 0;
