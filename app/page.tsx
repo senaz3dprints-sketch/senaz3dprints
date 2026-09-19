@@ -305,8 +305,12 @@ export default async function HomePage() {
                 href={`/shop?category=${cat.slug}`}
                 className="group relative rounded-xl bg-tech-bg border border-tech-border hover:border-tech-accent/50 p-4 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 shadow-md"
               >
-                <div className="w-12 h-12 rounded-lg bg-tech-card border border-tech-border flex items-center justify-center mb-3 group-hover:border-tech-accent transition-colors">
-                  <Printer className="w-6 h-6 text-tech-accent group-hover:scale-110 transition-transform" />
+                <div className="w-12 h-12 rounded-xl bg-tech-card border border-tech-border overflow-hidden flex items-center justify-center mb-3 group-hover:border-tech-accent transition-colors">
+                  {cat.image ? (
+                    <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                  ) : (
+                    <Printer className="w-6 h-6 text-tech-accent group-hover:scale-110 transition-transform" />
+                  )}
                 </div>
                 <h3 className="font-semibold text-sm text-white group-hover:text-tech-accent transition-colors">
                   {cat.name}

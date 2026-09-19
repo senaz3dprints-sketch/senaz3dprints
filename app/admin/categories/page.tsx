@@ -15,7 +15,10 @@ import {
   Layers,
   Sparkles,
   X,
+  Upload,
   Image as ImageIcon,
+  Loader2,
+  Link2,
 } from 'lucide-react';
 
 interface CategoryItem {
@@ -44,6 +47,9 @@ export default function AdminCategoriesPage() {
   const [image, setImage] = useState('');
   const [displayOrder, setDisplayOrder] = useState<number>(0);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showUrlInput, setShowUrlInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
@@ -74,6 +80,8 @@ export default function AdminCategoriesPage() {
     setImage('');
     setDisplayOrder(categories.length);
     setError(null);
+    setUploadError(null);
+    setShowUrlInput(false);
     setIsModalOpen(true);
   };
 
@@ -85,6 +93,8 @@ export default function AdminCategoriesPage() {
     setImage(cat.image || '');
     setDisplayOrder(cat.displayOrder || 0);
     setError(null);
+    setUploadError(null);
+    setShowUrlInput(!!(cat.image && (cat.image.startsWith('http://') || cat.image.startsWith('https://'))));
     setIsModalOpen(true);
   };
 
@@ -97,6 +107,93 @@ export default function AdminCategoriesPage() {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '');
       setSlug(generatedSlug);
+    }
+  };
+
+  // Client-side image compression and processing
+  const processImageFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataResult = e.target?.result as string;
+        if (!dataResult) return resolve('');
+
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1200;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimized = canvas.toDataURL('image/jpeg', 0.88);
+            resolve(optimized);
+          } else {
+            resolve(dataResult);
+          }
+        };
+        img.onerror = () => resolve(dataResult);
+        img.src = dataResult;
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    setUploadingImage(true);
+    setUploadError(null);
+
+    try {
+      const optimizedDataUrl = await processImageFile(file);
+      if (optimizedDataUrl) {
+        setImage(optimizedDataUrl);
+      }
+    } catch (err) {
+      console.error('Category image processing error:', err);
+      setUploadError('Could not process image file. Please try a different image.');
+    } finally {
+      setUploadingImage(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  const handleDropImage = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.dataTransfer.files || !e.dataTransfer.files[0]) return;
+    const file = e.dataTransfer.files[0];
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please drop a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+    setUploadingImage(true);
+    setUploadError(null);
+
+    try {
+      const optimizedDataUrl = await processImageFile(file);
+      if (optimizedDataUrl) {
+        setImage(optimizedDataUrl);
+      }
+    } catch (err) {
+      setUploadError('Could not process dropped image file.');
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -188,7 +285,7 @@ export default function AdminCategoriesPage() {
             <span>Category Management</span>
           </h1>
           <p className="text-xs text-slate-400 font-mono">
-            Organize catalog classifications, store navigation filters, and storefront sections
+            Organize catalog classifications, upload cover artwork, and configure storefront sections
           </p>
         </div>
 
@@ -220,8 +317,8 @@ export default function AdminCategoriesPage() {
           <div className="text-2xl font-bold font-mono text-tech-accent">{totalProducts}</div>
         </div>
         <div className="p-4 rounded-xl bg-tech-card border border-tech-border space-y-1">
-          <span className="text-xs font-mono text-slate-400">Store Filter Ready</span>
-          <div className="text-2xl font-bold font-mono text-emerald-400">Active</div>
+          <span className="text-xs font-mono text-slate-400">Cover Artwork Support</span>
+          <div className="text-2xl font-bold font-mono text-emerald-400">Active (Upload & URL)</div>
         </div>
       </div>
 
@@ -269,11 +366,11 @@ export default function AdminCategoriesPage() {
                 filteredCategories.map((cat) => (
                   <tr key={cat.id} className="hover:bg-tech-bg/50 transition-colors">
                     <td className="p-3.5">
-                      <div className="w-10 h-10 rounded-lg bg-tech-bg border border-tech-border overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-12 h-12 rounded-xl bg-tech-bg border border-tech-border overflow-hidden flex items-center justify-center shrink-0 shadow-inner">
                         {cat.image ? (
                           <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
                         ) : (
-                          <Layers className="w-4 h-4 text-slate-500" />
+                          <Layers className="w-5 h-5 text-slate-500" />
                         )}
                       </div>
                     </td>
@@ -322,10 +419,10 @@ export default function AdminCategoriesPage() {
         </div>
       </div>
 
-      {/* CREATE / EDIT CATEGORY MODAL */}
+      {/* CREATE / EDIT CATEGORY MODAL WITH IMAGE UPLOAD */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative w-full max-w-md bg-tech-card border border-tech-border rounded-2xl p-6 text-slate-100 shadow-2xl space-y-4">
+          <div className="relative w-full max-w-lg bg-tech-card border border-tech-border rounded-2xl p-6 text-slate-100 shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-tech-border pb-3">
               <h3 className="font-bold text-white text-base font-sans flex items-center gap-2">
                 <FolderTree className="w-4 h-4 text-tech-accent" />
@@ -333,7 +430,7 @@ export default function AdminCategoriesPage() {
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 rounded hover:bg-tech-bg text-slate-400 hover:text-white"
+                className="p-1 rounded hover:bg-tech-bg text-slate-400 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -356,7 +453,7 @@ export default function AdminCategoriesPage() {
                   required
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="e.g. Personalized Keychains, Figures, Lamps"
+                  placeholder="e.g. Keychains, Figures, Lamps, Decor"
                   className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
                 />
               </div>
@@ -370,11 +467,11 @@ export default function AdminCategoriesPage() {
                   required
                   value={slug}
                   onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                  placeholder="e.g. personalized-keychains"
+                  placeholder="e.g. keychains"
                   className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
                 />
                 <span className="text-[10px] text-slate-500 font-mono mt-0.5 block">
-                  Accessible at /shop?category={slug || '...'}
+                  Storefront URL: /shop?category={slug || '...'}
                 </span>
               </div>
 
@@ -391,17 +488,106 @@ export default function AdminCategoriesPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-mono text-slate-300 mb-1">
-                  Cover Image URL (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  placeholder="https://... or /images/..."
-                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
-                />
+              {/* CATEGORY IMAGE UPLOAD SECTION */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-mono text-slate-300">
+                    Category Cover Image
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowUrlInput(!showUrlInput)}
+                    className="text-[11px] font-mono text-tech-accent hover:underline flex items-center gap-1"
+                  >
+                    <Link2 className="w-3 h-3" />
+                    <span>{showUrlInput ? 'Switch to Upload' : 'Use Direct URL'}</span>
+                  </button>
+                </div>
+
+                {/* Direct Image File Upload Box */}
+                {!showUrlInput ? (
+                  <div className="space-y-3">
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={handleDropImage}
+                      className="border-2 border-dashed border-tech-border hover:border-tech-accent/60 bg-tech-bg/60 rounded-xl p-4 text-center transition-colors relative cursor-pointer group"
+                    >
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp, image/gif"
+                        onChange={handleImageUpload}
+                        disabled={uploadingImage}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-10"
+                      />
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        {uploadingImage ? (
+                          <>
+                            <Loader2 className="w-6 h-6 text-tech-accent animate-spin" />
+                            <span className="text-xs font-mono text-slate-300">
+                              Optimizing & uploading image...
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-10 h-10 rounded-full bg-tech-card border border-tech-border flex items-center justify-center group-hover:scale-105 transition-transform">
+                              <Upload className="w-5 h-5 text-tech-accent" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-white font-sans">
+                                Click to upload or drag & drop cover image
+                              </p>
+                              <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                PNG, JPG, WebP (auto-optimized for web)
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {uploadError && (
+                      <p className="text-[11px] font-mono text-rose-400 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3 shrink-0" />
+                        <span>{uploadError}</span>
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      value={image}
+                      onChange={(e) => setImage(e.target.value)}
+                      placeholder="https://... or /images/..."
+                      className="w-full bg-tech-bg border border-tech-border rounded-lg px-3.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-tech-accent"
+                    />
+                  </div>
+                )}
+
+                {/* Image Live Preview */}
+                {image && (
+                  <div className="relative mt-2 p-2 rounded-xl bg-tech-bg border border-tech-border flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-lg overflow-hidden border border-tech-border bg-black/40 shrink-0">
+                      <img src={image} alt="Category preview" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-xs font-mono text-slate-200 block truncate font-semibold">
+                        Image Attached
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Ready for storefront
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setImage('')}
+                      className="p-1.5 rounded-lg bg-tech-card hover:bg-rose-950/50 text-slate-400 hover:text-rose-400 border border-tech-border transition-colors"
+                      title="Remove image"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -419,7 +605,7 @@ export default function AdminCategoriesPage() {
                 </span>
               </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-tech-border">
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-tech-border">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -429,10 +615,11 @@ export default function AdminCategoriesPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving}
-                  className="px-4 py-2 rounded-lg bg-tech-accent text-tech-bg font-bold text-xs font-mono hover:bg-tech-accent/90 disabled:opacity-50 transition-colors"
+                  disabled={saving || uploadingImage}
+                  className="px-4 py-2 rounded-lg bg-tech-accent text-tech-bg font-bold text-xs font-mono hover:bg-tech-accent/90 disabled:opacity-50 transition-colors flex items-center gap-1.5 shadow-md shadow-tech-accent/10"
                 >
-                  {saving ? 'Saving...' : editingCategory ? 'Save Changes' : 'Create Category'}
+                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{saving ? 'Saving...' : editingCategory ? 'Save Changes' : 'Create Category'}</span>
                 </button>
               </div>
             </form>
