@@ -65,7 +65,7 @@ export default function HeroSection({
           x5-playsinline="true"
           disablePictureInPicture
           disableRemotePlayback
-          preload="auto"
+          preload="none"
           poster="/images/senaz_3d_printer_hero.jpg"
           className="w-full h-full object-cover object-[55%_45%] sm:object-center transition-opacity duration-700 opacity-90"
         >

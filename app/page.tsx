@@ -17,40 +17,44 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function HomePage() {
-  let products: any[] = [];
-  let categories: any[] = [];
-
-  try {
-    products = await db.product.findMany({
+  const [products, categories, siteContentRecord] = await Promise.all([
+    db.product.findMany({
       where: { isPublished: true },
-      include: { category: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        shortDescription: true,
+        price: true,
+        compareAtPrice: true,
+        images: true,
+        material: true,
+        colors: true,
+        isFeatured: true,
+        isNew: true,
+        personalizationEnabled: true,
+        shippingFee: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
-      take: 6,
-    });
-  } catch (e) {
-    console.error('HomePage products DB fetch error:', e);
-  }
-
-  try {
-    categories = await db.category.findMany({
+      take: 8,
+    }).catch(() => []),
+    db.category.findMany({
       orderBy: { displayOrder: 'asc' },
-    });
-  } catch (e) {
-    console.error('HomePage categories DB fetch error:', e);
-  }
-
-  let siteContentRecord = null;
-  try {
-    siteContentRecord = await db.siteContent.findUnique({
+    }).catch(() => []),
+    db.siteContent.findUnique({
       where: { key: 'homepage' },
-    });
-  } catch (e) {
-    console.error('HomePage content DB fetch error:', e);
-  }
+    }).catch(() => null),
+  ]);
   let content = {
     heroTitle: 'Made to Print. Built for You.',
     heroSubtitle:

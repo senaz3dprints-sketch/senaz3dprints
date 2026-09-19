@@ -18,6 +18,8 @@ model Category {
   products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([displayOrder])
 }
 
 model Product {
@@ -48,6 +50,10 @@ model Product {
   displayOrder          Int      @default(0)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+
+  @@index([isPublished, displayOrder])
+  @@index([categoryId])
+  @@index([isPublished, categoryId])
 }
 
 model Order {

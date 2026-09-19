@@ -2,26 +2,42 @@ import React, { Suspense } from 'react';
 import { db } from '@/lib/db';
 import ShopClient from './ShopClient';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function ShopPage() {
-  let categories: any[] = [];
-  let products: any[] = [];
-
-  try {
-    categories = await db.category.findMany({
+  const [categories, products] = await Promise.all([
+    db.category.findMany({
       orderBy: { displayOrder: 'asc' },
-    });
-
-    products = await db.product.findMany({
+    }).catch(() => []),
+    db.product.findMany({
       where: { isPublished: true },
-      include: { category: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        shortDescription: true,
+        price: true,
+        compareAtPrice: true,
+        images: true,
+        material: true,
+        colors: true,
+        isFeatured: true,
+        isNew: true,
+        personalizationEnabled: true,
+        shippingFee: true,
+        categoryId: true,
+        createdAt: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
-    });
-  } catch (e) {
-    console.error('ShopPage DB fetch error:', e);
-  }
+    }).catch(() => []),
+  ]);
 
   return (
     <Suspense fallback={<div className="p-12 text-center text-xs font-mono text-slate-400">Loading catalog...</div>}>
