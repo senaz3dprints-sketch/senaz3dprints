@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import HeroSection from '@/components/HeroSection';
 import ProductCard from '@/components/ProductCard';
-import PersonalizationPreview from '@/components/PersonalizationPreview';
 import {
   Upload,
   Layers,
@@ -176,15 +175,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. PERSONALISATION FEATURE SPOTLIGHT */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <PersonalizationPreview
-          initialText="SenAZ 3D"
-          showHeroBanner={true}
-        />
-      </section>
-
-      {/* 5. CUSTOM 3D PRINTING SERVICE BANNER */}
+      {/* 4. CUSTOM 3D PRINTING SERVICE BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-950 via-tech-card to-tech-bg border border-tech-accent/30 p-8 sm:p-12 text-slate-100 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-2xl">
           <div className="space-y-4 max-w-2xl text-left">

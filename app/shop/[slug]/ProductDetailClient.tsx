@@ -16,9 +16,6 @@ import {
   Palette,
   Check,
   Shield,
-  Upload,
-  X,
-  FileText,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
@@ -78,8 +75,6 @@ export default function ProductDetailClient({
   const [personalizedText, setPersonalizedText] = useState('YOUR NAME');
   const [selectedBaseColor, setSelectedBaseColor] = useState(BASE_COLORS[0]);
   const [selectedTextColor, setSelectedTextColor] = useState(TEXT_COLORS[0]);
-  const [uploadedPhoto, setUploadedPhoto] = useState<{ name: string; previewUrl?: string } | null>(null);
-  const [photoStyle, setPhotoStyle] = useState<'EMBOSS' | 'FULL_COLOR' | 'LITHOPHANE'>('EMBOSS');
   const [quantity, setQuantity] = useState(1);
 
   const discountPercent =
@@ -87,21 +82,12 @@ export default function ProductDetailClient({
       ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
       : null;
 
-  const displayText = personalizedText.trim() ? personalizedText.toUpperCase() : (uploadedPhoto?.previewUrl ? '' : 'YOUR NAME');
+  const displayText = personalizedText.trim() ? personalizedText.toUpperCase() : 'YOUR NAME';
 
   const handleAddToCart = () => {
     const finalColor = isPersonalizationActive
       ? `${selectedBaseColor.name} / ${selectedTextColor.name}`
       : selectedColor;
-
-    const customDesc = isPersonalizationActive
-      ? [
-          displayText ? `Name: ${displayText}` : '',
-          uploadedPhoto ? `Image: ${uploadedPhoto.name} (${photoStyle})` : '',
-        ]
-          .filter(Boolean)
-          .join(' • ')
-      : undefined;
 
     addToCart({
       productId: product.id,
@@ -113,24 +99,15 @@ export default function ProductDetailClient({
       quantity,
       color: finalColor,
       size: selectedSize,
-      personalizedText: customDesc || undefined,
+      personalizedText: isPersonalizationActive && personalizedText.trim() ? personalizedText.trim().toUpperCase() : undefined,
     });
   };
-
-  const customTextForWhatsapp = isPersonalizationActive
-    ? [
-        displayText ? `"${displayText}"` : '',
-        uploadedPhoto ? `Attached Image: ${uploadedPhoto.name} [3D Style: ${photoStyle}]` : '',
-      ]
-        .filter(Boolean)
-        .join(' + ')
-    : undefined;
 
   const whatsappInquiryUrl = generateProductInquiryUrl(product.name, product.price, {
     quantity,
     color: isPersonalizationActive ? `${selectedBaseColor.name} + ${selectedTextColor.name}` : selectedColor,
     size: selectedSize,
-    personalizedText: customTextForWhatsapp,
+    personalizedText: isPersonalizationActive && personalizedText.trim() ? personalizedText.trim().toUpperCase() : undefined,
   });
 
   // Parse Images JSON for gallery fallback
@@ -247,260 +224,54 @@ export default function ProductDetailClient({
             {product.fullDescription || product.shortDescription}
           </p>
 
-          {/* ══════════════════════════════════════════════════════════════ */}
-          {/* 🌟 IN-PAGE 3D PERSONALISATION CUSTOMIZER STUDIO 🌟 */}
-          {/* ══════════════════════════════════════════════════════════════ */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-tech-card border border-tech-border space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-tech-border/80 pb-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-tech-accent animate-pulse" />
-                <span className="text-xs sm:text-sm font-bold text-white font-sans">
-                  Custom 3D Personalisation & Name Engraving
-                </span>
-              </div>
-
-              {!isPersonalizationDefault && (
-                <button
-                  type="button"
-                  onClick={() => setIsPersonalizationActive(!isPersonalizationActive)}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-mono border transition-all ${
-                    isPersonalizationActive
-                      ? 'bg-tech-accent text-tech-bg font-bold border-tech-accent'
-                      : 'bg-tech-bg text-slate-400 border-tech-border hover:text-white'
-                  }`}
-                >
-                  {isPersonalizationActive ? 'Enabled (Free)' : '+ Add Custom Name'}
-                </button>
-              )}
-
-              {isPersonalizationDefault && (
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                  Included (Free)
-                </span>
-              )}
-            </div>
-
-            {isPersonalizationActive && (
-              <div className="space-y-4 animate-in fade-in duration-200">
-                {/* 1. Live 3D Embossed Preview Plate */}
-                <div className="relative w-full min-h-[140px] bg-gradient-to-b from-[#0b0f19] to-[#04060a] rounded-xl border border-tech-border flex items-center justify-center p-4 overflow-hidden select-none shadow-inner">
-                  <div className="absolute inset-0 bg-grid-pattern opacity-15 pointer-events-none" />
-                  <div className="absolute top-0 inset-x-1/4 h-16 bg-tech-accent/15 rounded-full blur-2xl pointer-events-none" />
-
-                  {/* Keychain / 3D Tag Embossed Assembly */}
-                  <div
-                    className="relative flex items-center rounded-xl transition-all duration-300 border shadow-[0_16px_32px_-8px_rgba(0,0,0,0.9),0_4px_8px_rgba(0,0,0,0.6)]"
-                    style={{
-                      backgroundColor: selectedBaseColor.hex,
-                      borderColor: selectedBaseColor.border,
-                    }}
-                  >
-                    {/* Keyring Tab */}
-                    <div
-                      className="w-7 h-10 -ml-1.5 rounded-l-xl flex items-center justify-center border-y border-l shrink-0"
-                      style={{
-                        backgroundColor: selectedBaseColor.hex,
-                        borderColor: selectedBaseColor.border,
-                      }}
-                    >
-                      <div className="w-3.5 h-3.5 rounded-full bg-[#05080e] border border-slate-400 shadow-inner" />
-                    </div>
-
-                    {/* Main Embossed Plate */}
-                    <div className="relative px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-center gap-2.5 min-w-[120px] max-w-[320px]">
-                      {/* Converted 3D Picture Emblem */}
-                      {uploadedPhoto?.previewUrl && (
-                        <div
-                          className={`relative shrink-0 rounded-lg overflow-hidden border transition-all duration-300 ${
-                            displayText ? 'w-8 h-8 sm:w-10 sm:h-10' : 'w-14 h-14 my-0.5'
-                          }`}
-                          style={{
-                            borderColor: selectedTextColor.hex,
-                            backgroundColor: selectedBaseColor.hex,
-                            boxShadow: `0 2px 6px rgba(0,0,0,0.8), 0 0 8px ${selectedTextColor.glow}`,
-                          }}
-                        >
-                          {/* 3D Print Layer Lines */}
-                          <div
-                            className="absolute inset-0 z-20 pointer-events-none opacity-25"
-                            style={{
-                              backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.15) 1px, rgba(255,255,255,0.15) 2px)`,
-                            }}
-                          />
-
-                          {photoStyle === 'EMBOSS' && (
-                            <div className="relative w-full h-full flex items-center justify-center">
-                              <img
-                                src={uploadedPhoto.previewUrl}
-                                alt="3D Converted Photo"
-                                className="w-full h-full object-cover select-none"
-                                style={{
-                                  filter: `grayscale(100%) contrast(170%) drop-shadow(0 1px 1px rgba(0,0,0,0.8))`,
-                                }}
-                              />
-                              <div
-                                className="absolute inset-0 mix-blend-multiply opacity-85 pointer-events-none"
-                                style={{ backgroundColor: selectedTextColor.hex }}
-                              />
-                            </div>
-                          )}
-
-                          {photoStyle === 'FULL_COLOR' && (
-                            <div className="relative w-full h-full">
-                              <img
-                                src={uploadedPhoto.previewUrl}
-                                alt="3D Photo"
-                                className="w-full h-full object-cover select-none"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none" />
-                            </div>
-                          )}
-
-                          {photoStyle === 'LITHOPHANE' && (
-                            <div className="relative w-full h-full bg-amber-950/40 flex items-center justify-center">
-                              <img
-                                src={uploadedPhoto.previewUrl}
-                                alt="Lithophane"
-                                className="w-full h-full object-cover select-none mix-blend-screen opacity-90"
-                                style={{
-                                  filter: `grayscale(100%) contrast(200%) brightness(120%)`,
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {displayText && (
-                        <span
-                          className="font-black font-mono tracking-widest text-sm sm:text-lg md:text-xl uppercase select-none drop-shadow-md truncate relative z-10 transition-colors duration-200"
-                          style={{
-                            color: selectedTextColor.hex,
-                            textShadow: `
-                              0 1px 0 rgba(255, 255, 255, 0.4),
-                              0 2px 0 rgba(0, 0, 0, 0.6),
-                              0 4px 6px rgba(0, 0, 0, 0.9),
-                              0 0 12px ${selectedTextColor.glow}
-                            `,
-                          }}
-                        >
-                          {displayText}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <span className="absolute bottom-1.5 right-3 text-[9px] font-mono text-slate-500">
-                    {uploadedPhoto ? 'Converted 3D Image Active' : 'Live Dual-Extrusion 3D Preview'}
+          {/* Custom Name / Personalization Section (if enabled) */}
+          {(isPersonalizationDefault || isPersonalizationActive) && (
+            <div className="p-4 rounded-xl bg-tech-card border border-tech-border space-y-3">
+              <div className="flex items-center justify-between border-b border-tech-border/80 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-tech-accent" />
+                  <span className="text-xs sm:text-sm font-bold text-white font-sans">
+                    Custom Name & Dual-Color Inscription
                   </span>
                 </div>
+                {!isPersonalizationDefault && (
+                  <button
+                    type="button"
+                    onClick={() => setIsPersonalizationActive(!isPersonalizationActive)}
+                    className="text-[11px] font-mono text-rose-400 hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
 
-                {/* 2. Text Input & Optional Picture Upload Side-by-Side */}
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                  <div className="sm:col-span-7 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
-                        <Type className="w-3.5 h-3.5 text-tech-accent" />
-                        <span>Custom Text</span>
-                      </label>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {personalizedText.length}/14 chars
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      maxLength={14}
-                      value={personalizedText}
-                      onChange={(e) => setPersonalizedText(e.target.value)}
-                      placeholder="e.g. SENAZ 3D"
-                      className="w-full bg-tech-bg border border-tech-border rounded-xl px-3.5 py-2 text-xs text-white font-mono tracking-wider focus:outline-none focus:border-tech-accent"
-                    />
-                  </div>
-
-                  {/* Photo / Logo Upload */}
-                  <div className="sm:col-span-5 space-y-1">
-                    <label className="text-xs font-mono text-slate-300 font-semibold flex items-center justify-between">
-                      <span className="flex items-center gap-1.5">
-                        <Upload className="w-3.5 h-3.5 text-tech-accent" />
-                        <span>Add Picture</span>
-                      </span>
-                      <span className="text-[9px] text-cyan-400 font-mono">3D Auto</span>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
+                      <Type className="w-3.5 h-3.5 text-tech-accent" />
+                      <span>Custom Inscribed Name / Text</span>
                     </label>
-
-                    {!uploadedPhoto ? (
-                      <label className="border border-dashed border-tech-border hover:border-tech-accent/80 bg-tech-bg rounded-xl px-3 py-2 flex items-center justify-center gap-2 cursor-pointer transition-colors text-slate-300 hover:text-white">
-                        <Upload className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-[11px] font-mono">Upload Photo</span>
-                        <input
-                          type="file"
-                          accept=".png,.jpg,.jpeg,.webp,.svg"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const previewUrl = URL.createObjectURL(file);
-                              setUploadedPhoto({ name: file.name, previewUrl });
-                            }
-                          }}
-                        />
-                      </label>
-                    ) : (
-                      <div className="bg-tech-bg border border-emerald-500/40 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1.5">
-                        <div className="flex items-center gap-1.5 overflow-hidden">
-                          {uploadedPhoto.previewUrl && (
-                            <img
-                              src={uploadedPhoto.previewUrl}
-                              alt="Upload"
-                              className="w-5 h-5 rounded object-cover border border-slate-700 shrink-0"
-                            />
-                          )}
-                          <span className="text-[10px] text-emerald-400 truncate font-mono">
-                            {uploadedPhoto.name}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (uploadedPhoto.previewUrl) URL.revokeObjectURL(uploadedPhoto.previewUrl);
-                            setUploadedPhoto(null);
-                          }}
-                          className="text-slate-400 hover:text-rose-400 p-0.5"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    )}
+                    <span className="text-[10px] font-mono text-slate-400">
+                      {personalizedText.length}/14 chars
+                    </span>
                   </div>
+                  <input
+                    type="text"
+                    maxLength={14}
+                    value={personalizedText}
+                    onChange={(e) => setPersonalizedText(e.target.value)}
+                    placeholder="e.g. SENAZ 3D"
+                    className="w-full bg-tech-bg border border-tech-border rounded-xl px-3.5 py-2 text-xs text-white font-mono tracking-wider focus:outline-none focus:border-tech-accent"
+                  />
                 </div>
 
-                {/* Picture 3D Mode Selector if Photo Attached */}
-                {uploadedPhoto && (
-                  <div className="flex items-center gap-1.5 pt-0.5">
-                    <span className="text-[10px] font-mono text-slate-400 shrink-0">3D Render:</span>
-                    {(['EMBOSS', 'FULL_COLOR', 'LITHOPHANE'] as const).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => setPhotoStyle(mode)}
-                        className={`flex-1 py-1 rounded text-[10px] font-mono border transition-all ${
-                          photoStyle === mode
-                            ? 'bg-tech-accent text-tech-bg font-bold border-tech-accent'
-                            : 'bg-tech-card border-tech-border text-slate-300 hover:text-white'
-                        }`}
-                      >
-                        {mode === 'EMBOSS' ? '⚡ Emboss' : mode === 'FULL_COLOR' ? '🎨 Color' : '💡 Lithophane'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* 3. Base Color & Raised Text Color Selectors */}
+                {/* Base Color & Text Layer Color Selectors */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {/* Base Plate Color */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
                       <Layers className="w-3 h-3 text-tech-accent" />
-                      <span>Base Layer: <strong className="text-white">{selectedBaseColor.name.split(' ')[1] || selectedBaseColor.name}</strong></span>
+                      <span>Base: <strong className="text-white">{selectedBaseColor.name.split(' ')[1] || selectedBaseColor.name}</strong></span>
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {BASE_COLORS.map((base) => (
@@ -524,11 +295,10 @@ export default function ProductDetailClient({
                     </div>
                   </div>
 
-                  {/* Raised Text Color */}
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
                       <Palette className="w-3 h-3 text-tech-accent" />
-                      <span>Text Layer: <strong className="text-white">{selectedTextColor.name.split(' ')[1] || selectedTextColor.name}</strong></span>
+                      <span>Text: <strong className="text-white">{selectedTextColor.name.split(' ')[1] || selectedTextColor.name}</strong></span>
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {TEXT_COLORS.map((tc) => (
@@ -553,8 +323,20 @@ export default function ProductDetailClient({
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* If personalization is optional and not active */}
+          {!isPersonalizationDefault && !isPersonalizationActive && (
+            <button
+              type="button"
+              onClick={() => setIsPersonalizationActive(true)}
+              className="w-full py-2 px-3 rounded-xl bg-tech-card/60 hover:bg-tech-card border border-tech-border hover:border-tech-accent/60 text-xs font-mono text-slate-300 hover:text-white flex items-center justify-center gap-2 transition-all"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-tech-accent" />
+              <span>+ Add Custom Inscribed Name / Text (Free)</span>
+            </button>
+          )}
 
           {/* Standard Color Selector (if personalization not active and product has colors) */}
           {!isPersonalizationActive && colorList.length > 0 && (
