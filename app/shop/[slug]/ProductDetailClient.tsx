@@ -11,6 +11,7 @@ import {
   Sparkles,
   Layers,
   ChevronRight,
+  ChevronLeft,
   Info,
   Type,
   Palette,
@@ -76,11 +77,67 @@ export default function ProductDetailClient({
     ? JSON.parse(product.sizes || '[]')
     : [];
 
-  const [selectedImage, setSelectedImage] = useState(initialImageList[0]);
+  const imageList = initialImageList;
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
   const [selectedColor, setSelectedColor] = useState(
     colorList[0] || 'Default'
   );
   const [selectedSize, setSelectedSize] = useState(sizeList[0] || 'Standard');
+
+  // Swipe / Drag handling state
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+  const [mouseStartX, setMouseStartX] = useState<number | null>(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+
+  const minSwipeDistance = 40;
+
+  const nextImage = () => {
+    if (imageList.length <= 1) return;
+    setActiveImageIndex((prev) => (prev + 1) % imageList.length);
+  };
+
+  const prevImage = () => {
+    if (imageList.length <= 1) return;
+    setActiveImageIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEndX(null);
+    setTouchStartX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX === null || touchEndX === null) return;
+    const distance = touchStartX - touchEndX;
+    if (distance > minSwipeDistance) {
+      nextImage();
+    } else if (distance < -minSwipeDistance) {
+      prevImage();
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsMouseDown(true);
+    setMouseStartX(e.clientX);
+  };
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (!isMouseDown || mouseStartX === null) return;
+    const distance = mouseStartX - e.clientX;
+    if (distance > minSwipeDistance) {
+      nextImage();
+    } else if (distance < -minSwipeDistance) {
+      prevImage();
+    }
+    setIsMouseDown(false);
+    setMouseStartX(null);
+  };
 
   // Personalization state
   const isPersonalizationDefault = product.personalizationEnabled || product.customTextEnabled;
@@ -106,7 +163,7 @@ export default function ProductDetailClient({
       productId: product.id,
       slug: product.slug,
       name: product.name,
-      image: selectedImage,
+      image: imageList[activeImageIndex] || imageList[0],
       price: product.price,
       shippingFee: product.shippingFee || 0,
       quantity,
@@ -123,10 +180,8 @@ export default function ProductDetailClient({
     personalizedText: isPersonalizationActive && personalizedText.trim() ? personalizedText.trim().toUpperCase() : undefined,
   });
 
-  const imageList = initialImageList;
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12 select-none">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs font-mono text-slate-400">
         <Link href="/" className="hover:text-white transition-colors">
@@ -142,38 +197,112 @@ export default function ProductDetailClient({
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left Column: Image Gallery */}
+        {/* Left Column: Swipeable Image Gallery */}
         <div className="lg:col-span-6 space-y-4">
-          <div className="relative aspect-square w-full bg-tech-card rounded-2xl border border-tech-border overflow-hidden shadow-2xl">
-            <img
-              src={selectedImage}
-              alt={product.name}
-              className="w-full h-full object-cover transition-all duration-300"
-            />
-            {discountPercent && (
-              <span className="absolute top-4 left-4 bg-rose-500 text-white font-mono font-extrabold text-xs px-2.5 py-1 rounded shadow-lg">
-                -{discountPercent}% OFF
-              </span>
-            )}
-            {product.personalizationEnabled && (
-              <span className="absolute top-4 right-4 bg-tech-accent/90 text-tech-bg font-mono font-extrabold text-xs px-2.5 py-1 rounded shadow-lg flex items-center gap-1">
-                <Sparkles className="w-3 h-3" />
-                <span>Personalised</span>
-              </span>
+          <div
+            className="relative aspect-square w-full bg-tech-card rounded-2xl border border-tech-border overflow-hidden shadow-2xl group cursor-grab active:cursor-grabbing touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+          >
+            {/* Sliding Image Strip */}
+            <div
+              className="flex w-full h-full transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+            >
+              {imageList.map((img, idx) => (
+                <div key={idx} className="w-full h-full shrink-0 relative bg-tech-bg">
+                  <img
+                    src={img}
+                    alt={`${product.name} - Photo ${idx + 1}`}
+                    className="w-full h-full object-cover pointer-events-none"
+                    draggable={false}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Badges Top Left */}
+            <div className="absolute top-4 left-4 flex flex-col gap-2 z-10 pointer-events-none">
+              {discountPercent && (
+                <span className="bg-rose-500 text-white font-mono font-extrabold text-xs px-2.5 py-1 rounded shadow-lg">
+                  -{discountPercent}% OFF
+                </span>
+              )}
+              {product.personalizationEnabled && (
+                <span className="bg-tech-accent/90 text-tech-bg font-mono font-extrabold text-xs px-2.5 py-1 rounded shadow-lg flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  <span>Personalised</span>
+                </span>
+              )}
+            </div>
+
+            {/* Prev / Next Swipe Arrows (Visible when > 1 image) */}
+            {imageList.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    prevImage();
+                  }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-tech-bg/70 hover:bg-tech-card border border-tech-border text-slate-200 hover:text-white flex items-center justify-center transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl backdrop-blur-md z-10"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    nextImage();
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-tech-bg/70 hover:bg-tech-card border border-tech-border text-slate-200 hover:text-white flex items-center justify-center transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl backdrop-blur-md z-10"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                {/* Dots Pagination Indicator & Swipe Hint */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-tech-bg/80 border border-tech-border backdrop-blur-md z-10">
+                  {imageList.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveImageIndex(idx);
+                      }}
+                      className={`h-2 rounded-full transition-all ${
+                        activeImageIndex === idx
+                          ? 'w-6 bg-tech-accent shadow-sm'
+                          : 'w-2 bg-slate-600 hover:bg-slate-400'
+                      }`}
+                      aria-label={`Go to slide ${idx + 1}`}
+                    />
+                  ))}
+                  <span className="text-[10px] font-mono text-slate-400 ml-1">
+                    {activeImageIndex + 1}/{imageList.length}
+                  </span>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Thumbnails */}
+          {/* Synced Thumbnails Strip */}
           {imageList.length > 1 && (
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
               {imageList.map((img, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setSelectedImage(img)}
-                  className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
-                    selectedImage === img
-                      ? 'border-tech-accent scale-95 shadow-md shadow-tech-accent/20'
-                      : 'border-tech-border opacity-70 hover:opacity-100'
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 relative ${
+                    activeImageIndex === idx
+                      ? 'border-tech-accent scale-95 shadow-lg shadow-tech-accent/20 ring-1 ring-tech-accent'
+                      : 'border-tech-border opacity-60 hover:opacity-100'
                   }`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />

@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Heart, ShoppingBag, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { Heart, ShoppingBag, Sparkles, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getFilamentColorStyle } from '@/lib/colors';
 
@@ -42,6 +42,7 @@ export default function ProductCard({
 }: ProductCardProps) {
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
   const inWishlist = isInWishlist(id);
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
 
   // Parse images JSON safely
   let imageList: string[] = [];
@@ -50,7 +51,9 @@ export default function ProductCard({
   } catch (e) {
     imageList = [images as unknown as string];
   }
-  const primaryImage = imageList[0] || 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80';
+  if (!Array.isArray(imageList) || imageList.length === 0) {
+    imageList = ['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'];
+  }
 
   // Parse colors JSON safely
   let colorList: string[] = [];
@@ -64,21 +67,60 @@ export default function ProductCard({
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
     : null;
 
+  // Swipe handling
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImgIdx((prev) => (prev + 1) % imageList.length);
+  };
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImgIdx((prev) => (prev - 1 + imageList.length) % imageList.length);
+  };
+
   return (
-    <div className="group bg-tech-card rounded-xl border border-tech-border hover:border-tech-accent/40 transition-all duration-300 flex flex-col overflow-hidden shadow-lg hover:shadow-tech-accent/5">
-      {/* Image Container */}
-      <div className="relative aspect-square w-full bg-tech-bg/80 overflow-hidden">
-        <Link href={`/shop/${slug}`}>
-          <img
-            src={primaryImage}
-            alt={name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-            loading="lazy"
-          />
+    <div className="group bg-tech-card rounded-xl border border-tech-border hover:border-tech-accent/40 transition-all duration-300 flex flex-col overflow-hidden shadow-lg hover:shadow-tech-accent/5 select-none">
+      {/* Image Container with Swipe / Slide */}
+      <div
+        className="relative aspect-square w-full bg-tech-bg/80 overflow-hidden"
+        onTouchStart={(e) => setTouchStart(e.targetTouches[0].clientX)}
+        onTouchEnd={(e) => {
+          if (touchStart === null) return;
+          const touchEnd = e.changedTouches[0].clientX;
+          const diff = touchStart - touchEnd;
+          if (diff > 35 && imageList.length > 1) {
+            setActiveImgIdx((prev) => (prev + 1) % imageList.length);
+          } else if (diff < -35 && imageList.length > 1) {
+            setActiveImgIdx((prev) => (prev - 1 + imageList.length) % imageList.length);
+          }
+          setTouchStart(null);
+        }}
+      >
+        <Link href={`/shop/${slug}`} className="block w-full h-full">
+          <div
+            className="flex w-full h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${activeImgIdx * 100}%)` }}
+          >
+            {imageList.map((img, idx) => (
+              <div key={idx} className="w-full h-full shrink-0 relative">
+                <img
+                  src={img}
+                  alt={`${name} - ${idx + 1}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                  loading="lazy"
+                  draggable={false}
+                />
+              </div>
+            ))}
+          </div>
         </Link>
 
         {/* Badges Top Left */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
           {isNew && (
             <span className="bg-tech-accent text-tech-bg text-[10px] font-extrabold px-2 py-0.5 rounded font-mono uppercase tracking-wider">
               New
@@ -96,13 +138,48 @@ export default function ProductCard({
           )}
         </div>
 
+        {/* Prev / Next Arrows (Visible on Card Hover if > 1 image) */}
+        {imageList.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-tech-bg/80 hover:bg-tech-card text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md backdrop-blur-sm z-20"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNext}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-tech-bg/80 hover:bg-tech-card text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md backdrop-blur-sm z-20"
+              aria-label="Next image"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Dots indicator at bottom */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-tech-bg/70 backdrop-blur-sm z-10 pointer-events-none">
+              {imageList.map((_, idx) => (
+                <span
+                  key={idx}
+                  className={`rounded-full transition-all ${
+                    activeImgIdx === idx ? 'w-3 h-1.5 bg-tech-accent' : 'w-1.5 h-1.5 bg-slate-500'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Wishlist Button Top Right */}
         <button
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             toggleWishlist(id);
           }}
-          className={`absolute top-3 right-3 p-2 rounded-full border transition-all z-10 backdrop-blur-md ${
+          className={`absolute top-3 right-3 p-2 rounded-full border transition-all z-20 backdrop-blur-md ${
             inWishlist
               ? 'bg-rose-500/20 border-rose-500 text-rose-500'
               : 'bg-tech-bg/60 border-tech-border text-slate-300 hover:text-white'
@@ -184,7 +261,7 @@ export default function ProductCard({
                   productId: id,
                   slug,
                   name,
-                  image: primaryImage,
+                  image: imageList[activeImgIdx] || imageList[0],
                   price,
                   shippingFee: shippingFee || 0,
                   quantity: 1,
