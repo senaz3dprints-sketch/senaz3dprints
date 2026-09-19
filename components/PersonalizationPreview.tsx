@@ -58,28 +58,30 @@ export default function PersonalizationPreview({
   const [selectedText, setSelectedText] = useState(TEXT_COLORS[0]);
   const [quantity, setQuantity] = useState<number>(1);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; size: string; previewUrl?: string } | null>(null);
+  const [imageStyle, setImageStyle] = useState<'EMBOSS' | 'FULL_COLOR' | 'LITHOPHANE'>('EMBOSS');
+  const [invertEmboss, setInvertEmboss] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTextChange = (val: string) => {
     const sanitized = val.slice(0, 14);
     setText(sanitized);
-    notifyChange(sanitized, selectedBase.name, selectedText.name, quantity, uploadedFile?.name);
+    notifyChange(sanitized, selectedBase.name, selectedText.name, quantity, uploadedFile?.name, imageStyle);
   };
 
   const handleBaseChange = (base: typeof BASE_COLORS[0]) => {
     setSelectedBase(base);
-    notifyChange(text, base.name, selectedText.name, quantity, uploadedFile?.name);
+    notifyChange(text, base.name, selectedText.name, quantity, uploadedFile?.name, imageStyle);
   };
 
   const handleTextColorChange = (textColor: typeof TEXT_COLORS[0]) => {
     setSelectedText(textColor);
-    notifyChange(text, selectedBase.name, textColor.name, quantity, uploadedFile?.name);
+    notifyChange(text, selectedBase.name, textColor.name, quantity, uploadedFile?.name, imageStyle);
   };
 
   const handleQuantityChange = (newQty: number) => {
     const validQty = Math.max(1, Math.min(500, newQty));
     setQuantity(validQty);
-    notifyChange(text, selectedBase.name, selectedText.name, validQty, uploadedFile?.name);
+    notifyChange(text, selectedBase.name, selectedText.name, validQty, uploadedFile?.name, imageStyle);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,7 +92,7 @@ export default function PersonalizationPreview({
       const previewUrl = isImg ? URL.createObjectURL(file) : undefined;
       const fileData = { name: file.name, size: `${sizeMb} MB`, previewUrl };
       setUploadedFile(fileData);
-      notifyChange(text, selectedBase.name, selectedText.name, quantity, file.name);
+      notifyChange(text, selectedBase.name, selectedText.name, quantity, file.name, imageStyle);
     }
   };
 
@@ -100,10 +102,10 @@ export default function PersonalizationPreview({
     }
     setUploadedFile(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    notifyChange(text, selectedBase.name, selectedText.name, quantity, undefined);
+    notifyChange(text, selectedBase.name, selectedText.name, quantity, undefined, imageStyle);
   };
 
-  const notifyChange = (t: string, b: string, tc: string, q: number, fn?: string) => {
+  const notifyChange = (t: string, b: string, tc: string, q: number, fn?: string, style?: string) => {
     if (onPersonalizationChange) {
       onPersonalizationChange({
         text: t,
@@ -111,21 +113,30 @@ export default function PersonalizationPreview({
         textColor: tc,
         color: tc,
         quantity: q,
-        uploadedFileName: fn,
+        uploadedFileName: fn ? `${fn} [3D Style: ${style || imageStyle}]` : undefined,
       });
     }
   };
 
-  const displayText = text.trim() ? text.toUpperCase() : 'YOUR NAME';
+  const displayText = text.trim() ? text.toUpperCase() : (uploadedFile?.previewUrl ? '' : 'YOUR NAME');
+
+  const styleLabel =
+    imageStyle === 'EMBOSS'
+      ? 'Dual-Tone Filament Emboss'
+      : imageStyle === 'FULL_COLOR'
+      ? 'Vibrant Full-Color 3D Direct Print'
+      : '3D Lithophane Relief';
 
   const whatsappMessage = encodeURIComponent(
     `Hi SenAZ 3D PRINTS! I would like to order Custom 3D Printed Keychains.\n\n` +
-    `• Custom Text: "${displayText}"\n` +
+    (displayText ? `• Custom Text: "${displayText}"\n` : '') +
     `• Base Color: ${selectedBase.name}\n` +
-    `• Text Color: ${selectedText.name}\n` +
+    `• Accent Color: ${selectedText.name}\n` +
     `• Order Quantity: ${quantity} unit${quantity > 1 ? 's' : ''}\n` +
-    (uploadedFile ? `• Custom Logo/Design Attached: Yes ("${uploadedFile.name}")\n` : '') +
-    `\nPlease share pricing, mockup confirmation, and estimated dispatch time.`
+    (uploadedFile
+      ? `• Custom Image/Design: Attached ("${uploadedFile.name}")\n• 3D Conversion Mode: ${styleLabel}\n`
+      : '') +
+    `\nPlease share pricing, 3D mockup confirmation, and estimated dispatch time.`
   );
 
   return (
@@ -190,11 +201,24 @@ export default function PersonalizationPreview({
             <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none" />
             <div className="absolute top-0 inset-x-1/4 h-28 bg-tech-accent/10 rounded-full blur-3xl pointer-events-none" />
             
-            {/* Specs tag */}
+            {/* Specs tag & Live Converted Badge */}
             <div className="absolute bottom-2.5 left-4 sm:left-6 text-[11px] font-mono text-slate-400 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-tech-accent" />
-              <span>FDM DUAL-EXTRUSION • REINFORCED INFILL</span>
+              <span>
+                {uploadedFile?.previewUrl
+                  ? `3D CONVERTED • ${styleLabel.toUpperCase()}`
+                  : 'FDM DUAL-EXTRUSION • REINFORCED INFILL'}
+              </span>
             </div>
+
+            {uploadedFile?.previewUrl && (
+              <div className="absolute top-2.5 right-4 sm:right-6">
+                <span className="text-[10px] font-mono font-bold text-cyan-300 bg-cyan-950/80 px-2.5 py-1 rounded-full border border-cyan-400/40 flex items-center gap-1.5 shadow-md backdrop-blur-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                  3D Picture Active
+                </span>
+              </div>
+            )}
 
             {/* Realistic Keychain Object Floating Assembly */}
             <div className="relative flex items-center pl-2 sm:pl-6 transition-transform duration-300 hover:scale-[1.02]">
@@ -237,7 +261,7 @@ export default function PersonalizationPreview({
                 </div>
 
                 {/* Main Keychain Body Plate with 3D Textured Surface */}
-                <div className="relative px-5 sm:px-7 py-3.5 sm:py-4 flex items-center justify-center min-w-[140px] max-w-[260px] sm:max-w-[340px]">
+                <div className="relative px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-center gap-3 sm:gap-4 min-w-[140px] max-w-[340px] sm:max-w-[420px]">
                   <div
                     className="absolute inset-0 rounded-r-2xl opacity-20 pointer-events-none"
                     style={{
@@ -246,22 +270,106 @@ export default function PersonalizationPreview({
                   />
                   <div className="absolute inset-x-0 top-0 h-[1.5px] bg-white/20 rounded-t-2xl" />
 
+                  {/* CONVERTED 3D IMAGE / EMBOSS EMBLEM */}
+                  {uploadedFile?.previewUrl && (
+                    <div
+                      className={`relative shrink-0 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                        displayText ? 'w-12 h-12 sm:w-14 sm:h-14' : 'w-20 h-20 sm:w-24 sm:h-24 my-1'
+                      }`}
+                      style={{
+                        borderColor: selectedText.hex,
+                        backgroundColor: selectedBase.hex,
+                        boxShadow: `0 4px 10px rgba(0,0,0,0.8), inset 0 1px 2px rgba(255,255,255,0.4), 0 0 12px ${selectedText.glow}`,
+                      }}
+                    >
+                      {/* 3D Print Extrusion Layer Lines Texture */}
+                      <div
+                        className="absolute inset-0 z-20 pointer-events-none opacity-30"
+                        style={{
+                          backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 1.5px, rgba(255,255,255,0.15) 1.5px, rgba(255,255,255,0.15) 2.5px)`,
+                        }}
+                      />
+
+                      {/* MODE 1: DUAL-TONE FILAMENT EMBOSS */}
+                      {imageStyle === 'EMBOSS' && (
+                        <div className="relative w-full h-full flex items-center justify-center">
+                          <img
+                            src={uploadedFile.previewUrl}
+                            alt="3D Embossed Graphic"
+                            className="w-full h-full object-cover select-none transition-all duration-200"
+                            style={{
+                              filter: `grayscale(100%) contrast(180%) brightness(${invertEmboss ? '130%' : '90%'}) ${
+                                invertEmboss ? 'invert(100%)' : ''
+                              } drop-shadow(0 1px 0 rgba(255,255,255,0.5)) drop-shadow(0 2px 2px rgba(0,0,0,0.9))`,
+                            }}
+                          />
+                          {/* Filament Color Tint Layer */}
+                          <div
+                            className="absolute inset-0 mix-blend-multiply opacity-80 pointer-events-none"
+                            style={{ backgroundColor: selectedText.hex }}
+                          />
+                          <div
+                            className="absolute inset-0 mix-blend-color opacity-70 pointer-events-none"
+                            style={{ backgroundColor: selectedText.hex }}
+                          />
+                        </div>
+                      )}
+
+                      {/* MODE 2: FULL-COLOR 3D DIRECT PRINT */}
+                      {imageStyle === 'FULL_COLOR' && (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={uploadedFile.previewUrl}
+                            alt="Full Color 3D Print"
+                            className="w-full h-full object-cover select-none"
+                          />
+                          {/* 3D Resin Protective Gloss Specular Sheen */}
+                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none" />
+                        </div>
+                      )}
+
+                      {/* MODE 3: 3D LITHOPHANE RELIEF */}
+                      {imageStyle === 'LITHOPHANE' && (
+                        <div className="relative w-full h-full bg-amber-950/40 flex items-center justify-center">
+                          {/* Translucent Backlight Glow */}
+                          <div className="absolute inset-0 bg-amber-200/30 blur-sm pointer-events-none" />
+                          <img
+                            src={uploadedFile.previewUrl}
+                            alt="3D Lithophane Relief"
+                            className="w-full h-full object-cover select-none mix-blend-screen opacity-90"
+                            style={{
+                              filter: `grayscale(100%) contrast(200%) brightness(120%) drop-shadow(0 0 6px rgba(253,230,138,0.7))`,
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Embossed Corner Bevel Accents */}
+                      <div className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-white/60 pointer-events-none z-30" />
+                      <div className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-white/60 pointer-events-none z-30" />
+                      <div className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-white/60 pointer-events-none z-30" />
+                      <div className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-white/60 pointer-events-none z-30" />
+                    </div>
+                  )}
+
                   {/* RAISED 3D EMBOSSED TEXT */}
-                  <span
-                    className="font-black font-mono tracking-widest text-base sm:text-xl md:text-2xl uppercase select-none drop-shadow-lg truncate relative z-10 transition-colors duration-200"
-                    style={{
-                      color: selectedText.hex,
-                      textShadow: `
-                        0 1px 0 rgba(255, 255, 255, 0.4),
-                        0 2px 0 rgba(0, 0, 0, 0.5),
-                        0 3px 0 rgba(0, 0, 0, 0.7),
-                        0 5px 8px rgba(0, 0, 0, 0.9),
-                        0 0 16px ${selectedText.glow}
-                      `,
-                    }}
-                  >
-                    {displayText}
-                  </span>
+                  {displayText && (
+                    <span
+                      className="font-black font-mono tracking-widest text-base sm:text-xl md:text-2xl uppercase select-none drop-shadow-lg truncate relative z-10 transition-colors duration-200"
+                      style={{
+                        color: selectedText.hex,
+                        textShadow: `
+                          0 1px 0 rgba(255, 255, 255, 0.4),
+                          0 2px 0 rgba(0, 0, 0, 0.5),
+                          0 3px 0 rgba(0, 0, 0, 0.7),
+                          0 5px 8px rgba(0, 0, 0, 0.9),
+                          0 0 16px ${selectedText.glow}
+                        `,
+                      }}
+                    >
+                      {displayText}
+                    </span>
+                  )}
 
                   <div
                     className="absolute inset-x-0 bottom-0 h-1.5 rounded-b-2xl opacity-80"
@@ -447,19 +555,19 @@ export default function PersonalizationPreview({
               </div>
             </div>
 
-            {/* Custom Keychain Design Upload */}
+            {/* Custom Keychain Design Upload & 3D Conversion Engine */}
             <div className="bg-tech-bg/90 border border-tech-border p-3.5 rounded-xl space-y-2.5 flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white font-mono uppercase tracking-wider flex items-center gap-1">
-                  <Upload className="w-3.5 h-3.5 text-tech-accent" /> Design File
+                  <Upload className="w-3.5 h-3.5 text-tech-accent" /> Upload Picture / Logo
                 </span>
-                <span className="text-[10px] font-mono text-slate-400">Optional</span>
+                <span className="text-[10px] font-mono text-cyan-400">Auto 3D Converted</span>
               </div>
 
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".stl,.obj,.3mf,.step,.stp,.png,.jpg,.jpeg,.svg,.pdf"
+                accept=".png,.jpg,.jpeg,.webp,.svg,.stl,.obj,.3mf"
                 onChange={handleFileUpload}
                 className="hidden"
                 id="keychain-design-uploader"
@@ -471,37 +579,106 @@ export default function PersonalizationPreview({
                   className="border-2 border-dashed border-tech-border hover:border-tech-accent/80 bg-tech-card/50 rounded-lg p-2.5 flex flex-col items-center justify-center cursor-pointer transition-colors group text-center flex-1"
                 >
                   <Upload className="w-4 h-4 text-slate-400 group-hover:text-tech-accent mb-0.5 transition-colors" />
-                  <span className="text-[11px] font-semibold text-slate-200">Upload Logo / Model</span>
-                  <span className="text-[9px] text-slate-400 font-mono">.stl, .obj, .png, .jpg (25MB)</span>
+                  <span className="text-[11px] font-semibold text-slate-200">Upload Photo / Logo</span>
+                  <span className="text-[9px] text-slate-400 font-mono">Converts into 3D embossed print</span>
                 </label>
               ) : (
-                <div className="bg-tech-card border border-emerald-500/40 rounded-lg p-2 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    {uploadedFile.previewUrl ? (
-                      <img
-                        src={uploadedFile.previewUrl}
-                        alt="Uploaded Preview"
-                        className="w-7 h-7 rounded object-cover border border-slate-700 shrink-0"
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center shrink-0">
-                        <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="space-y-2.5">
+                  <div className="bg-tech-card border border-emerald-500/40 rounded-lg p-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      {uploadedFile.previewUrl ? (
+                        <img
+                          src={uploadedFile.previewUrl}
+                          alt="Uploaded Preview"
+                          className="w-8 h-8 rounded object-cover border border-slate-700 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                          <FileText className="w-3.5 h-3.5 text-emerald-400" />
+                        </div>
+                      )}
+                      <div className="overflow-hidden">
+                        <p className="text-[11px] font-semibold text-white truncate">{uploadedFile.name}</p>
+                        <p className="text-[9px] font-mono text-emerald-400">
+                          {uploadedFile.previewUrl ? '✨ Converted to 3D' : `${uploadedFile.size} • Ready`}
+                        </p>
                       </div>
-                    )}
-                    <div className="overflow-hidden">
-                      <p className="text-[11px] font-semibold text-white truncate">{uploadedFile.name}</p>
-                      <p className="text-[9px] font-mono text-emerald-400">{uploadedFile.size} • Ready</p>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={removeUploadedFile}
+                      className="p-1 rounded hover:bg-rose-950/50 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
+                      title="Remove file"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={removeUploadedFile}
-                    className="p-1 rounded hover:bg-rose-950/50 text-slate-400 hover:text-rose-400 transition-colors shrink-0"
-                    title="Remove file"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                  {/* 3D Conversion Style Switcher for Image */}
+                  {uploadedFile.previewUrl && (
+                    <div className="space-y-1.5 pt-1 border-t border-tech-border/60">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-semibold text-slate-300">
+                          3D Convert Mode:
+                        </span>
+                        {imageStyle === 'EMBOSS' && (
+                          <button
+                            type="button"
+                            onClick={() => setInvertEmboss(!invertEmboss)}
+                            className="text-[9px] font-mono text-tech-accent hover:underline flex items-center gap-1"
+                          >
+                            <span>Invert {invertEmboss ? 'On' : 'Off'}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageStyle('EMBOSS');
+                            notifyChange(text, selectedBase.name, selectedText.name, quantity, uploadedFile.name, 'EMBOSS');
+                          }}
+                          className={`py-1 px-1 rounded text-[9px] font-mono border transition-all text-center ${
+                            imageStyle === 'EMBOSS'
+                              ? 'bg-tech-accent text-tech-bg font-bold border-tech-accent shadow-sm'
+                              : 'bg-tech-card border-tech-border text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          ⚡ 3D Emboss
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageStyle('FULL_COLOR');
+                            notifyChange(text, selectedBase.name, selectedText.name, quantity, uploadedFile.name, 'FULL_COLOR');
+                          }}
+                          className={`py-1 px-1 rounded text-[9px] font-mono border transition-all text-center ${
+                            imageStyle === 'FULL_COLOR'
+                              ? 'bg-tech-accent text-tech-bg font-bold border-tech-accent shadow-sm'
+                              : 'bg-tech-card border-tech-border text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          🎨 Full Color
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageStyle('LITHOPHANE');
+                            notifyChange(text, selectedBase.name, selectedText.name, quantity, uploadedFile.name, 'LITHOPHANE');
+                          }}
+                          className={`py-1 px-1 rounded text-[9px] font-mono border transition-all text-center ${
+                            imageStyle === 'LITHOPHANE'
+                              ? 'bg-tech-accent text-tech-bg font-bold border-tech-accent shadow-sm'
+                              : 'bg-tech-card border-tech-border text-slate-300 hover:text-white'
+                          }`}
+                        >
+                          💡 Lithophane
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

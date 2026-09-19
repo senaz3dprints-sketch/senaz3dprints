@@ -16,6 +16,9 @@ import {
   Palette,
   Check,
   Shield,
+  Upload,
+  X,
+  FileText,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
@@ -43,37 +46,30 @@ const TEXT_COLORS = [
   { name: 'Sunset Signal Orange', hex: '#f97316', glow: 'rgba(249, 115, 22, 0.5)' },
 ];
 
-export default function ProductDetailClient({ product, relatedProducts }: ProductDetailClientProps) {
-  const { addToCart, toggleWishlist, isInWishlist } = useCart();
-  const inWishlist = isInWishlist(product.id);
+export default function ProductDetailClient({
+  product,
+  relatedProducts,
+}: ProductDetailClientProps) {
+  const { addToCart } = useCart();
 
-  // Parse Images JSON
-  let imageList: string[] = [];
-  try {
-    imageList = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
-  } catch (e) {
-    imageList = [product.images];
-  }
+  const colorList: string[] = Array.isArray(product.colors)
+    ? product.colors
+    : typeof product.colors === 'string'
+    ? JSON.parse(product.colors || '[]')
+    : [];
+
+  const sizeList: string[] = Array.isArray(product.sizes)
+    ? product.sizes
+    : typeof product.sizes === 'string'
+    ? JSON.parse(product.sizes || '[]')
+    : [];
+
   const [selectedImage, setSelectedImage] = useState(
-    imageList[0] || 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'
+    product.images?.[0] || product.image || 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'
   );
-
-  // Parse Colors JSON
-  let colorList: string[] = [];
-  if (product.colors) {
-    try {
-      colorList = typeof product.colors === 'string' ? JSON.parse(product.colors) : product.colors;
-    } catch (e) {}
-  }
-  const [selectedColor, setSelectedColor] = useState(colorList[0] || 'Default');
-
-  // Parse Sizes JSON
-  let sizeList: string[] = [];
-  if (product.sizes) {
-    try {
-      sizeList = typeof product.sizes === 'string' ? JSON.parse(product.sizes) : product.sizes;
-    } catch (e) {}
-  }
+  const [selectedColor, setSelectedColor] = useState(
+    colorList[0] || 'Default'
+  );
   const [selectedSize, setSelectedSize] = useState(sizeList[0] || 'Standard');
 
   // Personalization state
@@ -82,6 +78,8 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
   const [personalizedText, setPersonalizedText] = useState('YOUR NAME');
   const [selectedBaseColor, setSelectedBaseColor] = useState(BASE_COLORS[0]);
   const [selectedTextColor, setSelectedTextColor] = useState(TEXT_COLORS[0]);
+  const [uploadedPhoto, setUploadedPhoto] = useState<{ name: string; previewUrl?: string } | null>(null);
+  const [photoStyle, setPhotoStyle] = useState<'EMBOSS' | 'FULL_COLOR' | 'LITHOPHANE'>('EMBOSS');
   const [quantity, setQuantity] = useState(1);
 
   const discountPercent =
@@ -89,12 +87,21 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
       : null;
 
-  const displayText = personalizedText.trim() ? personalizedText.toUpperCase() : 'YOUR NAME';
+  const displayText = personalizedText.trim() ? personalizedText.toUpperCase() : (uploadedPhoto?.previewUrl ? '' : 'YOUR NAME');
 
   const handleAddToCart = () => {
     const finalColor = isPersonalizationActive
       ? `${selectedBaseColor.name} / ${selectedTextColor.name}`
       : selectedColor;
+
+    const customDesc = isPersonalizationActive
+      ? [
+          displayText ? `Name: ${displayText}` : '',
+          uploadedPhoto ? `Image: ${uploadedPhoto.name} (${photoStyle})` : '',
+        ]
+          .filter(Boolean)
+          .join(' • ')
+      : undefined;
 
     addToCart({
       productId: product.id,
@@ -106,16 +113,33 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
       quantity,
       color: finalColor,
       size: selectedSize,
-      personalizedText: isPersonalizationActive && personalizedText.trim() ? personalizedText.trim().toUpperCase() : undefined,
+      personalizedText: customDesc || undefined,
     });
   };
+
+  const customTextForWhatsapp = isPersonalizationActive
+    ? [
+        displayText ? `"${displayText}"` : '',
+        uploadedPhoto ? `Attached Image: ${uploadedPhoto.name} [3D Style: ${photoStyle}]` : '',
+      ]
+        .filter(Boolean)
+        .join(' + ')
+    : undefined;
 
   const whatsappInquiryUrl = generateProductInquiryUrl(product.name, product.price, {
     quantity,
     color: isPersonalizationActive ? `${selectedBaseColor.name} + ${selectedTextColor.name}` : selectedColor,
     size: selectedSize,
-    personalizedText: isPersonalizationActive && personalizedText.trim() ? personalizedText.trim().toUpperCase() : undefined,
+    personalizedText: customTextForWhatsapp,
   });
+
+  // Parse Images JSON for gallery fallback
+  let imageList: string[] = [];
+  try {
+    imageList = typeof product.images === 'string' ? JSON.parse(product.images) : (product.images || [selectedImage]);
+  } catch (e) {
+    imageList = [product.images || selectedImage];
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
@@ -283,49 +307,192 @@ export default function ProductDetailClient({ product, relatedProducts }: Produc
                     </div>
 
                     {/* Main Embossed Plate */}
-                    <div className="relative px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-center min-w-[120px] max-w-[280px]">
-                      <span
-                        className="font-black font-mono tracking-widest text-sm sm:text-lg md:text-xl uppercase select-none drop-shadow-md truncate relative z-10 transition-colors duration-200"
-                        style={{
-                          color: selectedTextColor.hex,
-                          textShadow: `
-                            0 1px 0 rgba(255, 255, 255, 0.4),
-                            0 2px 0 rgba(0, 0, 0, 0.6),
-                            0 4px 6px rgba(0, 0, 0, 0.9),
-                            0 0 12px ${selectedTextColor.glow}
-                          `,
-                        }}
-                      >
-                        {displayText}
-                      </span>
+                    <div className="relative px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-center gap-2.5 min-w-[120px] max-w-[320px]">
+                      {/* Converted 3D Picture Emblem */}
+                      {uploadedPhoto?.previewUrl && (
+                        <div
+                          className={`relative shrink-0 rounded-lg overflow-hidden border transition-all duration-300 ${
+                            displayText ? 'w-8 h-8 sm:w-10 sm:h-10' : 'w-14 h-14 my-0.5'
+                          }`}
+                          style={{
+                            borderColor: selectedTextColor.hex,
+                            backgroundColor: selectedBaseColor.hex,
+                            boxShadow: `0 2px 6px rgba(0,0,0,0.8), 0 0 8px ${selectedTextColor.glow}`,
+                          }}
+                        >
+                          {/* 3D Print Layer Lines */}
+                          <div
+                            className="absolute inset-0 z-20 pointer-events-none opacity-25"
+                            style={{
+                              backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(255,255,255,0.15) 1px, rgba(255,255,255,0.15) 2px)`,
+                            }}
+                          />
+
+                          {photoStyle === 'EMBOSS' && (
+                            <div className="relative w-full h-full flex items-center justify-center">
+                              <img
+                                src={uploadedPhoto.previewUrl}
+                                alt="3D Converted Photo"
+                                className="w-full h-full object-cover select-none"
+                                style={{
+                                  filter: `grayscale(100%) contrast(170%) drop-shadow(0 1px 1px rgba(0,0,0,0.8))`,
+                                }}
+                              />
+                              <div
+                                className="absolute inset-0 mix-blend-multiply opacity-85 pointer-events-none"
+                                style={{ backgroundColor: selectedTextColor.hex }}
+                              />
+                            </div>
+                          )}
+
+                          {photoStyle === 'FULL_COLOR' && (
+                            <div className="relative w-full h-full">
+                              <img
+                                src={uploadedPhoto.previewUrl}
+                                alt="3D Photo"
+                                className="w-full h-full object-cover select-none"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent pointer-events-none" />
+                            </div>
+                          )}
+
+                          {photoStyle === 'LITHOPHANE' && (
+                            <div className="relative w-full h-full bg-amber-950/40 flex items-center justify-center">
+                              <img
+                                src={uploadedPhoto.previewUrl}
+                                alt="Lithophane"
+                                className="w-full h-full object-cover select-none mix-blend-screen opacity-90"
+                                style={{
+                                  filter: `grayscale(100%) contrast(200%) brightness(120%)`,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {displayText && (
+                        <span
+                          className="font-black font-mono tracking-widest text-sm sm:text-lg md:text-xl uppercase select-none drop-shadow-md truncate relative z-10 transition-colors duration-200"
+                          style={{
+                            color: selectedTextColor.hex,
+                            textShadow: `
+                              0 1px 0 rgba(255, 255, 255, 0.4),
+                              0 2px 0 rgba(0, 0, 0, 0.6),
+                              0 4px 6px rgba(0, 0, 0, 0.9),
+                              0 0 12px ${selectedTextColor.glow}
+                            `,
+                          }}
+                        >
+                          {displayText}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <span className="absolute bottom-1.5 right-3 text-[9px] font-mono text-slate-500">
-                    Live Dual-Extrusion 3D Preview
+                    {uploadedPhoto ? 'Converted 3D Image Active' : 'Live Dual-Extrusion 3D Preview'}
                   </span>
                 </div>
 
-                {/* 2. Text Input */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
-                      <Type className="w-3.5 h-3.5 text-tech-accent" />
-                      <span>Custom Name / Text</span>
-                    </label>
-                    <span className="text-[10px] font-mono text-slate-400">
-                      {personalizedText.length}/14 chars
-                    </span>
+                {/* 2. Text Input & Optional Picture Upload Side-by-Side */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  <div className="sm:col-span-7 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
+                        <Type className="w-3.5 h-3.5 text-tech-accent" />
+                        <span>Custom Text</span>
+                      </label>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {personalizedText.length}/14 chars
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      maxLength={14}
+                      value={personalizedText}
+                      onChange={(e) => setPersonalizedText(e.target.value)}
+                      placeholder="e.g. SENAZ 3D"
+                      className="w-full bg-tech-bg border border-tech-border rounded-xl px-3.5 py-2 text-xs text-white font-mono tracking-wider focus:outline-none focus:border-tech-accent"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    maxLength={14}
-                    value={personalizedText}
-                    onChange={(e) => setPersonalizedText(e.target.value)}
-                    placeholder="e.g. SENAZ 3D, MILAN, VIP-01"
-                    className="w-full bg-tech-bg border border-tech-border rounded-xl px-3.5 py-2 text-xs text-white font-mono tracking-wider focus:outline-none focus:border-tech-accent"
-                  />
+
+                  {/* Photo / Logo Upload */}
+                  <div className="sm:col-span-5 space-y-1">
+                    <label className="text-xs font-mono text-slate-300 font-semibold flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Upload className="w-3.5 h-3.5 text-tech-accent" />
+                        <span>Add Picture</span>
+                      </span>
+                      <span className="text-[9px] text-cyan-400 font-mono">3D Auto</span>
+                    </label>
+
+                    {!uploadedPhoto ? (
+                      <label className="border border-dashed border-tech-border hover:border-tech-accent/80 bg-tech-bg rounded-xl px-3 py-2 flex items-center justify-center gap-2 cursor-pointer transition-colors text-slate-300 hover:text-white">
+                        <Upload className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-[11px] font-mono">Upload Photo</span>
+                        <input
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.webp,.svg"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const previewUrl = URL.createObjectURL(file);
+                              setUploadedPhoto({ name: file.name, previewUrl });
+                            }
+                          }}
+                        />
+                      </label>
+                    ) : (
+                      <div className="bg-tech-bg border border-emerald-500/40 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          {uploadedPhoto.previewUrl && (
+                            <img
+                              src={uploadedPhoto.previewUrl}
+                              alt="Upload"
+                              className="w-5 h-5 rounded object-cover border border-slate-700 shrink-0"
+                            />
+                          )}
+                          <span className="text-[10px] text-emerald-400 truncate font-mono">
+                            {uploadedPhoto.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (uploadedPhoto.previewUrl) URL.revokeObjectURL(uploadedPhoto.previewUrl);
+                            setUploadedPhoto(null);
+                          }}
+                          className="text-slate-400 hover:text-rose-400 p-0.5"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                {/* Picture 3D Mode Selector if Photo Attached */}
+                {uploadedPhoto && (
+                  <div className="flex items-center gap-1.5 pt-0.5">
+                    <span className="text-[10px] font-mono text-slate-400 shrink-0">3D Render:</span>
+                    {(['EMBOSS', 'FULL_COLOR', 'LITHOPHANE'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setPhotoStyle(mode)}
+                        className={`flex-1 py-1 rounded text-[10px] font-mono border transition-all ${
+                          photoStyle === mode
+                            ? 'bg-tech-accent text-tech-bg font-bold border-tech-accent'
+                            : 'bg-tech-card border-tech-border text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        {mode === 'EMBOSS' ? '⚡ Emboss' : mode === 'FULL_COLOR' ? '🎨 Color' : '💡 Lithophane'}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* 3. Base Color & Raised Text Color Selectors */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
