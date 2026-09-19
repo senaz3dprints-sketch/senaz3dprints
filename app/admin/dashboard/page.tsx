@@ -12,6 +12,9 @@ import {
   Tag,
   ArrowRight,
   MessageCircle,
+  FolderTree,
+  Receipt,
+  Plus,
 } from 'lucide-react';
 
 export const revalidate = 0;
@@ -28,6 +31,7 @@ export default async function AdminDashboardPage() {
   const pendingCustomRequests = await db.customRequest.count({ where: { status: 'PENDING' } });
 
   const activeProducts = await db.product.count({ where: { isPublished: true } });
+  const totalCategories = await db.category.count();
   const lowStockProducts = await db.product.count({ where: { stockQuantity: { lte: 5 } } });
 
   const totalCouponUsage = await db.coupon.aggregate({ _sum: { timesUsed: true } });
@@ -136,6 +140,32 @@ export default async function AdminDashboardPage() {
           </div>
           <p className="text-[11px] font-mono text-slate-500">Total discount applications</p>
         </div>
+
+        {/* Active Categories */}
+        <Link
+          href="/admin/categories"
+          className="bg-tech-card p-5 rounded-2xl border border-tech-border hover:border-tech-accent transition-all space-y-2 group block"
+        >
+          <div className="flex items-center justify-between text-slate-400 group-hover:text-tech-accent transition-colors">
+            <span className="text-xs font-mono">Catalog Categories</span>
+            <FolderTree className="w-4 h-4 text-tech-accent" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-white">{totalCategories}</div>
+          <p className="text-[11px] font-mono text-slate-500">Classifications & filters →</p>
+        </Link>
+
+        {/* Generate Receipts / Quotes */}
+        <Link
+          href="/admin/receipts"
+          className="bg-tech-card p-5 rounded-2xl border border-tech-border hover:border-tech-accent transition-all space-y-2 group block"
+        >
+          <div className="flex items-center justify-between text-slate-400 group-hover:text-tech-accent transition-colors">
+            <span className="text-xs font-mono">Receipts & Quotes</span>
+            <Receipt className="w-4 h-4 text-tech-accent" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-tech-accent">Create</div>
+          <p className="text-[11px] font-mono text-slate-500">Custom prices & invoices →</p>
+        </Link>
 
         {/* Completed Orders */}
         <div className="bg-tech-card p-5 rounded-2xl border border-tech-border space-y-2">

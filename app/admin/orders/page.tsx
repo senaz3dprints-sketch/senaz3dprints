@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, MessageCircle, CheckCircle, Clock, Truck, XCircle, Trash2, Send, Tag, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { ShoppingBag, MessageCircle, CheckCircle, Clock, Truck, XCircle, Trash2, Send, Tag, Sparkles, Receipt } from 'lucide-react';
 import { generateAdminToCustomerConfirmationWhatsAppUrl } from '@/lib/whatsapp';
 
 export default function AdminOrdersPage() {
@@ -167,6 +168,16 @@ export default function AdminOrdersPage() {
                     </td>
                     <td className="p-3.5 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Generate / View Receipt */}
+                        <Link
+                          href={`/admin/receipts`}
+                          className="px-2.5 py-1.5 bg-tech-bg border border-tech-border text-slate-300 hover:text-white rounded-lg text-xs font-mono font-semibold hover:border-tech-accent transition-colors inline-flex items-center gap-1.5 shadow-sm"
+                          title="Generate or Customize Receipt for this order"
+                        >
+                          <Receipt className="w-3 h-3 text-tech-accent" />
+                          <span>Receipt</span>
+                        </Link>
+
                         {/* 1-Click WhatsApp Status Notification to Customer */}
                         <a
                           href={whatsappUrl}
@@ -176,7 +187,7 @@ export default function AdminOrdersPage() {
                           title="Send Order Status confirmation to customer on WhatsApp"
                         >
                           <Send className="w-3 h-3" />
-                          <span>Send WhatsApp Update</span>
+                          <span>WhatsApp</span>
                         </a>
 
                         <button

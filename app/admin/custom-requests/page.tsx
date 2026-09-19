@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UploadCloud, FileText, Image as ImageIcon, MessageCircle, ExternalLink, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { UploadCloud, FileText, Image as ImageIcon, MessageCircle, ExternalLink, Trash2, Receipt } from 'lucide-react';
 
 export default function AdminCustomRequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -119,6 +120,15 @@ export default function AdminCustomRequestsPage() {
                     </select>
                   </td>
                   <td className="p-3.5 text-right flex items-center justify-end gap-2">
+                    <Link
+                      href="/admin/receipts"
+                      className="px-2.5 py-1.5 bg-tech-bg border border-tech-border text-slate-300 hover:text-white rounded-lg text-xs font-mono font-semibold hover:border-tech-accent transition-colors inline-flex items-center gap-1.5"
+                      title="Create Quotation / Advance Receipt"
+                    >
+                      <Receipt className="w-3 h-3 text-tech-accent" />
+                      <span>Quote / Receipt</span>
+                    </Link>
+
                     <a
                       href={`https://wa.me/${req.whatsapp}`}
                       target="_blank"
@@ -126,7 +136,7 @@ export default function AdminCustomRequestsPage() {
                       className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 rounded-lg text-xs font-mono font-semibold hover:bg-emerald-500/30 transition-colors inline-flex items-center gap-1.5"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
-                      <span>Send Quote</span>
+                      <span>WhatsApp</span>
                     </a>
                     <button
                       onClick={() => handleDeleteRequest(req.id)}

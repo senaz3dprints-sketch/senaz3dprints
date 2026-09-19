@@ -65,16 +65,29 @@ Please confirm order acceptance and estimated dispatch date. Thank you!`;
 export function generateProductInquiryUrl(
   productName: string,
   price: number,
-  customNumber?: string
+  options?: {
+    personalizedText?: string;
+    color?: string;
+    size?: string;
+    quantity?: number;
+    customNumber?: string;
+  }
 ): string {
-  const number = customNumber || DEFAULT_WHATSAPP_NUMBER;
+  const number = options?.customNumber || DEFAULT_WHATSAPP_NUMBER;
+  const qty = options?.quantity || 1;
+  const total = price * qty;
 
-  const text = `Hello *SenAZ 3D PRINTS*,
+  let text = `Hello *SenAZ 3D PRINTS*,
 
-I have a question regarding this product:
-*${productName}* (Price: Rs. ${price})
+I would like to order / inquire about:
+*${productName}*
+• Quantity: ${qty} | Price: Rs. ${price} (Total: Rs. ${total})\n`;
 
-Could you please assist me with customization / delivery timeline details?`;
+  if (options?.color) text += `• Selected Color: ${options.color}\n`;
+  if (options?.size) text += `• Selected Size: ${options.size}\n`;
+  if (options?.personalizedText) text += `• Custom Text / Personalisation: "${options.personalizedText}"\n`;
+
+  text += `\nPlease confirm production scheduling and delivery timeline. Thank you!`;
 
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
