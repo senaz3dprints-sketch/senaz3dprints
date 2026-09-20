@@ -15,8 +15,6 @@ export default function Navbar() {
   const mobileMenuOpenRef = useRef(false);
   const scrollPosOnOpen = useRef(0);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const isVisibleRef = useRef(true);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -33,57 +31,17 @@ export default function Navbar() {
 
     if (nextState) {
       scrollPosOnOpen.current = window.scrollY;
-      isVisibleRef.current = true;
-      setIsVisible(true);
     }
   };
 
+  // Auto-close mobile menu on scroll
   useEffect(() => {
-    let lastY = window.scrollY;
-    let ticking = false;
-
     const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentY = window.scrollY;
-          const delta = currentY - lastY;
-
-          // If mobile menu is open, only auto-close if user deliberately scrolls by > 40px
-          if (mobileMenuOpenRef.current) {
-            if (Math.abs(currentY - scrollPosOnOpen.current) > 40) {
-              mobileMenuOpenRef.current = false;
-              setMobileMenuOpen(false);
-            }
-            lastY = Math.max(0, currentY);
-            ticking = false;
-            return;
-          }
-
-          // Normal navbar collapse/reveal behavior
-          if (currentY <= 50) {
-            if (!isVisibleRef.current) {
-              isVisibleRef.current = true;
-              setIsVisible(true);
-            }
-          } else if (delta > 10 && currentY > 100) {
-            // Scrolling down past threshold -> hide header
-            if (isVisibleRef.current) {
-              isVisibleRef.current = false;
-              setIsVisible(false);
-            }
-          } else if (delta < -8) {
-            // Scrolling up -> reveal header
-            if (!isVisibleRef.current) {
-              isVisibleRef.current = true;
-              setIsVisible(true);
-            }
-          }
-
-          lastY = Math.max(0, currentY);
-          ticking = false;
-        });
-
-        ticking = true;
+      if (mobileMenuOpenRef.current) {
+        if (Math.abs(window.scrollY - scrollPosOnOpen.current) > 20) {
+          mobileMenuOpenRef.current = false;
+          setMobileMenuOpen(false);
+        }
       }
     };
 
@@ -103,11 +61,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header
-        className={`sticky top-0 z-40 bg-tech-bg/95 backdrop-blur-md border-b border-tech-border text-slate-100 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isVisible ? 'translate-y-0 shadow-md shadow-tech-bg/50' : '-translate-y-full shadow-none'
-        }`}
-      >
+      <header className="sticky top-0 z-40 bg-tech-bg/95 backdrop-blur-md border-b border-tech-border text-slate-100 shadow-md shadow-tech-bg/50">
         {/* Top Announcement Bar */}
         <div className="bg-brand-950/80 border-b border-brand-900/60 text-xs py-1.5 px-4 text-center text-slate-300 flex items-center justify-center gap-2 font-mono">
           <span className="inline-block w-2 h-2 rounded-full bg-tech-accent animate-pulse"></span>
