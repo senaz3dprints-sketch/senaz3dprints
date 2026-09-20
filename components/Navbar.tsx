@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -12,8 +12,6 @@ export default function Navbar() {
   const pathname = usePathname();
   const { cartCount, wishlist, setIsCartOpen } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const mobileMenuOpenRef = useRef(false);
-  const scrollPosOnOpen = useRef(0);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const navLinks = [
@@ -24,34 +22,8 @@ export default function Navbar() {
     { name: 'Contact', href: '/contact' },
   ];
 
-  const toggleMobileMenu = (forceState?: boolean) => {
-    const nextState = typeof forceState === 'boolean' ? forceState : !mobileMenuOpenRef.current;
-    mobileMenuOpenRef.current = nextState;
-    setMobileMenuOpen(nextState);
-
-    if (nextState) {
-      scrollPosOnOpen.current = window.scrollY;
-    }
-  };
-
-  // Auto-close mobile menu on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      if (mobileMenuOpenRef.current) {
-        if (Math.abs(window.scrollY - scrollPosOnOpen.current) > 20) {
-          mobileMenuOpenRef.current = false;
-          setMobileMenuOpen(false);
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   // Close mobile menu whenever pathname changes
   useEffect(() => {
-    mobileMenuOpenRef.current = false;
     setMobileMenuOpen(false);
   }, [pathname]);
 
@@ -61,7 +33,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-tech-bg/95 backdrop-blur-md border-b border-tech-border text-slate-100 shadow-md shadow-tech-bg/50">
+      <header className="relative w-full z-40 bg-tech-bg border-b border-tech-border text-slate-100">
         {/* Top Announcement Bar */}
         <div className="bg-brand-950/80 border-b border-brand-900/60 text-xs py-1.5 px-4 text-center text-slate-300 flex items-center justify-center gap-2 font-mono">
           <span className="inline-block w-2 h-2 rounded-full bg-tech-accent animate-pulse"></span>
@@ -114,6 +86,7 @@ export default function Navbar() {
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Search Trigger */}
             <button
+              type="button"
               onClick={() => setSearchOpen(true)}
               className="p-2 rounded-lg hover:bg-tech-card text-slate-300 hover:text-white transition-colors"
               aria-label="Search Catalog"
@@ -137,6 +110,7 @@ export default function Navbar() {
 
             {/* Cart Trigger */}
             <button
+              type="button"
               onClick={() => setIsCartOpen(true)}
               className="p-2 rounded-lg bg-tech-accent/10 border border-tech-accent/30 text-tech-accent hover:bg-tech-accent/20 transition-all flex items-center gap-2 relative"
               aria-label="Order Bag"
@@ -162,7 +136,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               type="button"
-              onClick={() => toggleMobileMenu()}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-tech-card text-slate-300 transition-colors"
               aria-label="Toggle Navigation Menu"
             >
@@ -182,7 +156,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                onClick={() => toggleMobileMenu(false)}
+                onClick={() => setMobileMenuOpen(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   pathname === link.href
                     ? 'bg-tech-accent/10 text-tech-accent font-semibold'
@@ -193,7 +167,7 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-tech-border flex justify-between items-center text-xs text-slate-400 font-mono">
-              <Link href="/admin/login" onClick={() => toggleMobileMenu(false)} className="hover:text-tech-accent">
+              <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)} className="hover:text-tech-accent">
                 Owner Dashboard →
               </Link>
               <span>senaz3dprints.in</span>
@@ -205,7 +179,7 @@ export default function Navbar() {
       {/* Mobile Drawer Backdrop Overlay */}
       {mobileMenuOpen && (
         <div
-          onClick={() => toggleMobileMenu(false)}
+          onClick={() => setMobileMenuOpen(false)}
           className="fixed inset-0 z-30 bg-black/60 backdrop-blur-xs md:hidden transition-opacity duration-300 animate-fade-in"
           aria-hidden="true"
         />
