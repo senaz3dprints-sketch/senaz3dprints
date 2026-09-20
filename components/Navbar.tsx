@@ -12,11 +12,11 @@ export default function Navbar() {
   const pathname = usePathname();
   const { cartCount, wishlist, setIsCartOpen } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuOpenRef = useRef(false);
+  const scrollPosOnOpen = useRef(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const lastScrollY = useRef(0);
-  const scrollPosOnOpen = useRef(0);
-  const ticking = useRef(false);
+  const isVisibleRef = useRef(true);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -26,56 +26,74 @@ export default function Navbar() {
     { name: 'Contact', href: '/contact' },
   ];
 
-  // When mobile menu opens, record current scroll position and ensure header is visible
-  useEffect(() => {
-    if (mobileMenuOpen) {
+  const toggleMobileMenu = (forceState?: boolean) => {
+    const nextState = typeof forceState === 'boolean' ? forceState : !mobileMenuOpenRef.current;
+    mobileMenuOpenRef.current = nextState;
+    setMobileMenuOpen(nextState);
+
+    if (nextState) {
       scrollPosOnOpen.current = window.scrollY;
+      isVisibleRef.current = true;
       setIsVisible(true);
     }
-  }, [mobileMenuOpen]);
+  };
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (!ticking.current) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const delta = currentScrollY - lastScrollY.current;
+    let lastY = window.scrollY;
+    let ticking = false;
 
-          // If mobile menu is open, only close if user actively scrolls beyond 15px
-          if (mobileMenuOpen) {
-            if (Math.abs(currentScrollY - scrollPosOnOpen.current) > 15) {
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentY = window.scrollY;
+          const delta = currentY - lastY;
+
+          // If mobile menu is open, only auto-close if user deliberately scrolls by > 40px
+          if (mobileMenuOpenRef.current) {
+            if (Math.abs(currentY - scrollPosOnOpen.current) > 40) {
+              mobileMenuOpenRef.current = false;
               setMobileMenuOpen(false);
             }
-            lastScrollY.current = Math.max(0, currentScrollY);
-            ticking.current = false;
+            lastY = Math.max(0, currentY);
+            ticking = false;
             return;
           }
 
-          // Near top of page: always keep header visible
-          if (currentScrollY <= 40) {
-            setIsVisible(true);
-          } else if (delta > 10 && currentScrollY > 80) {
-            // Significant downward scroll: hide header smoothly
-            setIsVisible(false);
-          } else if (delta < -6) {
-            // Scrolling upwards: reveal header smoothly
-            setIsVisible(true);
+          // Normal navbar collapse/reveal behavior
+          if (currentY <= 50) {
+            if (!isVisibleRef.current) {
+              isVisibleRef.current = true;
+              setIsVisible(true);
+            }
+          } else if (delta > 10 && currentY > 100) {
+            // Scrolling down past threshold -> hide header
+            if (isVisibleRef.current) {
+              isVisibleRef.current = false;
+              setIsVisible(false);
+            }
+          } else if (delta < -8) {
+            // Scrolling up -> reveal header
+            if (!isVisibleRef.current) {
+              isVisibleRef.current = true;
+              setIsVisible(true);
+            }
           }
 
-          lastScrollY.current = Math.max(0, currentScrollY);
-          ticking.current = false;
+          lastY = Math.max(0, currentY);
+          ticking = false;
         });
 
-        ticking.current = true;
+        ticking = true;
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [mobileMenuOpen]);
+  }, []);
 
   // Close mobile menu whenever pathname changes
   useEffect(() => {
+    mobileMenuOpenRef.current = false;
     setMobileMenuOpen(false);
   }, [pathname]);
 
@@ -189,7 +207,8 @@ export default function Navbar() {
 
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              type="button"
+              onClick={() => toggleMobileMenu()}
               className="md:hidden p-2 rounded-lg hover:bg-tech-card text-slate-300 transition-colors"
               aria-label="Toggle Navigation Menu"
             >
@@ -209,7 +228,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 href={link.href}
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => toggleMobileMenu(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   pathname === link.href
                     ? 'bg-tech-accent/10 text-tech-accent font-semibold'
@@ -220,7 +239,7 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-tech-border flex justify-between items-center text-xs text-slate-400 font-mono">
-              <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)} className="hover:text-tech-accent">
+              <Link href="/admin/login" onClick={() => toggleMobileMenu(false)} className="hover:text-tech-accent">
                 Owner Dashboard →
               </Link>
               <span>senaz3dprints.in</span>
@@ -232,7 +251,7 @@ export default function Navbar() {
       {/* Mobile Drawer Backdrop Overlay */}
       {mobileMenuOpen && (
         <div
-          onClick={() => setMobileMenuOpen(false)}
+          onClick={() => toggleMobileMenu(false)}
           className="fixed inset-0 z-30 bg-black/60 backdrop-blur-xs md:hidden transition-opacity duration-300 animate-fade-in"
           aria-hidden="true"
         />
