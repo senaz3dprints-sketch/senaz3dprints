@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Heart, Search, Menu, X, Printer, User } from 'lucide-react';
+import { ShoppingBag, Heart, Search, Menu, X, User } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import SearchModal from './SearchModal';
 
@@ -14,8 +14,8 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
-  const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
+  const ticking = useRef(false);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -27,22 +27,33 @@ export default function Navbar() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+      if (!ticking.current) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const delta = currentScrollY - lastScrollY.current;
 
-      setIsScrolled(currentScrollY > 20);
+          // Automatically close mobile menu immediately if user starts scrolling
+          if (Math.abs(delta) > 8 && mobileMenuOpen) {
+            setMobileMenuOpen(false);
+          }
 
-      // Don't auto-collapse if mobile drawer is currently open
-      if (mobileMenuOpen) return;
+          // Near top of page: always keep header visible
+          if (currentScrollY <= 40) {
+            setIsVisible(true);
+          } else if (delta > 12 && currentScrollY > 100) {
+            // Significant downward scroll: hide header smoothly
+            setIsVisible(false);
+          } else if (delta < -8) {
+            // Scrolling upwards: reveal header smoothly
+            setIsVisible(true);
+          }
 
-      // When user scrolls down by more than 80px, collapse/hide the header
-      // When scrolling up or near the very top (<= 50px), reveal the header smoothly
-      if (currentScrollY > 80 && currentScrollY > lastScrollY.current + 5) {
-        setIsVisible(false);
-      } else if (currentScrollY < lastScrollY.current - 5 || currentScrollY <= 50) {
-        setIsVisible(true);
+          lastScrollY.current = Math.max(0, currentScrollY);
+          ticking.current = false;
+        });
+
+        ticking.current = true;
       }
-
-      lastScrollY.current = currentScrollY;
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -61,8 +72,8 @@ export default function Navbar() {
   return (
     <>
       <header
-        className={`sticky top-0 z-40 bg-tech-bg/90 backdrop-blur-md border-b border-tech-border text-slate-100 transition-transform duration-300 ease-in-out ${
-          isVisible ? 'translate-y-0 shadow-md shadow-tech-bg/50' : '-translate-y-full'
+        className={`sticky top-0 z-40 bg-tech-bg/95 backdrop-blur-md border-b border-tech-border text-slate-100 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isVisible ? 'translate-y-0 shadow-md shadow-tech-bg/50' : '-translate-y-full shadow-none'
         }`}
       >
         {/* Top Announcement Bar */}
@@ -164,7 +175,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-tech-card text-slate-300"
+              className="md:hidden p-2 rounded-lg hover:bg-tech-card text-slate-300 transition-colors"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -172,15 +183,19 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-tech-card border-b border-tech-border px-4 pt-3 pb-6 space-y-3">
+        {/* Mobile Navigation Drawer with Smooth Slide & Fade */}
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-tech-card border-b border-tech-border ${
+            mobileMenuOpen ? 'max-h-96 opacity-100 py-3' : 'max-h-0 opacity-0 py-0 border-transparent pointer-events-none'
+          }`}
+        >
+          <div className="px-4 space-y-2">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   pathname === link.href
                     ? 'bg-tech-accent/10 text-tech-accent font-semibold'
                     : 'text-slate-200 hover:bg-tech-border'
@@ -190,14 +205,23 @@ export default function Navbar() {
               </Link>
             ))}
             <div className="pt-2 border-t border-tech-border flex justify-between items-center text-xs text-slate-400 font-mono">
-              <Link href="/admin/login" className="hover:text-tech-accent">
+              <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)} className="hover:text-tech-accent">
                 Owner Dashboard →
               </Link>
               <span>senaz3dprints.in</span>
             </div>
           </div>
-        )}
+        </div>
       </header>
+
+      {/* Mobile Drawer Backdrop Overlay */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-xs md:hidden transition-opacity duration-300 animate-fade-in"
+          aria-hidden="true"
+        />
+      )}
 
       {/* Search Modal */}
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
