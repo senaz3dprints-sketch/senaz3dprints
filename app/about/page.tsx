@@ -1,9 +1,25 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { Printer, Cpu, ShieldCheck, Zap, Layers, Award, ArrowRight } from 'lucide-react';
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'About Us | Precision 3D Printing Lab India',
+  description:
+    'Learn about SenAZ 3D PRINTS, India\'s high-precision 3D printing studio. Specialized in personalized keychains, desk accessories, figures, and on-demand STL manufacturing in PLA+, PETG, TPU, ABS, and Nylon.',
+  alternates: {
+    canonical: 'https://senaz3dprints.in/about',
+  },
+  openGraph: {
+    title: 'About SenAZ 3D PRINTS | Engineering-Grade 3D Printing',
+    description:
+      'Learn about our print farm, materials, quality standards, and personalized 3D printing process in India.',
+    url: 'https://senaz3dprints.in/about',
+  },
+};
 
 export default async function AboutPage() {
   let content: any = null;
@@ -59,8 +75,8 @@ export default async function AboutPage() {
           <div className="w-10 h-10 rounded-lg bg-tech-bg border border-tech-border flex items-center justify-center">
             <Cpu className="w-5 h-5 text-tech-accent" />
           </div>
-          <h3 className="text-lg font-bold text-white font-sans">{highlight1Title}</h3>
-          <p className="text-xs text-slate-400 leading-relaxed font-sans">
+          <h3 className="font-bold text-white text-base font-sans">{highlight1Title}</h3>
+          <p className="text-xs text-slate-400 font-sans leading-relaxed">
             {highlight1Desc}
           </p>
         </div>
@@ -69,8 +85,8 @@ export default async function AboutPage() {
           <div className="w-10 h-10 rounded-lg bg-tech-bg border border-tech-border flex items-center justify-center">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
           </div>
-          <h3 className="text-lg font-bold text-white font-sans">{highlight2Title}</h3>
-          <p className="text-xs text-slate-400 leading-relaxed font-sans">
+          <h3 className="font-bold text-white text-base font-sans">{highlight2Title}</h3>
+          <p className="text-xs text-slate-400 font-sans leading-relaxed">
             {highlight2Desc}
           </p>
         </div>
@@ -79,51 +95,49 @@ export default async function AboutPage() {
           <div className="w-10 h-10 rounded-lg bg-tech-bg border border-tech-border flex items-center justify-center">
             <Zap className="w-5 h-5 text-amber-400" />
           </div>
-          <h3 className="text-lg font-bold text-white font-sans">{highlight3Title}</h3>
-          <p className="text-xs text-slate-400 leading-relaxed font-sans">
+          <h3 className="font-bold text-white text-base font-sans">{highlight3Title}</h3>
+          <p className="text-xs text-slate-400 font-sans leading-relaxed">
             {highlight3Desc}
           </p>
         </div>
       </div>
 
-      {/* Tech Specifications Section */}
-      <div className="bg-tech-card rounded-2xl border border-tech-border p-8 lg:p-10 space-y-6">
-        <h2 className="text-2xl font-bold text-white font-sans">Print Farm Specifications</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 font-mono text-xs">
-          <div className="p-4 bg-tech-bg rounded-xl border border-tech-border">
-            <span className="text-slate-500 block">Nozzle Diameter</span>
-            <span className="text-lg font-bold text-tech-accent">{specNozzle}</span>
-          </div>
-          <div className="p-4 bg-tech-bg rounded-xl border border-tech-border">
-            <span className="text-slate-500 block">Layer Height Range</span>
-            <span className="text-lg font-bold text-white">{specLayerHeight}</span>
-          </div>
-          <div className="p-4 bg-tech-bg rounded-xl border border-tech-border">
-            <span className="text-slate-500 block">Max Build Volume</span>
-            <span className="text-lg font-bold text-white">{specBuildVolume}</span>
-          </div>
-          <div className="p-4 bg-tech-bg rounded-xl border border-tech-border">
-            <span className="text-slate-500 block">Quality Check</span>
-            <span className="text-lg font-bold text-emerald-400">{specQuality}</span>
-          </div>
+      {/* Specs Strip */}
+      <div className="rounded-2xl bg-tech-card border border-tech-border p-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div className="space-y-1">
+          <span className="text-xs font-mono text-slate-400">Nozzle Diameters</span>
+          <div className="text-xl font-bold font-mono text-tech-accent">{specNozzle}</div>
+        </div>
+        <div className="space-y-1">
+          <span className="text-xs font-mono text-slate-400">Layer Precision</span>
+          <div className="text-xl font-bold font-mono text-white">{specLayerHeight}</div>
+        </div>
+        <div className="space-y-1">
+          <span className="text-xs font-mono text-slate-400">Max Build Volume</span>
+          <div className="text-xl font-bold font-mono text-emerald-400">{specBuildVolume}</div>
+        </div>
+        <div className="space-y-1">
+          <span className="text-xs font-mono text-slate-400">Quality Standard</span>
+          <div className="text-xl font-bold font-mono text-amber-400">{specQuality}</div>
         </div>
       </div>
 
-      {/* CTA Banner */}
-      <div className="p-8 bg-gradient-to-r from-tech-card to-tech-bg border border-tech-accent/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+      {/* Action CTA */}
+      <div className="p-8 rounded-2xl bg-gradient-to-r from-tech-card to-tech-bg border border-tech-border flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
-          <h3 className="text-xl font-bold text-white">Ready to create a custom 3D design?</h3>
-          <p className="text-xs text-slate-400 mt-1">Upload your STL file or customize your nameplate keychain today.</p>
+          <h3 className="text-xl font-bold text-white font-sans">Have a CAD file ready to print?</h3>
+          <p className="text-xs text-slate-400 font-sans mt-1">
+            Send us your .stl or .step model for an instant WhatsApp quotation.
+          </p>
         </div>
         <Link
           href="/custom-printing"
-          className="px-6 py-3 bg-tech-accent text-tech-bg font-bold font-mono text-xs rounded-xl hover:bg-tech-accent/90 transition-all flex items-center gap-2 shrink-0"
+          className="px-6 py-3 rounded-xl bg-tech-accent text-tech-bg font-mono font-bold text-xs hover:bg-tech-accent/90 transition-all flex items-center gap-2 shrink-0 shadow-lg shadow-tech-accent/15"
         >
-          <span>Get Started</span>
+          <span>Upload Model File</span>
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
     </div>
   );
 }
-

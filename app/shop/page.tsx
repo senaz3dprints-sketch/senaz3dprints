@@ -1,8 +1,24 @@
 import React, { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { db } from '@/lib/db';
 import ShopClient from './ShopClient';
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Shop 3D Printed Products, Keychains & Statues',
+  description:
+    'Browse our full collection of precision 3D printed items in India. Personalized name keychains, desk toys, low-poly decor, and anime figures in PLA+ and PETG.',
+  alternates: {
+    canonical: 'https://senaz3dprints.in/shop',
+  },
+  openGraph: {
+    title: 'Shop 3D Printed Products & Custom Gifts | SenAZ 3D PRINTS',
+    description:
+      'Browse precision 3D printed keychains, decor, and figures crafted with industrial FDM printers in India.',
+    url: 'https://senaz3dprints.in/shop',
+  },
+};
 
 export default async function ShopPage() {
   const [categories, products] = await Promise.all([
