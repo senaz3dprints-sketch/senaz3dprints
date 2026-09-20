@@ -15,6 +15,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
+  const scrollPosOnOpen = useRef(0);
   const ticking = useRef(false);
 
   const navLinks = [
@@ -25,6 +26,14 @@ export default function Navbar() {
     { name: 'Contact', href: '/contact' },
   ];
 
+  // When mobile menu opens, record current scroll position and ensure header is visible
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      scrollPosOnOpen.current = window.scrollY;
+      setIsVisible(true);
+    }
+  }, [mobileMenuOpen]);
+
   useEffect(() => {
     const handleScroll = () => {
       if (!ticking.current) {
@@ -32,18 +41,23 @@ export default function Navbar() {
           const currentScrollY = window.scrollY;
           const delta = currentScrollY - lastScrollY.current;
 
-          // Automatically close mobile menu immediately if user starts scrolling
-          if (Math.abs(delta) > 8 && mobileMenuOpen) {
-            setMobileMenuOpen(false);
+          // If mobile menu is open, only close if user actively scrolls beyond 15px
+          if (mobileMenuOpen) {
+            if (Math.abs(currentScrollY - scrollPosOnOpen.current) > 15) {
+              setMobileMenuOpen(false);
+            }
+            lastScrollY.current = Math.max(0, currentScrollY);
+            ticking.current = false;
+            return;
           }
 
           // Near top of page: always keep header visible
           if (currentScrollY <= 40) {
             setIsVisible(true);
-          } else if (delta > 12 && currentScrollY > 100) {
+          } else if (delta > 10 && currentScrollY > 80) {
             // Significant downward scroll: hide header smoothly
             setIsVisible(false);
-          } else if (delta < -8) {
+          } else if (delta < -6) {
             // Scrolling upwards: reveal header smoothly
             setIsVisible(true);
           }
