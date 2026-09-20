@@ -66,21 +66,21 @@ export const metadata: Metadata = {
     siteName: 'SenAZ 3D PRINTS',
     images: [
       {
-        url: '/images/senaz_3d_printer_hero.jpg',
-        width: 1200,
-        height: 630,
-        alt: 'SenAZ 3D PRINTS Precision Manufacturing Studio',
+        url: '/images/logo-full.png',
+        width: 600,
+        height: 600,
+        alt: 'SenAZ 3D PRINTS Official Logo',
       },
     ],
     locale: 'en_IN',
     type: 'website',
   },
   twitter: {
-    card: 'summary_large_image',
+    card: 'summary',
     title: 'SenAZ 3D PRINTS | Custom 3D Printed Products & STL Printing',
     description:
       'Custom 3D printed keychains, personalized gifts, figures, and online STL printing service in India.',
-    images: ['/images/senaz_3d_printer_hero.jpg'],
+    images: ['/images/logo-full.png'],
     creator: '@senaz3dprints',
   },
   robots: {
@@ -90,7 +90,7 @@ export const metadata: Metadata = {
       index: true,
       follow: true,
       'max-video-preview': -1,
-      'max-image-preview': 'large',
+      'max-image-preview': 'standard',
       'max-snippet': -1,
     },
   },
@@ -105,7 +105,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     name: 'SenAZ 3D PRINTS',
     url: 'https://senaz3dprints.in',
     logo: 'https://senaz3dprints.in/images/logo-full.png',
-    image: 'https://senaz3dprints.in/images/senaz_3d_printer_hero.jpg',
+    image: 'https://senaz3dprints.in/images/logo-full.png',
     description:
       'Premier custom 3D printing studio in India offering personalized keychains, desk decor, anime figures, and custom STL 3D printing services.',
     telephone: '+918761053230',
