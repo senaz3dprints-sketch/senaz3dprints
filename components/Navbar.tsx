@@ -84,8 +84,8 @@ export default function Navbar() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-lg bg-brand-950/80 border border-tech-accent/40 flex items-center justify-center overflow-hidden group-hover:border-tech-accent transition-colors shadow-sm shrink-0">
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 group shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-brand-950/80 border border-tech-accent/40 flex items-center justify-center overflow-hidden group-hover:border-tech-accent transition-colors shadow-sm shrink-0">
               <Image
                 src="/images/logo-icon.png"
                 alt="SenAZ 3D PRINTS Logo"
@@ -95,11 +95,12 @@ export default function Navbar() {
                 priority
               />
             </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold tracking-tight text-lg leading-tight font-sans text-white">
-                Sen<span className="text-tech-accent">AZ</span> <span className="text-tech-accent font-mono text-sm font-semibold">3D PRINTS</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono tracking-widest uppercase">
+            <div className="flex flex-col whitespace-nowrap">
+              <div className="font-extrabold tracking-tight text-base sm:text-lg leading-tight font-sans text-white flex items-baseline gap-1">
+                <span>Sen<span className="text-tech-accent">AZ</span></span>
+                <span className="text-tech-accent font-mono text-xs sm:text-sm font-semibold">3D PRINTS</span>
+              </div>
+              <span className="text-[9px] sm:text-[10px] text-slate-400 font-mono tracking-wider sm:tracking-widest uppercase leading-none mt-0.5">
                 Ideas Into Reality
               </span>
             </div>
@@ -124,7 +125,7 @@ export default function Navbar() {
           </nav>
 
           {/* Action Icons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {/* Search Trigger */}
             <button
               onClick={() => setSearchOpen(true)}

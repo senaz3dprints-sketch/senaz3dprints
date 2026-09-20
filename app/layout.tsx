@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import React, { Suspense } from 'react';
 import './globals.css';
 import { CartProvider } from '@/context/CartContext';
@@ -6,6 +7,18 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import TopProgressBar from '@/components/TopProgressBar';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 export const viewport: Viewport = {
   themeColor: '#00e5ff',
@@ -137,7 +150,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
-      <body className="min-h-screen flex flex-col bg-tech-bg text-slate-100 font-sans antialiased">
+      <body className={`${inter.variable} ${jetbrainsMono.variable} min-h-screen flex flex-col bg-tech-bg text-slate-100 font-sans antialiased`}>
         <Suspense fallback={null}>
           <TopProgressBar />
         </Suspense>
