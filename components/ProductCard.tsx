@@ -100,18 +100,20 @@ export default function ProductCard({
           setTouchStart(null);
         }}
       >
-        <Link href={`/shop/${slug}`} className="block w-full h-full">
+        <Link href={`/shop/${slug}`} className="block w-full h-full" aria-label={`View ${name}`}>
           <div
             className="flex w-full h-full transition-transform duration-300 ease-out"
             style={{ transform: `translateX(-${activeImgIdx * 100}%)` }}
           >
             {imageList.map((img, idx) => (
               <div key={idx} className="w-full h-full shrink-0 relative">
-                <img
+                <Image
                   src={img}
                   alt={`${name} - ${idx + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                  loading="lazy"
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                  loading={idx === 0 ? 'eager' : 'lazy'}
                   draggable={false}
                 />
               </div>
@@ -122,17 +124,17 @@ export default function ProductCard({
         {/* Badges Top Left */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
           {isNew && (
-            <span className="bg-tech-accent text-tech-bg text-[10px] font-extrabold px-2 py-0.5 rounded font-mono uppercase tracking-wider">
+            <span className="bg-tech-accent text-tech-bg text-[10px] font-extrabold px-2 py-0.5 rounded font-mono uppercase tracking-wider shadow">
               New
             </span>
           )}
           {personalizationEnabled && (
-            <span className="bg-brand-800/90 border border-tech-accent/30 text-tech-accent text-[10px] font-semibold px-2 py-0.5 rounded font-mono flex items-center gap-1 backdrop-blur-sm">
+            <span className="bg-brand-900/95 border border-tech-accent/40 text-tech-accent text-[10px] font-semibold px-2 py-0.5 rounded font-mono flex items-center gap-1 backdrop-blur-sm shadow">
               <Sparkles className="w-3 h-3" /> Custom Text
             </span>
           )}
           {discountPercent && (
-            <span className="bg-rose-500/90 text-white text-[10px] font-extrabold px-2 py-0.5 rounded font-mono">
+            <span className="bg-rose-500/95 text-white text-[10px] font-extrabold px-2 py-0.5 rounded font-mono shadow">
               -{discountPercent}%
             </span>
           )}
@@ -144,27 +146,27 @@ export default function ProductCard({
             <button
               type="button"
               onClick={handlePrev}
-              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-tech-bg/80 hover:bg-tech-card text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md backdrop-blur-sm z-20"
-              aria-label="Previous image"
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-tech-bg/85 hover:bg-tech-card text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md backdrop-blur-sm z-20"
+              aria-label="Previous product image"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={handleNext}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-tech-bg/80 hover:bg-tech-card text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md backdrop-blur-sm z-20"
-              aria-label="Next image"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-tech-bg/85 hover:bg-tech-card text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-md backdrop-blur-sm z-20"
+              aria-label="Next product image"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
 
             {/* Dots indicator at bottom */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-tech-bg/70 backdrop-blur-sm z-10 pointer-events-none">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-tech-bg/80 backdrop-blur-sm z-10 pointer-events-none">
               {imageList.map((_, idx) => (
                 <span
                   key={idx}
                   className={`rounded-full transition-all ${
-                    activeImgIdx === idx ? 'w-3 h-1.5 bg-tech-accent' : 'w-1.5 h-1.5 bg-slate-500'
+                    activeImgIdx === idx ? 'w-3 h-1.5 bg-tech-accent' : 'w-1.5 h-1.5 bg-slate-400'
                   }`}
                 />
               ))}
@@ -179,12 +181,12 @@ export default function ProductCard({
             e.stopPropagation();
             toggleWishlist(id);
           }}
-          className={`absolute top-3 right-3 p-2 rounded-full border transition-all z-20 backdrop-blur-md ${
+          className={`absolute top-3 right-3 p-2.5 rounded-full border transition-all z-20 backdrop-blur-md shadow ${
             inWishlist
-              ? 'bg-rose-500/20 border-rose-500 text-rose-500'
-              : 'bg-tech-bg/60 border-tech-border text-slate-300 hover:text-white'
+              ? 'bg-rose-500/20 border-rose-500 text-rose-400'
+              : 'bg-tech-bg/70 border-tech-border text-slate-200 hover:text-white'
           }`}
-          aria-label="Toggle Wishlist"
+          aria-label={inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}
         >
           <Heart className={`w-4 h-4 ${inWishlist ? 'fill-rose-500' : ''}`} />
         </button>
@@ -194,23 +196,23 @@ export default function ProductCard({
       <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
         <div>
           {category && (
-            <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block mb-1">
+            <span className="text-[11px] font-mono text-slate-300 uppercase tracking-wider block mb-1">
               {category.name}
             </span>
           )}
           <Link href={`/shop/${slug}`}>
-            <h3 className="font-semibold text-slate-100 group-hover:text-tech-accent transition-colors text-base line-clamp-1">
+            <h3 className="font-semibold text-white group-hover:text-tech-accent transition-colors text-base line-clamp-1">
               {name}
             </h3>
           </Link>
-          <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed">
+          <p className="text-xs text-slate-300 line-clamp-2 mt-1 leading-relaxed">
             {shortDescription}
           </p>
         </div>
 
         {/* Color Swatches Preview */}
         {colorList.length > 0 && (
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
+          <div className="flex items-center gap-1.5 text-xs text-slate-300 font-mono">
             <span className="text-[10px]">Colors:</span>
             <div className="flex items-center gap-1">
               {colorList.slice(0, 5).map((col, idx) => {
@@ -225,7 +227,7 @@ export default function ProductCard({
                 );
               })}
               {colorList.length > 5 && (
-                <span className="text-[10px] text-slate-500">+{colorList.length - 5}</span>
+                <span className="text-[10px] text-slate-400">+{colorList.length - 5}</span>
               )}
             </div>
           </div>
@@ -234,11 +236,11 @@ export default function ProductCard({
         {/* Material Tag & Price */}
         <div className="pt-2 border-t border-tech-border/60 flex items-center justify-between">
           <div>
-            <div className="text-xs font-mono text-slate-400 font-medium">Material: {material}</div>
+            <div className="text-xs font-mono text-slate-300 font-medium">Material: {material}</div>
             <div className="flex items-baseline gap-2 mt-0.5">
               <span className="text-lg font-bold text-white font-mono">₹{price}</span>
               {compareAtPrice && compareAtPrice > price && (
-                <span className="text-xs text-slate-500 line-through font-mono">
+                <span className="text-xs text-slate-400 line-through font-mono">
                   ₹{compareAtPrice}
                 </span>
               )}
@@ -249,7 +251,8 @@ export default function ProductCard({
           {personalizationEnabled ? (
             <Link
               href={`/shop/${slug}`}
-              className="px-3 py-2 rounded-lg bg-tech-card border border-tech-accent/40 text-tech-accent hover:bg-tech-accent/10 text-xs font-semibold font-mono flex items-center gap-1.5 transition-colors"
+              aria-label={`Personalise ${name}`}
+              className="px-3.5 py-2.5 rounded-lg bg-tech-card border border-tech-accent/40 text-tech-accent hover:bg-tech-accent/10 text-xs font-semibold font-mono flex items-center gap-1.5 transition-colors"
             >
               <SlidersHorizontal className="w-3.5 h-3.5" />
               <span>Personalise</span>
@@ -268,7 +271,8 @@ export default function ProductCard({
                   color: colorList[0] || 'Default',
                 })
               }
-              className="px-3 py-2 rounded-lg bg-tech-accent text-tech-bg hover:bg-tech-accent/90 text-xs font-semibold font-mono flex items-center gap-1.5 transition-all shadow shadow-tech-accent/10"
+              aria-label={`Add ${name} to order bag`}
+              className="px-3.5 py-2.5 rounded-lg bg-tech-accent text-tech-bg hover:bg-tech-accent/90 text-xs font-semibold font-mono flex items-center gap-1.5 transition-all shadow shadow-tech-accent/10"
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               <span>Add</span>
