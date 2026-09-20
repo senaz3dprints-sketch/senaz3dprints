@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Upload, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
+import { ShoppingBag, Upload, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface HeroSectionProps {
   title?: string;
@@ -18,65 +19,66 @@ export default function HeroSection({
   secondaryCta = 'Get a Custom Print',
 }: HeroSectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [loadVideo, setLoadVideo] = useState(false);
+
+  // Defer background video playback until after initial paint & idle to maximize LCP and FCP
+  useEffect(() => {
+    // Only load background video on desktop/fast devices after main paint
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined' && window.innerWidth >= 640) {
+        setLoadVideo(true);
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
-    if (videoRef.current) {
+    if (loadVideo && videoRef.current) {
       const video = videoRef.current;
       video.defaultMuted = true;
       video.muted = true;
-      video.setAttribute('muted', '');
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      
-      const startVideo = () => {
-        if (video) {
-          const promise = video.play();
-          if (promise !== undefined) {
-            promise.catch(() => {
-              // On mobile browsers with strict policies, retry on first user interaction
-              const triggerPlayOnTouch = () => {
-                video.play().catch(() => {});
-                window.removeEventListener('touchstart', triggerPlayOnTouch);
-                window.removeEventListener('scroll', triggerPlayOnTouch);
-              };
-              window.addEventListener('touchstart', triggerPlayOnTouch, { once: true, passive: true });
-              window.addEventListener('scroll', triggerPlayOnTouch, { once: true, passive: true });
-            });
-          }
-        }
-      };
-
-      startVideo();
+      video.play().catch(() => {});
     }
-  }, []);
+  }, [loadVideo]);
 
   return (
     <section className="relative overflow-hidden bg-tech-bg border-b border-tech-border min-h-[520px] sm:min-h-[580px] lg:min-h-[660px] flex items-center">
-      {/* 1. BACKGROUND REAL 3D PRINTER VIDEO */}
+      {/* 1. BACKGROUND HIGH-PERFORMANCE POSTER & OPTIONAL AMBIENT VIDEO */}
       <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          // @ts-ignore
-          webkit-playsinline="true"
-          x5-playsinline="true"
-          disablePictureInPicture
-          disableRemotePlayback
-          preload="none"
-          poster="/images/senaz_3d_printer_hero.jpg"
-          className="w-full h-full object-cover object-[55%_45%] sm:object-center transition-opacity duration-700 opacity-90"
-        >
-          <source src="/videos/3d-printer-printing.mp4" type="video/mp4" />
-          <source src="/videos/3d-printer-printing.webm" type="video/webm" />
-          <source src="/videos/printer-hero.mp4" type="video/mp4" />
-        </video>
+        {/* Instant LCP High-Priority Image */}
+        <Image
+          src="/images/senaz_3d_printer_hero.jpg"
+          alt="SenAZ 3D Printing Production Farm"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[55%_45%] sm:object-center transition-opacity duration-700 opacity-80"
+        />
 
-        {/* Dynamic Dark Gradient & Overlays: Perfectly balanced for mobile & desktop readability */}
-        <div className="absolute inset-0 bg-gradient-to-b sm:bg-gradient-to-r from-tech-bg/95 via-tech-bg/75 to-tech-bg/35 sm:to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-tech-bg/50" />
+        {/* Deferred ambient video on larger screens */}
+        {loadVideo && (
+          <video
+            ref={videoRef}
+            autoPlay
+            loop
+            muted
+            playsInline
+            // @ts-ignore
+            webkit-playsinline="true"
+            x5-playsinline="true"
+            disablePictureInPicture
+            disableRemotePlayback
+            className="absolute inset-0 w-full h-full object-cover object-[55%_45%] sm:object-center transition-opacity duration-1000 opacity-90"
+          >
+            <source src="/videos/3d-printer-printing.mp4" type="video/mp4" />
+            <track kind="captions" srcLang="en" label="English" default />
+          </video>
+        )}
+
+        {/* Dynamic Dark Gradient & Overlays: Balanced for WCAG AA readability */}
+        <div className="absolute inset-0 bg-gradient-to-b sm:bg-gradient-to-r from-tech-bg/95 via-tech-bg/85 to-tech-bg/40 sm:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-tech-bg/60" />
         <div className="absolute inset-0 bg-grid-pattern opacity-15" />
         
         {/* Ambient Cyan Glow */}
@@ -88,7 +90,7 @@ export default function HeroSection({
         <div className="max-w-3xl space-y-6 text-left">
           
           {/* Live 3D Printing Studio Badge */}
-          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-tech-card/80 border border-tech-border backdrop-blur-md shadow-lg">
+          <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-tech-card/90 border border-tech-border backdrop-blur-md shadow-lg">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
@@ -107,7 +109,7 @@ export default function HeroSection({
           </h1>
 
           {/* Supporting Subtitle */}
-          <p className="text-base sm:text-lg text-slate-200 font-sans leading-relaxed drop-shadow max-w-2xl">
+          <p className="text-base sm:text-lg text-slate-100 font-sans leading-relaxed drop-shadow max-w-2xl">
             {subtitle}
           </p>
 
@@ -115,6 +117,7 @@ export default function HeroSection({
           <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <Link
               href="/shop"
+              aria-label="Shop our 3D printed products catalog"
               className="px-8 py-4 rounded-xl bg-tech-accent text-tech-bg font-extrabold text-sm font-mono hover:bg-tech-accent/90 transition-all shadow-xl shadow-tech-accent/25 flex items-center justify-center gap-2 group hover:scale-[1.02] active:scale-[0.98]"
             >
               <ShoppingBag className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -124,7 +127,8 @@ export default function HeroSection({
             
             <Link
               href="/custom-printing"
-              className="px-8 py-4 rounded-xl bg-tech-card/80 border border-tech-border/90 hover:border-tech-accent/60 backdrop-blur-md text-white font-extrabold text-sm font-mono transition-all shadow-lg flex items-center justify-center gap-2 hover:bg-tech-card"
+              aria-label="Get a custom 3D print quotation"
+              className="px-8 py-4 rounded-xl bg-tech-card/90 border border-tech-border/90 hover:border-tech-accent/60 backdrop-blur-md text-white font-extrabold text-sm font-mono transition-all shadow-lg flex items-center justify-center gap-2 hover:bg-tech-card"
             >
               <Upload className="w-4 h-4 text-tech-accent" />
               <span>{secondaryCta}</span>
@@ -133,15 +137,15 @@ export default function HeroSection({
 
           {/* Quick Highlight Feature Pills */}
           <div className="pt-6 grid grid-cols-2 sm:grid-cols-3 gap-3 border-t border-tech-border/60">
-            <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-200">
               <CheckCircle2 className="w-3.5 h-3.5 text-tech-accent shrink-0" />
               <span>24–48h Dispatch</span>
             </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-200">
               <CheckCircle2 className="w-3.5 h-3.5 text-tech-accent shrink-0" />
               <span>High Precision FDM</span>
             </div>
-            <div className="flex items-center gap-2 text-xs font-mono text-slate-300 col-span-2 sm:col-span-1">
+            <div className="flex items-center gap-2 text-xs font-mono text-slate-200 col-span-2 sm:col-span-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-tech-accent shrink-0" />
               <span>WhatsApp Live Preview</span>
             </div>
