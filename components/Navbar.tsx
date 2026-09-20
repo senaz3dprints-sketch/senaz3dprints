@@ -22,6 +22,33 @@ export default function Navbar() {
     { name: 'Contact', href: '/contact' },
   ];
 
+  // Auto-close mobile menu on scroll with tap-momentum protection
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    let initialScrollY = window.scrollY;
+    let isIgnoredInitially = true;
+
+    // 150ms grace period so finger tap micro-movement or momentum doesn't dismiss the menu
+    const timer = setTimeout(() => {
+      isIgnoredInitially = false;
+      initialScrollY = window.scrollY;
+    }, 150);
+
+    const handleScroll = () => {
+      if (isIgnoredInitially) return;
+      if (Math.abs(window.scrollY - initialScrollY) > 20) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [mobileMenuOpen]);
+
   // Close mobile menu whenever pathname changes
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -33,7 +60,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="relative w-full z-40 bg-tech-bg border-b border-tech-border text-slate-100">
+      <header className="relative w-full z-40 bg-tech-bg/90 backdrop-blur-md border-b border-tech-border text-slate-100">
         {/* Top Announcement Bar */}
         <div className="bg-brand-950/80 border-b border-brand-900/60 text-xs py-1.5 px-4 text-center text-slate-300 flex items-center justify-center gap-2 font-mono">
           <span className="inline-block w-2 h-2 rounded-full bg-tech-accent animate-pulse"></span>
@@ -145,9 +172,9 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Navigation Drawer with Smooth Slide & Fade */}
+        {/* Mobile Navigation Drawer with Transparent Frosted Glass Background */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-tech-card border-b border-tech-border ${
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-tech-bg/85 backdrop-blur-xl border-b border-tech-border/70 shadow-2xl ${
             mobileMenuOpen ? 'max-h-96 opacity-100 py-3' : 'max-h-0 opacity-0 py-0 border-transparent pointer-events-none'
           }`}
         >
@@ -159,14 +186,14 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   pathname === link.href
-                    ? 'bg-tech-accent/10 text-tech-accent font-semibold'
-                    : 'text-slate-200 hover:bg-tech-border'
+                    ? 'bg-tech-accent/15 text-tech-accent font-semibold'
+                    : 'text-slate-200 hover:bg-white/5'
                 }`}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="pt-2 border-t border-tech-border flex justify-between items-center text-xs text-slate-400 font-mono">
+            <div className="pt-2 border-t border-tech-border/60 flex justify-between items-center text-xs text-slate-400 font-mono">
               <Link href="/admin/login" onClick={() => setMobileMenuOpen(false)} className="hover:text-tech-accent">
                 Owner Dashboard →
               </Link>
@@ -180,7 +207,7 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div
           onClick={() => setMobileMenuOpen(false)}
-          className="fixed inset-0 z-30 bg-black/60 backdrop-blur-xs md:hidden transition-opacity duration-300 animate-fade-in"
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs md:hidden transition-opacity duration-300 animate-fade-in"
           aria-hidden="true"
         />
       )}
