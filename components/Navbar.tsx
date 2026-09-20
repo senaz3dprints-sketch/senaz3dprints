@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -13,6 +13,9 @@ export default function Navbar() {
   const { cartCount, wishlist, setIsCartOpen } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const lastScrollY = useRef(0);
 
   const navLinks = [
     { name: 'Home', href: '/' },
@@ -22,13 +25,46 @@ export default function Navbar() {
     { name: 'Contact', href: '/contact' },
   ];
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      setIsScrolled(currentScrollY > 20);
+
+      // Don't auto-collapse if mobile drawer is currently open
+      if (mobileMenuOpen) return;
+
+      // When user scrolls down by more than 80px, collapse/hide the header
+      // When scrolling up or near the very top (<= 50px), reveal the header smoothly
+      if (currentScrollY > 80 && currentScrollY > lastScrollY.current + 5) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY.current - 5 || currentScrollY <= 50) {
+        setIsVisible(true);
+      }
+
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [mobileMenuOpen]);
+
+  // Close mobile menu whenever pathname changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   const isAdminPage = pathname?.startsWith('/admin');
 
   if (isAdminPage) return null; // Admin has its own dedicated sidebar layout
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-tech-bg/90 backdrop-blur-md border-b border-tech-border text-slate-100">
+      <header
+        className={`sticky top-0 z-40 bg-tech-bg/90 backdrop-blur-md border-b border-tech-border text-slate-100 transition-transform duration-300 ease-in-out ${
+          isVisible ? 'translate-y-0 shadow-md shadow-tech-bg/50' : '-translate-y-full'
+        }`}
+      >
         {/* Top Announcement Bar */}
         <div className="bg-brand-950/80 border-b border-brand-900/60 text-xs py-1.5 px-4 text-center text-slate-300 flex items-center justify-center gap-2 font-mono">
           <span className="inline-block w-2 h-2 rounded-full bg-tech-accent animate-pulse"></span>
