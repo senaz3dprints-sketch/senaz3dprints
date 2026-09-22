@@ -49,16 +49,106 @@ export default function AdminOrdersPage() {
     if (res.ok) fetchOrders();
   };
 
+  const [restoring, setRestoring] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [sheetInput, setSheetInput] = useState('');
+  const [restoreMsg, setRestoreMsg] = useState('');
+
+  const handleRestoreFromSheets = async () => {
+    if (!sheetInput.trim()) {
+      alert('Please paste your Google Sheet link or Spreadsheet ID.');
+      return;
+    }
+    setRestoring(true);
+    setRestoreMsg('');
+    try {
+      const res = await fetch('/api/admin/restore-sheets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sheetUrlOrId: sheetInput.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setRestoreMsg('✔ All orders and custom requests successfully restored from Google Sheets!');
+        fetchOrders();
+      } else {
+        setRestoreMsg(`Error: ${data.error || 'Failed to restore. Please ensure the Google Sheet link is publicly viewable.'}`);
+      }
+    } catch (e: any) {
+      setRestoreMsg(`Error: ${e.message}`);
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="border-b border-tech-border pb-4">
-        <h1 className="text-2xl font-extrabold text-white font-sans tracking-tight">
-          Orders Management
-        </h1>
-        <p className="text-xs text-slate-400 font-mono">
-          Track customer submissions, personalized notes, address details, and update status in real-time across database & Google Sheets.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-tech-border pb-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-white font-sans tracking-tight">
+            Orders Management
+          </h1>
+          <p className="text-xs text-slate-400 font-mono">
+            Track customer submissions, personalized notes, address details, and update status in real-time across database & Google Sheets.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setShowRestoreModal(true)}
+          className="px-3.5 py-2 rounded-xl bg-tech-card hover:bg-tech-border border border-tech-border hover:border-emerald-500/50 text-emerald-400 text-xs font-mono font-bold flex items-center gap-2 transition-all shrink-0"
+        >
+          <Sparkles className="w-4 h-4" />
+          <span>Restore / Sync from Google Sheets</span>
+        </button>
       </div>
+
+      {/* Google Sheets Restore Modal */}
+      {showRestoreModal && (
+        <div className="p-5 rounded-2xl bg-tech-card border border-emerald-500/40 space-y-4 shadow-xl animate-fade-in">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 font-sans">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>Restore Orders & Custom Requests from Google Sheets</span>
+            </h3>
+            <button
+              onClick={() => {
+                setShowRestoreModal(false);
+                setRestoreMsg('');
+              }}
+              className="text-xs font-mono text-slate-400 hover:text-white"
+            >
+              ✕ Close
+            </button>
+          </div>
+
+          <p className="text-xs text-slate-300 font-mono leading-relaxed">
+            Paste your Google Spreadsheet link below (ensure your sheet sharing is set to <strong className="text-white">"Anyone with the link can view"</strong>).
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={sheetInput}
+              onChange={(e) => setSheetInput(e.target.value)}
+              placeholder="https://docs.google.com/spreadsheets/d/your-sheet-id/edit"
+              className="flex-1 bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-xs font-mono text-white focus:outline-none focus:border-emerald-400"
+            />
+            <button
+              onClick={handleRestoreFromSheets}
+              disabled={restoring}
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-mono font-bold text-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {restoring ? 'Restoring...' : 'Start Restore'}
+            </button>
+          </div>
+
+          {restoreMsg && (
+            <div className={`p-3 rounded-lg text-xs font-mono ${restoreMsg.startsWith('✔') ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border border-rose-500/30 text-rose-400'}`}>
+              {restoreMsg}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="bg-tech-card rounded-2xl border border-tech-border overflow-hidden">
         <div className="overflow-x-auto">
