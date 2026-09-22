@@ -256,14 +256,15 @@ export default function AdminReceiptsPage() {
     setCustomerNotes(`Custom Specs: ${req.additionalNotes || 'N/A'}`);
 
     const qty = Number(req.quantity) || 1;
+    const unitPrice = req.quotedAmount && Number(req.quotedAmount) > 0 ? Math.round(Number(req.quotedAmount) / qty) : 500;
     setItems([
       {
         id: '1',
         name: `Custom 3D Print - ${req.productType || 'Model Manufacturing'}`,
         specs: `Material: ${req.materialPreference || 'PLA+'} • Color: ${req.colorPreference || 'Default'} ${req.dimensions ? `• Dims: ${req.dimensions}` : ''}`,
         quantity: qty,
-        unitPrice: 500,
-        total: qty * 500,
+        unitPrice: unitPrice,
+        total: qty * unitPrice,
       },
     ]);
   };

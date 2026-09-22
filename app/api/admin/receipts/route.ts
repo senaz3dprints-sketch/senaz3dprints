@@ -110,23 +110,6 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // If receipt is tied to a Custom Request (e.g. SNZ-REQ-1082), sync its price & status
-    try {
-      const match = receiptNumber.match(/SNZ-REQ-\d+/i);
-      if (match) {
-        const reqId = match[0].toUpperCase();
-        await db.customRequest.updateMany({
-          where: { id: reqId },
-          data: {
-            quotedPrice: Number(grandTotal) || 0,
-            status: paymentStatus === 'PAID_IN_FULL' ? 'COMPLETED' : 'QUOTED',
-          },
-        });
-      }
-    } catch (syncErr) {
-      console.error('[Receipt to CustomRequest Sync Error]', syncErr);
-    }
-
     return NextResponse.json({ success: true, receipt: saved });
   } catch (error) {
     console.error('Failed to save receipt:', error);

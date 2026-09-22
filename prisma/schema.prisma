@@ -91,7 +91,7 @@ model CustomRequest {
   quantity          Int      @default(1)
   dimensions        String?
   additionalNotes   String?
-  quotedPrice       Float?   @default(0)
+  quotedAmount      Float    @default(0) // Negotiated custom quote / order value
   status            String   @default("PENDING") // PENDING, QUOTED, IN_PRODUCTION, COMPLETED, REJECTED
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

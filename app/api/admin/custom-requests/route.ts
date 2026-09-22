@@ -27,18 +27,18 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
 
-    const { id, status, quotedPrice } = await req.json();
+    const { id, status, quotedAmount } = await req.json();
     if (!id) {
       return NextResponse.json({ error: 'Request ID required.' }, { status: 400 });
     }
 
-    const dataToUpdate: any = {};
-    if (status) dataToUpdate.status = status;
-    if (quotedPrice !== undefined) dataToUpdate.quotedPrice = Number(quotedPrice) || 0;
+    const updateData: any = {};
+    if (status) updateData.status = status;
+    if (quotedAmount !== undefined) updateData.quotedAmount = Math.max(0, Number(quotedAmount) || 0);
 
     const updated = await db.customRequest.update({
       where: { id },
-      data: dataToUpdate,
+      data: updateData,
     });
 
     // Synchronously update Google Sheet tab 'CustomRequests' and notify customer
