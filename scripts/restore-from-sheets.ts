@@ -221,10 +221,116 @@ export async function restoreFromSheetUrl(sheetUrlOrId: string) {
       }
       console.log(`✔ Successfully restored ${importedRequests} Custom Requests into database!`);
     } else {
-      console.error(`Could not fetch CustomRequests tab (HTTP ${res.status}).`);
+      console.log(`No 'CustomRequests' tab found or not public.`);
     }
   } catch (err: any) {
     console.error('Error importing custom requests:', err.message);
+  }
+
+  // 3. Restore Products
+  const productsCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Products`;
+  try {
+    const res = await fetch(productsCsvUrl);
+    if (res.ok) {
+      const csvText = await res.text();
+      const rows = parseCSV(csvText);
+      console.log(`\nFound ${rows.length - 1} rows in 'Products' tab.`);
+
+      let importedProducts = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        const [
+          name,
+          categoryName,
+          priceStr,
+          comparePriceStr,
+          shortDesc,
+          fullDesc,
+          imagesStr,
+          colorsStr,
+          sizesStr,
+          material,
+          stockStr,
+          personalizationStr,
+          tagsStr,
+        ] = r;
+
+        if (!name) continue;
+
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const price = parseFloat((priceStr || '0').replace(/[^0-9.]/g, '')) || 299;
+        const compareAtPrice = comparePriceStr ? parseFloat(comparePriceStr.replace(/[^0-9.]/g, '')) : null;
+        const stockQuantity = parseInt(stockStr || '20') || 20;
+
+        // Ensure category exists
+        const catName = categoryName || 'Custom 3D Prints';
+        const catSlug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        let category = await prisma.category.findUnique({ where: { slug: catSlug } });
+        if (!category) {
+          category = await prisma.category.create({
+            data: {
+              name: catName,
+              slug: catSlug,
+              description: `Custom ${catName} collection`,
+            },
+          });
+        }
+
+        const images = imagesStr
+          ? imagesStr.split(',').map((u) => u.trim()).filter(Boolean)
+          : ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'];
+
+        const colors = colorsStr ? colorsStr.split(',').map((c) => c.trim()).filter(Boolean) : ['White', 'Black'];
+        const sizes = sizesStr ? sizesStr.split(',').map((s) => s.trim()).filter(Boolean) : ['Standard'];
+        const tags = tagsStr ? tagsStr.split(',').map((t) => t.trim()).filter(Boolean) : ['3D Print'];
+        const isPersonalized = String(personalizationStr).toLowerCase().includes('true') || String(personalizationStr).toLowerCase().includes('yes');
+
+        await prisma.product.upsert({
+          where: { slug },
+          update: {
+            name,
+            categoryId: category.id,
+            price,
+            compareAtPrice,
+            shortDescription: shortDesc || name,
+            fullDescription: fullDesc || shortDesc || name,
+            images: JSON.stringify(images),
+            colors: JSON.stringify(colors),
+            sizes: JSON.stringify(sizes),
+            material: material || 'PLA+',
+            stockQuantity,
+            personalizationEnabled: isPersonalized,
+            customTextEnabled: isPersonalized,
+            tags: JSON.stringify(tags),
+            isPublished: true,
+          },
+          create: {
+            name,
+            slug,
+            categoryId: category.id,
+            price,
+            compareAtPrice,
+            shortDescription: shortDesc || name,
+            fullDescription: fullDesc || shortDesc || name,
+            images: JSON.stringify(images),
+            colors: JSON.stringify(colors),
+            sizes: JSON.stringify(sizes),
+            material: material || 'PLA+',
+            stockQuantity,
+            personalizationEnabled: isPersonalized,
+            customTextEnabled: isPersonalized,
+            tags: JSON.stringify(tags),
+            isPublished: true,
+          },
+        });
+        importedProducts++;
+      }
+      console.log(`✔ Successfully restored ${importedProducts} Products from 'Products' tab into database!`);
+    } else {
+      console.log(`No 'Products' tab found in Google Sheet (Optional).`);
+    }
+  } catch (err: any) {
+    console.error('Error importing products tab:', err.message);
   }
 
   await prisma.$disconnect();
@@ -235,3 +341,4 @@ const inputArg = process.argv[2];
 if (inputArg) {
   restoreFromSheetUrl(inputArg);
 }
+

@@ -235,6 +235,40 @@ export async function recordReferralSheetRecord(referral: {
   return await appendToSheet('Referrals', row);
 }
 
+export async function syncProductSheetRecord(product: {
+  name: string;
+  categoryName: string;
+  price: number;
+  compareAtPrice?: number | null;
+  shortDescription?: string | null;
+  fullDescription?: string | null;
+  images?: string[];
+  colors?: string[];
+  sizes?: string[];
+  material?: string | null;
+  stockQuantity?: number;
+  personalizationEnabled?: boolean;
+  tags?: string[];
+}) {
+  const row = [
+    product.name,                                     // 1. Name
+    product.categoryName || 'General',                // 2. Category
+    product.price,                                    // 3. Price (₹)
+    product.compareAtPrice || '',                     // 4. Compare At Price (₹)
+    product.shortDescription || '',                   // 5. Short Description
+    product.fullDescription || '',                    // 6. Full Description
+    (product.images || []).join(', '),                // 7. Image URLs
+    (product.colors || []).join(', '),                // 8. Colors
+    (product.sizes || []).join(', '),                 // 9. Sizes
+    product.material || 'PLA+',                       // 10. Material
+    product.stockQuantity ?? 20,                      // 11. Stock Quantity
+    product.personalizationEnabled ? 'TRUE' : 'FALSE',// 12. Personalization
+    (product.tags || []).join(', '),                  // 13. Tags
+  ];
+
+  return await appendToSheet('Products', row);
+}
+
 /**
  * Updates status of a custom 3D printing request in Google Sheets (CustomRequests tab)
  */

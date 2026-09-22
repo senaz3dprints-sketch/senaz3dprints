@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
+import { syncProductSheetRecord } from '@/lib/google-sheets';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -96,6 +97,27 @@ export async function POST(req: NextRequest) {
         tags: typeof tags === 'string' ? tags : JSON.stringify(tags || []),
       },
     });
+
+    try {
+      const cat = await db.category.findUnique({ where: { id: categoryId } });
+      await syncProductSheetRecord({
+        name: product.name,
+        categoryName: cat?.name || 'General',
+        price: product.price,
+        compareAtPrice: product.compareAtPrice,
+        shortDescription: product.shortDescription,
+        fullDescription: product.fullDescription,
+        images: Array.isArray(images) ? images : [],
+        colors: Array.isArray(colors) ? colors : [],
+        sizes: Array.isArray(sizes) ? sizes : [],
+        material: product.material,
+        stockQuantity: product.stockQuantity,
+        personalizationEnabled: product.personalizationEnabled,
+        tags: Array.isArray(tags) ? tags : [],
+      });
+    } catch (sheetErr) {
+      console.error('[Google Sheets Product Sync Error]', sheetErr);
+    }
 
     try {
       revalidatePath('/', 'layout');
