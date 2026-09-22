@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
+import { syncReceiptSheetRecord } from '@/lib/google-sheets';
 
 export async function GET(req: NextRequest) {
   try {
@@ -108,6 +109,33 @@ export async function POST(req: NextRequest) {
         update: payload,
         create: payload,
       });
+    }
+
+    try {
+      await syncReceiptSheetRecord({
+        receiptNumber: saved.receiptNumber,
+        docType: saved.docType,
+        customerName: saved.customerName,
+        whatsapp: saved.whatsapp,
+        email: saved.email,
+        address: saved.address,
+        city: saved.city,
+        state: saved.state,
+        pincode: saved.pincode,
+        items: saved.items,
+        subtotal: saved.subtotal,
+        discountAmount: saved.discountAmount,
+        shippingFee: saved.shippingFee,
+        grandTotal: saved.grandTotal,
+        advancePaid: saved.advancePaid,
+        balanceDue: saved.balanceDue,
+        paymentStatus: saved.paymentStatus,
+        paymentMode: saved.paymentMode,
+        customerNotes: saved.customerNotes,
+        issueDate: saved.issueDate,
+      });
+    } catch (sheetErr) {
+      console.error('[Google Sheets Receipt Sync Error]', sheetErr);
     }
 
     return NextResponse.json({ success: true, receipt: saved });

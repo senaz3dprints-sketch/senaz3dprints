@@ -269,6 +269,60 @@ export async function syncProductSheetRecord(product: {
   return await appendToSheet('Products', row);
 }
 
+export async function syncReceiptSheetRecord(receipt: {
+  receiptNumber: string;
+  docType: string;
+  customerName: string;
+  whatsapp?: string | null;
+  email?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  pincode?: string | null;
+  items: string;
+  subtotal: number;
+  discountAmount: number;
+  shippingFee: number;
+  grandTotal: number;
+  advancePaid: number;
+  balanceDue: number;
+  paymentStatus: string;
+  paymentMode: string;
+  customerNotes?: string | null;
+  issueDate: string;
+}) {
+  let itemsSummary = receipt.items;
+  try {
+    const parsed = typeof receipt.items === 'string' ? JSON.parse(receipt.items) : receipt.items;
+    if (Array.isArray(parsed)) {
+      itemsSummary = parsed.map((it: any) => `${it.quantity}x ${it.name} (₹${it.total})`).join(' | ');
+    }
+  } catch (e) {}
+
+  const fullAddr = [receipt.address, receipt.city, receipt.state, receipt.pincode].filter(Boolean).join(', ');
+
+  const row = [
+    receipt.receiptNumber,                   // 1. Receipt Ref No
+    receipt.issueDate,                       // 2. Date
+    receipt.docType,                         // 3. Document Type
+    receipt.customerName,                    // 4. Customer Name
+    receipt.whatsapp || 'N/A',               // 5. WhatsApp
+    fullAddr || 'N/A',                       // 6. Full Address
+    itemsSummary,                            // 7. Items Summary
+    receipt.subtotal,                        // 8. Subtotal (₹)
+    receipt.discountAmount,                  // 9. Discount (₹)
+    receipt.shippingFee,                     // 10. Shipping (₹)
+    receipt.grandTotal,                      // 11. Grand Total (₹)
+    receipt.advancePaid,                     // 12. Advance Paid (₹)
+    receipt.balanceDue,                      // 13. Balance Due (₹)
+    receipt.paymentStatus,                   // 14. Payment Status
+    receipt.paymentMode,                     // 15. Payment Mode
+    receipt.customerNotes || 'None',         // 16. Notes
+  ];
+
+  return await appendToSheet('Receipts', row);
+}
+
 /**
  * Updates status of a custom 3D printing request in Google Sheets (CustomRequests tab)
  */

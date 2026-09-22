@@ -330,7 +330,106 @@ export async function restoreFromSheetUrl(sheetUrlOrId: string) {
       console.log(`No 'Products' tab found in Google Sheet (Optional).`);
     }
   } catch (err: any) {
-    console.error('Error importing products tab:', err.message);
+    console.error('Error importing products:', err.message);
+  }
+
+  // 4. Restore Receipts & Quotations
+  const receiptsCsvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Receipts`;
+  try {
+    const res = await fetch(receiptsCsvUrl);
+    if (res.ok) {
+      const csvText = await res.text();
+      const rows = parseCSV(csvText);
+      console.log(`\nFound ${rows.length - 1} rows in 'Receipts' tab.`);
+
+      let importedReceipts = 0;
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        const [
+          receiptNumber,
+          issueDate,
+          docType,
+          customerName,
+          whatsapp,
+          fullAddress,
+          itemsSummary,
+          subtotalStr,
+          discountStr,
+          shippingStr,
+          grandTotalStr,
+          advanceStr,
+          balanceStr,
+          paymentStatus,
+          paymentMode,
+          notes,
+        ] = r;
+
+        if (!receiptNumber || !customerName) continue;
+
+        const grandTotal = parseFloat((grandTotalStr || '0').replace(/[^0-9.]/g, '')) || 0;
+        const subtotal = parseFloat((subtotalStr || '0').replace(/[^0-9.]/g, '')) || grandTotal;
+        const discountAmount = parseFloat((discountStr || '0').replace(/[^0-9.]/g, '')) || 0;
+        const shippingFee = parseFloat((shippingStr || '0').replace(/[^0-9.]/g, '')) || 0;
+        const advancePaid = parseFloat((advanceStr || '0').replace(/[^0-9.]/g, '')) || 0;
+        const balanceDue = parseFloat((balanceStr || '0').replace(/[^0-9.]/g, '')) || 0;
+
+        const itemsJson = JSON.stringify([
+          {
+            id: '1',
+            name: itemsSummary || '3D Printed Custom Order',
+            specs: 'Standard Precision FDM',
+            quantity: 1,
+            unitPrice: subtotal,
+            total: subtotal,
+          },
+        ]);
+
+        await prisma.receipt.upsert({
+          where: { receiptNumber },
+          update: {
+            docType: docType || 'INVOICE',
+            customerName,
+            whatsapp: whatsapp === 'N/A' ? '' : whatsapp,
+            address: fullAddress === 'N/A' ? '' : fullAddress,
+            items: itemsJson,
+            subtotal,
+            discountAmount,
+            shippingFee,
+            grandTotal,
+            advancePaid,
+            balanceDue,
+            paymentStatus: paymentStatus || 'PAID_IN_FULL',
+            paymentMode: paymentMode || 'UPI / Online',
+            customerNotes: notes === 'None' ? '' : notes,
+            issueDate: issueDate || new Date().toISOString().split('T')[0],
+          },
+          create: {
+            receiptNumber,
+            docType: docType || 'INVOICE',
+            customerName,
+            whatsapp: whatsapp === 'N/A' ? '' : whatsapp,
+            address: fullAddress === 'N/A' ? '' : fullAddress,
+            items: itemsJson,
+            subtotal,
+            discountAmount,
+            shippingFee,
+            grandTotal,
+            advancePaid,
+            balanceDue,
+            paymentStatus: paymentStatus || 'PAID_IN_FULL',
+            paymentMode: paymentMode || 'UPI / Online',
+            customerNotes: notes === 'None' ? '' : notes,
+            issueDate: issueDate || new Date().toISOString().split('T')[0],
+          },
+        });
+        importedReceipts++;
+      }
+      console.log(`✔ Successfully restored ${importedReceipts} Receipts from 'Receipts' tab into database!`);
+    } else {
+      console.log(`No 'Receipts' tab found in Google Sheet (Optional).`);
+    }
+  } catch (err: any) {
+    console.error('Error importing receipts tab:', err.message);
   }
 
   await prisma.$disconnect();
@@ -341,4 +440,5 @@ const inputArg = process.argv[2];
 if (inputArg) {
   restoreFromSheetUrl(inputArg);
 }
+
 
