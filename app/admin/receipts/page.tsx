@@ -16,18 +16,12 @@ import {
   IndianRupee,
   Calendar,
   Share2,
-  ArrowLeft,
-  ChevronDown,
   Building2,
   Save,
-  RotateCcw,
   Search,
-  ExternalLink,
   Edit,
   Layers,
-  Clock,
   Check,
-  Download,
 } from 'lucide-react';
 
 interface ReceiptItem {
@@ -49,20 +43,18 @@ interface AdminBusinessInfo {
   businessWebsite: string;
   businessUpiId: string;
   businessUpiName: string;
-  businessGstin?: string;
 }
 
 const DEFAULT_ADMIN_INFO: AdminBusinessInfo = {
   businessName: 'SenAZ 3D PRINTS',
-  tagline: 'Micro-Manufacturing • Rapid Prototyping • Custom FDM 3D Printing',
-  businessAddress: 'SenAZ 3D Studio, Kaldoba Pt 1, Agomoni',
-  businessCityStatePin: 'Dhubri, Assam - 783335',
-  businessPhone: '+91 87610 53230',
-  businessEmail: 'senaz3dprints@gmail.com',
+  tagline: 'Custom 3D Printing & Rapid Prototyping Studio',
+  businessAddress: '',
+  businessCityStatePin: '',
+  businessPhone: '',
+  businessEmail: 'support@senaz3dprints.in',
   businessWebsite: 'senaz3dprints.in',
-  businessUpiId: '918761053230@upi',
+  businessUpiId: '',
   businessUpiName: 'SenAZ 3D PRINTS',
-  businessGstin: '',
 };
 
 export default function AdminReceiptsPage() {
@@ -78,17 +70,17 @@ export default function AdminReceiptsPage() {
   const [savedSearch, setSavedSearch] = useState('');
   const [showAdminInfoEdit, setShowAdminInfoEdit] = useState(false);
 
-  // Admin / Business Sender Information
+  // Admin / Business Sender Information (Configured by Admin)
   const [adminInfo, setAdminInfo] = useState<AdminBusinessInfo>(DEFAULT_ADMIN_INFO);
 
   // Document Details
   const [currentId, setCurrentId] = useState<string | null>(null);
-  const [docType, setDocType] = useState<'INVOICE' | 'ADVANCE_RECEIPT' | 'QUOTATION' | 'DELIVERY_RECEIPT'>('INVOICE');
+  const [docType, setDocType] = useState<'RECEIPT' | 'ADVANCE_RECEIPT' | 'QUOTATION' | 'DELIVERY_RECEIPT'>('RECEIPT');
   const [receiptNumber, setReceiptNumber] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [estimatedDelivery, setEstimatedDelivery] = useState('3-5 Business Days');
 
-  // Customer Info
+  // Customer Info (Purely Generic Placeholders)
   const [customerName, setCustomerName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState('');
@@ -103,7 +95,7 @@ export default function AdminReceiptsPage() {
     {
       id: '1',
       name: 'Custom 3D Printing Service',
-      specs: 'Material: PLA+ • Layer Height: 0.16mm • Infill: 25%',
+      specs: 'Material: PLA+ • Layer Height: 0.16mm',
       quantity: 1,
       unitPrice: 450,
       total: 450,
@@ -113,7 +105,6 @@ export default function AdminReceiptsPage() {
   // Financials & Payment
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [shippingFee, setShippingFee] = useState<number>(0);
-  const [taxPercent, setTaxPercent] = useState<number>(0);
   const [advancePaid, setAdvancePaid] = useState<number>(0);
   const [paymentStatus, setPaymentStatus] = useState<string>('PAID_IN_FULL');
   const [paymentMode, setPaymentMode] = useState<string>('UPI / Online');
@@ -174,6 +165,8 @@ export default function AdminReceiptsPage() {
       localStorage.setItem('senaz_admin_business_info', JSON.stringify(adminInfo));
     } catch (e) {}
     setShowAdminInfoEdit(false);
+    setSaveSuccessMsg('Studio & Admin Address saved successfully!');
+    setTimeout(() => setSaveSuccessMsg(''), 3000);
   };
 
   // Reset & Create a New Blank Receipt
@@ -319,16 +312,15 @@ export default function AdminReceiptsPage() {
     setItems(items.filter((_, idx) => idx !== index));
   };
 
-  // Calculations
+  // Calculations (No Tax)
   const subtotal = items.reduce((sum, item) => sum + (Number(item.total) || 0), 0);
-  const taxAmount = (subtotal * (Number(taxPercent) || 0)) / 100;
-  const grandTotal = Math.max(0, subtotal - (Number(discountAmount) || 0) + (Number(shippingFee) || 0) + taxAmount);
+  const grandTotal = Math.max(0, subtotal - (Number(discountAmount) || 0) + (Number(shippingFee) || 0));
   const balanceDue = Math.max(0, grandTotal - (Number(advancePaid) || 0));
 
   const docTitleMap = {
-    INVOICE: 'TAX INVOICE / RECEIPT',
+    RECEIPT: 'ORDER RECEIPT',
     ADVANCE_RECEIPT: 'ADVANCE PAYMENT RECEIPT',
-    QUOTATION: 'CUSTOM 3D PRINTING QUOTATION',
+    QUOTATION: 'PRICE QUOTATION / ESTIMATE',
     DELIVERY_RECEIPT: 'DELIVERY CHALLAN & RECEIPT',
   };
 
@@ -358,7 +350,7 @@ export default function AdminReceiptsPage() {
         subtotal,
         discountAmount,
         shippingFee,
-        taxPercent,
+        taxPercent: 0,
         grandTotal,
         advancePaid,
         balanceDue,
@@ -395,7 +387,8 @@ export default function AdminReceiptsPage() {
   const handleLoadSavedReceipt = (rec: any) => {
     setCurrentId(rec.id);
     setReceiptNumber(rec.receiptNumber);
-    setDocType(rec.docType || 'INVOICE');
+    const rawType = rec.docType || 'RECEIPT';
+    setDocType(rawType === 'INVOICE' ? 'RECEIPT' : rawType);
     setCustomerName(rec.customerName || '');
     setWhatsapp(rec.whatsapp || '');
     setEmail(rec.email || '');
@@ -406,7 +399,6 @@ export default function AdminReceiptsPage() {
     setCustomerNotes(rec.customerNotes || '');
     setDiscountAmount(rec.discountAmount || 0);
     setShippingFee(rec.shippingFee || 0);
-    setTaxPercent(rec.taxPercent || 0);
     setAdvancePaid(rec.advancePaid || 0);
     setPaymentStatus(rec.paymentStatus || 'PAID_IN_FULL');
     setPaymentMode(rec.paymentMode || 'UPI / Online');
@@ -438,7 +430,7 @@ export default function AdminReceiptsPage() {
   const handleDuplicateReceipt = (rec: any) => {
     handleLoadSavedReceipt(rec);
     setCurrentId(null);
-    setReceiptNumber(generateNewReceiptNumber(rec.docType || 'INVOICE'));
+    setReceiptNumber(generateNewReceiptNumber(rec.docType === 'QUOTATION' ? 'QUOTATION' : 'RECEIPT'));
     setIssueDate(new Date().toISOString().split('T')[0]);
     setSaveSuccessMsg('Receipt duplicated with new reference number.');
     setTimeout(() => setSaveSuccessMsg(''), 3000);
@@ -483,10 +475,9 @@ ${itemLines}
 *FINANCIAL SUMMARY:*
 • Subtotal: Rs. ${subtotal}
 ${discountAmount > 0 ? `• Negotiated Discount: -Rs. ${discountAmount}\n` : ''}• Shipping / Delivery: ${shippingFee > 0 ? `Rs. ${shippingFee}` : 'FREE'}
-*• GRAND TOTAL: Rs. ${grandTotal}*
+*• TOTAL AMOUNT: Rs. ${grandTotal}*
 ${advancePaid > 0 ? `• Advance Received: Rs. ${advancePaid}\n• *BALANCE PAYABLE:* Rs. ${balanceDue}\n` : ''}• Payment Status: *${paymentStatus.replace(/_/g, ' ')}*
-• Payment Mode: ${paymentMode} (UPI: ${adminInfo.businessUpiId})
-
+${adminInfo.businessUpiId ? `• Payment Mode: ${paymentMode} (UPI: ${adminInfo.businessUpiId})\n` : `• Payment Mode: ${paymentMode}\n`}
 *Estimated Delivery:* ${estimatedDelivery}
 Thank you for choosing ${adminInfo.businessName}!`;
 
@@ -496,7 +487,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
   const handleSendWhatsApp = () => {
     const cleanNumber = (whatsapp || '').replace(/[^0-9]/g, '');
     const num = cleanNumber.length === 10 ? `91${cleanNumber}` : cleanNumber;
-    const url = `https://wa.me/${num || '918761053230'}?text=${encodeURIComponent(generateWhatsAppMessage())}`;
+    const url = `https://wa.me/${num || ''}?text=${encodeURIComponent(generateWhatsAppMessage())}`;
     window.open(url, '_blank');
   };
 
@@ -528,10 +519,10 @@ Thank you for choosing ${adminInfo.businessName}!`;
         <div>
           <h1 className="text-2xl font-extrabold text-white font-sans tracking-tight flex items-center gap-2.5">
             <Receipt className="w-6 h-6 text-tech-accent" />
-            <span>Receipts & Quotation Suite</span>
+            <span>Customer Receipts & Quotations</span>
           </h1>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
-            Create custom invoices, adjust negotiated prices, save to database, and print or share on WhatsApp
+            Create custom receipts & quotes, adjust negotiated prices, save to database, and print or share on WhatsApp
           </p>
         </div>
 
@@ -687,10 +678,12 @@ Thank you for choosing ${adminInfo.businessName}!`;
             <div className="p-3.5 rounded-xl bg-tech-card border border-tech-border flex items-center justify-between">
               <div>
                 <span className="text-xs font-mono font-bold text-white block">
-                  {adminInfo.businessName}
+                  {adminInfo.businessName || 'Your Brand Name'}
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono block truncate max-w-[200px]">
-                  {adminInfo.businessAddress || 'Studio Sender Details Configured'}
+                  {adminInfo.businessAddress
+                    ? `${adminInfo.businessAddress}, ${adminInfo.businessCityStatePin}`
+                    : 'Click "Edit Address" to set your studio address'}
                 </span>
               </div>
               <button
@@ -699,7 +692,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                 className="px-2.5 py-1.5 rounded-lg bg-tech-bg hover:bg-tech-border border border-tech-border text-[11px] font-mono text-tech-accent flex items-center gap-1 transition-colors"
               >
                 <Building2 className="w-3 h-3" />
-                <span>{showAdminInfoEdit ? 'Close' : 'Edit Address'}</span>
+                <span>{showAdminInfoEdit ? 'Close' : 'Edit Admin Address'}</span>
               </button>
             </div>
           </div>
@@ -710,7 +703,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-white font-sans flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-tech-accent" />
-                  <span>Configure Admin / Studio Address & Business Info (Sender Details)</span>
+                  <span>Configure Admin / Studio Address & Sender Information</span>
                 </h3>
                 <span className="text-[11px] text-slate-400 font-mono">
                   Saved automatically to all future receipts
@@ -735,7 +728,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     type="text"
                     value={adminInfo.tagline}
                     onChange={(e) => setAdminInfo({ ...adminInfo, tagline: e.target.value })}
-                    placeholder="e.g. Micro-Manufacturing & Rapid Prototyping"
+                    placeholder="e.g. Custom 3D Printing & Rapid Prototyping Studio"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -746,7 +739,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     type="text"
                     value={adminInfo.businessAddress}
                     onChange={(e) => setAdminInfo({ ...adminInfo, businessAddress: e.target.value })}
-                    placeholder="e.g. 123 Tech Park, Kaldoba Pt 1"
+                    placeholder="e.g. 123 Tech Park, MG Road"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -757,7 +750,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     type="text"
                     value={adminInfo.businessCityStatePin}
                     onChange={(e) => setAdminInfo({ ...adminInfo, businessCityStatePin: e.target.value })}
-                    placeholder="e.g. Dhubri, Assam - 783335"
+                    placeholder="e.g. Mumbai, Maharashtra - 400001"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -768,7 +761,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     type="text"
                     value={adminInfo.businessPhone}
                     onChange={(e) => setAdminInfo({ ...adminInfo, businessPhone: e.target.value })}
-                    placeholder="e.g. +91 87610 53230"
+                    placeholder="e.g. +91 98765 43210"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -779,7 +772,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     type="email"
                     value={adminInfo.businessEmail}
                     onChange={(e) => setAdminInfo({ ...adminInfo, businessEmail: e.target.value })}
-                    placeholder="e.g. senaz3dprints@gmail.com"
+                    placeholder="e.g. support@senaz3dprints.in"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -790,7 +783,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     type="text"
                     value={adminInfo.businessUpiId}
                     onChange={(e) => setAdminInfo({ ...adminInfo, businessUpiId: e.target.value })}
-                    placeholder="e.g. 918761053230@upi"
+                    placeholder="e.g. senaz3dprints@upi"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -807,12 +800,12 @@ Thank you for choosing ${adminInfo.businessName}!`;
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1">GSTIN / MSME Reg (Optional)</label>
+                  <label className="block text-slate-300 mb-1">Website URL</label>
                   <input
                     type="text"
-                    value={adminInfo.businessGstin || ''}
-                    onChange={(e) => setAdminInfo({ ...adminInfo, businessGstin: e.target.value })}
-                    placeholder="e.g. 18AAAAA0000A1Z5"
+                    value={adminInfo.businessWebsite}
+                    onChange={(e) => setAdminInfo({ ...adminInfo, businessWebsite: e.target.value })}
+                    placeholder="e.g. senaz3dprints.in"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -835,7 +828,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
           <div className="p-5 rounded-2xl bg-tech-card border border-tech-border space-y-4">
             <h3 className="text-sm font-bold text-white font-sans flex items-center gap-2">
               <FileText className="w-4 h-4 text-tech-accent" />
-              <span>1. Document & Invoice Settings</span>
+              <span>1. Document & Receipt Settings</span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-mono">
@@ -846,15 +839,15 @@ Thank you for choosing ${adminInfo.businessName}!`;
                   onChange={(e: any) => setDocType(e.target.value)}
                   className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                 >
-                  <option value="INVOICE">Tax Invoice / Receipt</option>
+                  <option value="RECEIPT">Order Receipt</option>
                   <option value="ADVANCE_RECEIPT">Advance Payment Receipt</option>
-                  <option value="QUOTATION">Custom Print Quotation</option>
+                  <option value="QUOTATION">Price Quotation / Estimate</option>
                   <option value="DELIVERY_RECEIPT">Delivery Challan</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1">Receipt / Invoice Ref No.</label>
+                <label className="block text-slate-300 mb-1">Receipt Reference No.</label>
                 <input
                   type="text"
                   value={receiptNumber}
@@ -975,10 +968,10 @@ Thank you for choosing ${adminInfo.businessName}!`;
               <div>
                 <h3 className="text-sm font-bold text-white font-sans flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4 text-tech-accent" />
-                  <span>3. Line Items & Negotiated Pricing (Manually Editable)</span>
+                  <span>3. Line Items & Custom Pricing (Manually Editable)</span>
                 </h3>
                 <p className="text-[11px] text-slate-400 font-mono">
-                  Create, edit, or delete any item row. You can manually override unit prices to reflect negotiated deals.
+                  Create, edit, or delete item rows. You can manually override unit prices to reflect agreed customer pricing.
                 </p>
               </div>
 
@@ -1028,7 +1021,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                 onClick={() =>
                   addItem({
                     name: 'Custom Curved Lithophane Lamp',
-                    specs: 'White High-Res PLA • LED Base included',
+                    specs: 'White High-Res PLA • Warm LED Base included',
                     unitPrice: 699,
                   })
                 }
@@ -1162,12 +1155,12 @@ Thank you for choosing ${adminInfo.businessName}!`;
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1">UPI ID on Invoice</label>
+                  <label className="block text-slate-300 mb-1">UPI ID on Receipt</label>
                   <input
                     type="text"
                     value={adminInfo.businessUpiId}
                     onChange={(e) => setAdminInfo({ ...adminInfo, businessUpiId: e.target.value })}
-                    placeholder="e.g. 918761053230@upi"
+                    placeholder="e.g. senaz3dprints@upi"
                     className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                   />
                 </div>
@@ -1201,7 +1194,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
 
             {/* Total Math Summary */}
             <div className="p-5 rounded-2xl bg-tech-card border border-tech-border space-y-3 font-mono text-xs">
-              <h3 className="text-sm font-bold text-white font-sans">Final Financial Breakdown</h3>
+              <h3 className="text-sm font-bold text-white font-sans">Payment Summary</h3>
 
               <div className="space-y-2.5 pt-2">
                 <div className="flex justify-between text-slate-300">
@@ -1210,7 +1203,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                 </div>
 
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-slate-300">Negotiated Discount (₹):</span>
+                  <span className="text-slate-300">Discount (₹):</span>
                   <input
                     type="number"
                     min={0}
@@ -1232,7 +1225,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                 </div>
 
                 <div className="pt-2 border-t border-tech-border flex justify-between text-sm font-bold text-white">
-                  <span>Grand Total:</span>
+                  <span>Total Payable:</span>
                   <span className="text-tech-accent text-base font-extrabold">₹{grandTotal}</span>
                 </div>
 
@@ -1257,7 +1250,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                   className="flex-1 py-2.5 rounded-xl bg-tech-accent text-tech-bg font-bold text-xs hover:bg-tech-accent/90 transition-all flex items-center justify-center gap-1.5 shadow"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>Preview Full Receipt</span>
+                  <span>Preview Receipt</span>
                 </button>
 
                 <button
@@ -1333,15 +1326,22 @@ Thank you for choosing ${adminInfo.businessName}!`;
             <div className="flex flex-col sm:flex-row justify-between items-start border-b-2 border-slate-900 pb-6 gap-4">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                  {adminInfo.businessName}
+                  {adminInfo.businessName || 'SenAZ 3D PRINTS'}
                 </h1>
                 <p className="text-xs text-slate-500 font-mono mt-0.5 font-semibold">
-                  {adminInfo.tagline}
+                  {adminInfo.tagline || 'Custom 3D Printing & Rapid Prototyping Studio'}
                 </p>
                 <div className="mt-2 text-xs text-slate-600 space-y-0.5 font-mono">
-                  <p>📍 {adminInfo.businessAddress}, {adminInfo.businessCityStatePin}</p>
-                  <p>📞 Phone: {adminInfo.businessPhone} | 🌐 {adminInfo.businessWebsite}</p>
-                  {adminInfo.businessGstin && <p>🔖 GSTIN: {adminInfo.businessGstin}</p>}
+                  {(adminInfo.businessAddress || adminInfo.businessCityStatePin) && (
+                    <p>📍 {adminInfo.businessAddress ? `${adminInfo.businessAddress}, ` : ''}{adminInfo.businessCityStatePin}</p>
+                  )}
+                  {(adminInfo.businessPhone || adminInfo.businessWebsite || adminInfo.businessEmail) && (
+                    <p>
+                      {adminInfo.businessPhone ? `📞 ${adminInfo.businessPhone} | ` : ''}
+                      {adminInfo.businessEmail ? `✉️ ${adminInfo.businessEmail} | ` : ''}
+                      🌐 {adminInfo.businessWebsite || 'senaz3dprints.in'}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1350,7 +1350,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                   {docTitleMap[docType]}
                 </span>
                 <p className="text-xs font-mono text-slate-500 pt-1">
-                  <strong>Ref / Receipt No:</strong> <span className="text-slate-900 font-bold">{receiptNumber}</span>
+                  <strong>Receipt Ref No:</strong> <span className="text-slate-900 font-bold">{receiptNumber}</span>
                 </p>
                 <p className="text-xs font-mono text-slate-500">
                   <strong>Date:</strong> {issueDate}
@@ -1362,7 +1362,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-6 border-b border-slate-200 text-xs">
               <div>
                 <span className="font-mono text-slate-400 uppercase tracking-wider font-bold block mb-1">
-                  Billed & Shipped To:
+                  Customer & Delivery Details:
                 </span>
                 <h3 className="font-bold text-slate-900 text-sm">{customerName || 'Valued Customer'}</h3>
                 {address && <p className="text-slate-600 mt-0.5">{address}</p>}
@@ -1382,7 +1382,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                   Order & Production Specs:
                 </span>
                 <p className="text-slate-700">
-                  <strong>Status:</strong>{' '}
+                  <strong>Payment Status:</strong>{' '}
                   <span className="font-bold text-emerald-700">{paymentStatus.replace(/_/g, ' ')}</span>
                 </p>
                 <p className="text-slate-700">
@@ -1405,11 +1405,11 @@ Thank you for choosing ${adminInfo.businessName}!`;
                 <thead>
                   <tr className="border-b-2 border-slate-900 text-slate-900 font-mono uppercase">
                     <th className="py-2.5 font-bold w-8">#</th>
-                    <th className="py-2.5 font-bold">Item & Description</th>
+                    <th className="py-2.5 font-bold">Item Description</th>
                     <th className="py-2.5 font-bold">3D Specifications / Notes</th>
                     <th className="py-2.5 text-center font-bold w-14">Qty</th>
                     <th className="py-2.5 text-right font-bold w-24">Unit Price</th>
-                    <th className="py-2.5 text-right font-bold w-24">Amount</th>
+                    <th className="py-2.5 text-right font-bold w-24">Total</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -1417,7 +1417,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     <tr key={idx} className="py-2">
                       <td className="py-3 font-mono text-slate-400 font-bold">{idx + 1}</td>
                       <td className="py-3">
-                        <span className="font-bold text-slate-900 block">{it.name}</span>
+                        <span className="font-bold text-slate-900 block">{it.name || '3D Printed Item'}</span>
                       </td>
                       <td className="py-3 text-slate-600 font-mono text-[11px]">
                         {it.specs || 'Standard Precision FDM'}
@@ -1440,12 +1440,18 @@ Thank you for choosing ${adminInfo.businessName}!`;
             {/* Calculations & Payment Block */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t-2 border-slate-900">
               <div className="space-y-2 text-xs font-mono">
-                <span className="font-bold text-slate-900 block">Payment & Bank Details:</span>
+                <span className="font-bold text-slate-900 block">Payment Information:</span>
                 <div className="p-3 bg-slate-50 rounded border border-slate-200 space-y-1 text-[11px]">
-                  <p><strong>UPI ID:</strong> <span className="font-bold text-cyan-700">{adminInfo.businessUpiId}</span></p>
-                  <p><strong>Beneficiary:</strong> {adminInfo.businessUpiName}</p>
+                  {adminInfo.businessUpiId ? (
+                    <>
+                      <p><strong>UPI ID:</strong> <span className="font-bold text-cyan-700">{adminInfo.businessUpiId}</span></p>
+                      <p><strong>Beneficiary:</strong> {adminInfo.businessUpiName || adminInfo.businessName}</p>
+                    </>
+                  ) : (
+                    <p className="text-slate-500 italic">UPI ID not set (Optional in Admin Settings).</p>
+                  )}
                   <p className="text-slate-500 pt-1">
-                    Please share payment screenshot on WhatsApp ({adminInfo.businessPhone}) for instant production scheduling.
+                    Please share payment screenshot on WhatsApp for instant order confirmation.
                   </p>
                 </div>
               </div>
@@ -1458,26 +1464,26 @@ Thank you for choosing ${adminInfo.businessName}!`;
 
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-semibold">
-                    <span>Discount Applied:</span>
+                    <span>Discount:</span>
                     <span>-₹{discountAmount}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between text-slate-600">
-                  <span>Shipping & Handling:</span>
+                  <span>Delivery / Shipping:</span>
                   <span className="font-bold text-slate-900">
                     {shippingFee > 0 ? `₹${shippingFee}` : 'FREE'}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-sm font-black text-slate-900 pt-2 border-t border-slate-300">
-                  <span>Grand Total:</span>
+                  <span>Total Amount:</span>
                   <span className="text-base text-cyan-700">₹{grandTotal}</span>
                 </div>
 
                 {advancePaid > 0 && (
                   <div className="flex justify-between text-emerald-700 font-bold">
-                    <span>Advance Paid:</span>
+                    <span>Advance Received:</span>
                     <span>-₹{advancePaid}</span>
                   </div>
                 )}
@@ -1491,8 +1497,8 @@ Thank you for choosing ${adminInfo.businessName}!`;
 
             {/* Footer Terms */}
             <div className="mt-8 pt-4 border-t border-slate-200 text-center text-[10px] font-mono text-slate-400 space-y-1">
-              <p>Thank you for choosing {adminInfo.businessName}. All custom prints are inspected for dimensional accuracy and structural integrity.</p>
-              <p>© {new Date().getFullYear()} {adminInfo.businessName} • {adminInfo.businessWebsite} • {adminInfo.businessCityStatePin}</p>
+              <p>Thank you for choosing {adminInfo.businessName || 'SenAZ 3D PRINTS'}. All custom prints are inspected for dimensional accuracy and structural integrity.</p>
+              <p>© {new Date().getFullYear()} {adminInfo.businessName || 'SenAZ 3D PRINTS'} • {adminInfo.businessWebsite || 'senaz3dprints.in'}</p>
             </div>
           </div>
         </div>
@@ -1548,7 +1554,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
                     <th className="p-3.5">Customer Name</th>
                     <th className="p-3.5">Phone / WhatsApp</th>
                     <th className="p-3.5">Date</th>
-                    <th className="p-3.5 text-right">Grand Total</th>
+                    <th className="p-3.5 text-right">Total</th>
                     <th className="p-3.5">Status</th>
                     <th className="p-3.5 text-right">Actions</th>
                   </tr>
