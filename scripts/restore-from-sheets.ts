@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { normalizeImageUrl } from '../lib/images';
 
 const prisma = new PrismaClient();
 
@@ -277,7 +278,10 @@ export async function restoreFromSheetUrl(sheetUrlOrId: string) {
         }
 
         const images = imagesStr
-          ? imagesStr.split(',').map((u) => u.trim()).filter(Boolean)
+          ? imagesStr
+              .split(',')
+              .map((u) => normalizeImageUrl(u.trim()))
+              .filter(Boolean)
           : ['https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'];
 
         const colors = colorsStr ? colorsStr.split(',').map((c) => c.trim()).filter(Boolean) : ['White', 'Black'];

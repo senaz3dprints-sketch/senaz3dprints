@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Heart, ShoppingBag, Sparkles, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { getFilamentColorStyle } from '@/lib/colors';
+import { parseImageList } from '@/lib/images';
 
 export interface ProductCardProps {
   id: string;
@@ -44,16 +45,8 @@ export default function ProductCard({
   const inWishlist = isInWishlist(id);
   const [activeImgIdx, setActiveImgIdx] = useState(0);
 
-  // Parse images JSON safely
-  let imageList: string[] = [];
-  try {
-    imageList = typeof images === 'string' ? JSON.parse(images) : images;
-  } catch (e) {
-    imageList = [images as unknown as string];
-  }
-  if (!Array.isArray(imageList) || imageList.length === 0) {
-    imageList = ['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'];
-  }
+  // Parse images safely and normalize Drive/remote URLs
+  const imageList = parseImageList(images);
 
   // Parse colors JSON safely
   let colorList: string[] = [];

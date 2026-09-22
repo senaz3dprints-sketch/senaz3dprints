@@ -22,6 +22,7 @@ import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
 import { generateProductInquiryUrl } from '@/lib/whatsapp';
 import { getFilamentColorStyle } from '@/lib/colors';
+import { parseImageList } from '@/lib/images';
 
 interface ProductDetailClientProps {
   product: any;
@@ -51,19 +52,9 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const { addToCart } = useCart();
 
-  // Safely parse image list
-  let initialImageList: string[] = [];
-  try {
-    initialImageList = typeof product.images === 'string' ? JSON.parse(product.images) : (Array.isArray(product.images) ? product.images : []);
-  } catch (e) {
-    initialImageList = [];
-  }
-  if (!initialImageList.length && product.image) {
-    initialImageList = [product.image];
-  }
-  if (!initialImageList.length) {
-    initialImageList = ['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'];
-  }
+  // Safely parse and normalize image list
+  const imageList = parseImageList(product.images || product.image);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const colorList: string[] = Array.isArray(product.colors)
     ? product.colors
@@ -76,9 +67,6 @@ export default function ProductDetailClient({
     : typeof product.sizes === 'string'
     ? JSON.parse(product.sizes || '[]')
     : [];
-
-  const imageList = initialImageList;
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const [selectedColor, setSelectedColor] = useState(
     colorList[0] || 'Default'
