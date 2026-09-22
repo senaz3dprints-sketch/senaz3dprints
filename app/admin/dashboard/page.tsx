@@ -25,7 +25,12 @@ export default async function AdminDashboardPage() {
   const completedOrders = await db.order.count({ where: { status: 'DELIVERED' } });
 
   const allOrders = await db.order.findMany({ select: { totalAmount: true } });
-  const revenue = allOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  const storeOrdersRevenue = allOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+
+  const allCustomRequests = await db.customRequest.findMany({ select: { quotedPrice: true } });
+  const customRequestsRevenue = allCustomRequests.reduce((sum, r) => sum + (r.quotedPrice || 0), 0);
+
+  const totalCombinedRevenue = storeOrdersRevenue + customRequestsRevenue;
 
   const totalCustomRequests = await db.customRequest.count();
   const pendingCustomRequests = await db.customRequest.count({ where: { status: 'PENDING' } });
@@ -78,16 +83,18 @@ export default async function AdminDashboardPage() {
           <p className="text-[11px] font-mono text-slate-500">Awaiting WhatsApp confirmation</p>
         </div>
 
-        {/* Revenue */}
+        {/* Total Combined Revenue */}
         <div className="bg-tech-card p-5 rounded-2xl border border-tech-border space-y-2">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-mono">Total Revenue</span>
             <IndianRupee className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-bold font-mono text-emerald-400">
-            ₹{revenue.toLocaleString()}
+            ₹{totalCombinedRevenue.toLocaleString('en-IN')}
           </div>
-          <p className="text-[11px] font-mono text-slate-500">Gross order value</p>
+          <p className="text-[10px] font-mono text-slate-400 truncate">
+            Store: ₹{storeOrdersRevenue.toLocaleString('en-IN')} • Custom: ₹{customRequestsRevenue.toLocaleString('en-IN')}
+          </p>
         </div>
 
         {/* Custom Requests */}
