@@ -137,3 +137,36 @@ model AdminUser {
   password  String
   createdAt DateTime @default(now())
 }
+
+model Receipt {
+  id                String   @id @default(cuid())
+  receiptNumber     String   @unique
+  docType           String   @default("INVOICE") // INVOICE, ADVANCE_RECEIPT, QUOTATION, DELIVERY_RECEIPT
+  customerName      String
+  whatsapp          String
+  email             String?
+  address           String?
+  city              String?
+  state             String?
+  pincode           String?
+  customerNotes     String?
+  adminBusinessInfo String?  // JSON string storing studio name, address, contact, etc.
+  items             String   // JSON string array of ReceiptItem
+  subtotal          Float
+  discountAmount    Float    @default(0)
+  shippingFee       Float    @default(0)
+  taxPercent        Float    @default(0)
+  grandTotal        Float
+  advancePaid       Float    @default(0)
+  balanceDue        Float    @default(0)
+  paymentStatus     String   @default("PAID_IN_FULL")
+  paymentMode       String   @default("UPI / Online")
+  upiId             String   @default("918761053230@upi")
+  estimatedDelivery String?  @default("3-5 Business Days")
+  issueDate         String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([customerName])
+}
