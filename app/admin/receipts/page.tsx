@@ -924,7 +924,7 @@ Thank you for choosing ${adminInfo.businessName}!`;
 
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs font-mono">
               <div className="sm:col-span-2">
-                <label className="block text-slate-300 mb-1">Delivery Street Address</label>
+                <label className="block text-slate-300 mb-1">Delivery Street Address / Area</label>
                 <input
                   type="text"
                   value={address}
@@ -935,29 +935,38 @@ Thank you for choosing ${adminInfo.businessName}!`;
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1">City & State</label>
+                <label className="block text-slate-300 mb-1">City</label>
                 <input
                   type="text"
-                  value={city ? `${city}${state ? `, ${state}` : ''}` : state}
-                  onChange={(e) => {
-                    const parts = e.target.value.split(',');
-                    setCity(parts[0]?.trim() || '');
-                    if (parts[1]) setState(parts[1]?.trim() || '');
-                  }}
-                  placeholder="e.g. Mumbai, Maharashtra"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g. Mumbai"
                   className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Postal Pincode</label>
-                <input
-                  type="text"
-                  value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
-                  placeholder="e.g. 400001"
-                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tech-accent"
-                />
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-300 mb-1">State</label>
+                  <input
+                    type="text"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    placeholder="e.g. MH"
+                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-tech-accent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 mb-1">Pincode</label>
+                  <input
+                    type="text"
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value)}
+                    placeholder="e.g. 400001"
+                    className="w-full bg-tech-bg border border-tech-border rounded-lg px-2.5 py-2 text-white focus:outline-none focus:border-tech-accent"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -1365,10 +1374,10 @@ Thank you for choosing ${adminInfo.businessName}!`;
                   Customer & Delivery Details:
                 </span>
                 <h3 className="font-bold text-slate-900 text-sm">{customerName || 'Valued Customer'}</h3>
-                {address && <p className="text-slate-600 mt-0.5">{address}</p>}
+                {address && <p className="text-slate-700 mt-0.5">{address}</p>}
                 {(city || state || pincode) && (
                   <p className="text-slate-600">
-                    {city ? `${city}, ` : ''}{state ? `${state} ` : ''}{pincode ? `- ${pincode}` : ''}
+                    {[city, state].filter(Boolean).join(', ')}{pincode ? ` - ${pincode}` : ''}
                   </p>
                 )}
                 <p className="text-slate-600 mt-1 font-mono">
@@ -1445,10 +1454,10 @@ Thank you for choosing ${adminInfo.businessName}!`;
                   {adminInfo.businessUpiId ? (
                     <>
                       <p><strong>UPI ID:</strong> <span className="font-bold text-cyan-700">{adminInfo.businessUpiId}</span></p>
-                      <p><strong>Beneficiary:</strong> {adminInfo.businessUpiName || adminInfo.businessName}</p>
+                      {adminInfo.businessUpiName && <p><strong>Beneficiary:</strong> {adminInfo.businessUpiName}</p>}
                     </>
                   ) : (
-                    <p className="text-slate-500 italic">UPI ID not set (Optional in Admin Settings).</p>
+                    <p className="text-slate-700"><strong>Accepted Mode:</strong> {paymentMode || 'UPI / Net Banking / Cash'}</p>
                   )}
                   <p className="text-slate-500 pt-1">
                     Please share payment screenshot on WhatsApp for instant order confirmation.

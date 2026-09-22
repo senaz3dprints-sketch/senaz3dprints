@@ -39,9 +39,9 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   ];
 
   return (
-    <div className="min-h-screen bg-tech-bg text-slate-100 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-tech-bg text-slate-100 flex flex-col md:flex-row print:bg-white print:min-h-0">
       {/* Admin Sidebar */}
-      <aside className="w-full md:w-64 bg-tech-card border-r border-tech-border p-4 flex flex-col justify-between shrink-0">
+      <aside className="w-full md:w-64 bg-tech-card border-r border-tech-border p-4 flex flex-col justify-between shrink-0 print:hidden">
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-tech-border">
