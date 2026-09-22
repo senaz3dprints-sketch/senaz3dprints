@@ -20,41 +20,58 @@ import {
 export const revalidate = 0;
 
 export default async function AdminDashboardPage() {
-  const totalOrders = await db.order.count();
-  const pendingOrders = await db.order.count({ where: { status: 'PENDING' } });
-  const completedOrders = await db.order.count({ where: { status: 'DELIVERED' } });
+  let totalOrders = 0;
+  let pendingOrders = 0;
+  let completedOrders = 0;
+  let storeRevenue = 0;
+  let totalCustomRequests = 0;
+  let pendingCustomRequests = 0;
+  let customRevenue = 0;
+  let activeProducts = 0;
+  let totalCategories = 0;
+  let totalCouponUsage = { _sum: { timesUsed: 0 } };
+  let totalReferralPartners = 0;
+  let referralOrdersCount = 0;
+  let recentOrders: any[] = [];
+  let recentCustomRequests: any[] = [];
 
-  const allOrders = await db.order.findMany({ select: { totalAmount: true } });
-  const storeRevenue = allOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+  try {
+    totalOrders = await db.order.count();
+    pendingOrders = await db.order.count({ where: { status: 'PENDING' } });
+    completedOrders = await db.order.count({ where: { status: 'DELIVERED' } });
 
-  const totalCustomRequests = await db.customRequest.count();
-  const pendingCustomRequests = await db.customRequest.count({ where: { status: 'PENDING' } });
-  const allCustomRequests = await db.customRequest.findMany({
-    where: { status: { not: 'REJECTED' } },
-    select: { quotedAmount: true, status: true },
-  });
-  const customRevenue = allCustomRequests.reduce((sum, r) => sum + (r.quotedAmount || 0), 0);
+    const allOrders = await db.order.findMany({ select: { totalAmount: true } });
+    storeRevenue = allOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+
+    totalCustomRequests = await db.customRequest.count();
+    pendingCustomRequests = await db.customRequest.count({ where: { status: 'PENDING' } });
+    const allCustomRequests = await db.customRequest.findMany({
+      where: { status: { not: 'REJECTED' } },
+      select: { quotedAmount: true, status: true },
+    });
+    customRevenue = allCustomRequests.reduce((sum, r) => sum + (r.quotedAmount || 0), 0);
+
+    activeProducts = await db.product.count({ where: { isPublished: true } });
+    totalCategories = await db.category.count();
+
+    totalCouponUsage = (await db.coupon.aggregate({ _sum: { timesUsed: true } })) as any;
+    totalReferralPartners = await db.referral.count({ where: { status: 'ACTIVE' } });
+    referralOrdersCount = await db.order.count({ where: { referralCode: { not: null } } });
+
+    recentOrders = await db.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    recentCustomRequests = await db.customRequest.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+  } catch (dbError) {
+    console.error('[Admin Dashboard DB Error]', dbError);
+  }
 
   const totalRevenue = storeRevenue + customRevenue;
-
-  const activeProducts = await db.product.count({ where: { isPublished: true } });
-  const totalCategories = await db.category.count();
-  const lowStockProducts = await db.product.count({ where: { stockQuantity: { lte: 5 } } });
-
-  const totalCouponUsage = await db.coupon.aggregate({ _sum: { timesUsed: true } });
-
-  const totalReferralPartners = await db.referral.count({ where: { status: 'ACTIVE' } });
-  const referralOrdersCount = await db.order.count({ where: { referralCode: { not: null } } });
-
-  const recentOrders = await db.order.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
-
-  const recentCustomRequests = await db.customRequest.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 5,
-  });
 
   return (
     <div className="space-y-8">
