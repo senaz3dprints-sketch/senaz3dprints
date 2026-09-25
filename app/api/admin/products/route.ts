@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { isAuthenticatedAdmin } from '@/lib/auth';
 import { syncProductSheetRecord } from '@/lib/google-sheets';
+import { normalizeImageUrl, parseImageList } from '@/lib/images';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
   try {
     const isAuth = await isAuthenticatedAdmin(req);
     if (!isAuth) {
-      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized. Please login again.' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -62,26 +63,50 @@ export async function POST(req: NextRequest) {
       tags,
     } = body;
 
-    if (!name || !categoryId || !price) {
-      return NextResponse.json({ error: 'Name, Category, and Price are required.' }, { status: 400 });
+    if (!name?.trim()) {
+      return NextResponse.json({ error: 'Product name is required.' }, { status: 400 });
     }
 
-    const generatedSlug = (slug || name)
+    if (!categoryId) {
+      return NextResponse.json({ error: 'Please select a product category.' }, { status: 400 });
+    }
+
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return NextResponse.json({ error: 'Please provide a valid price (₹).' }, { status: 400 });
+    }
+
+    // Generate unique slug
+    let generatedSlug = (slug || name)
       .toLowerCase()
+      .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
+
+    if (!generatedSlug) {
+      generatedSlug = `product-${Date.now()}`;
+    }
+
+    // Avoid duplicate slug collisions
+    const existingSlug = await db.product.findUnique({ where: { slug: generatedSlug } });
+    if (existingSlug) {
+      generatedSlug = `${generatedSlug}-${Math.random().toString(36).substring(2, 6)}`;
+    }
+
+    // Normalize image URLs
+    const normalizedImageList = parseImageList(images);
 
     const product = await db.product.create({
       data: {
         name: name.trim(),
         slug: generatedSlug,
-        shortDescription: shortDescription || '',
-        fullDescription: fullDescription || '',
+        shortDescription: shortDescription?.trim() || name.trim(),
+        fullDescription: fullDescription?.trim() || shortDescription?.trim() || name.trim(),
         categoryId,
-        price: parseFloat(price),
+        price: parsedPrice,
         compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
         shippingFee: shippingFee !== undefined && shippingFee !== '' ? parseFloat(shippingFee) : 0,
-        images: typeof images === 'string' ? images : JSON.stringify(images || []),
+        images: JSON.stringify(normalizedImageList),
         colors: typeof colors === 'string' ? colors : JSON.stringify(colors || []),
         sizes: typeof sizes === 'string' ? sizes : JSON.stringify(sizes || []),
         material: material || 'PLA+',
@@ -107,7 +132,7 @@ export async function POST(req: NextRequest) {
         compareAtPrice: product.compareAtPrice,
         shortDescription: product.shortDescription,
         fullDescription: product.fullDescription,
-        images: Array.isArray(images) ? images : [],
+        images: normalizedImageList,
         colors: Array.isArray(colors) ? colors : [],
         sizes: Array.isArray(sizes) ? sizes : [],
         material: product.material,
@@ -128,7 +153,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, product });
   } catch (error: any) {
     console.error('Create product error:', error);
-    return NextResponse.json({ error: 'Failed to create product.' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to create product.' }, { status: 500 });
   }
 }
 
@@ -149,16 +174,23 @@ export async function PUT(req: NextRequest) {
     if (data.slug) {
       data.slug = data.slug
         .toLowerCase()
+        .trim()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
-    } else if (data.name && !data.slug) {
-      // Keep existing slug if not provided, or generate if needed
+
+      const existing = await db.product.findFirst({
+        where: { slug: data.slug, id: { not: id } },
+      });
+      if (existing) {
+        data.slug = `${data.slug}-${Math.random().toString(36).substring(2, 6)}`;
+      }
     }
-    if (data.price !== undefined) data.price = parseFloat(data.price);
+
+    if (data.price !== undefined) data.price = parseFloat(data.price) || 0;
     if (data.compareAtPrice !== undefined) data.compareAtPrice = data.compareAtPrice ? parseFloat(data.compareAtPrice) : null;
     if (data.shippingFee !== undefined) data.shippingFee = data.shippingFee !== '' && data.shippingFee !== null ? parseFloat(data.shippingFee) : 0;
-    if (data.stockQuantity !== undefined) data.stockQuantity = parseInt(data.stockQuantity);
-    if (data.images && typeof data.images !== 'string') data.images = JSON.stringify(data.images);
+    if (data.stockQuantity !== undefined) data.stockQuantity = parseInt(data.stockQuantity) || 0;
+    if (data.images) data.images = JSON.stringify(parseImageList(data.images));
     if (data.colors && typeof data.colors !== 'string') data.colors = JSON.stringify(data.colors);
     if (data.sizes && typeof data.sizes !== 'string') data.sizes = JSON.stringify(data.sizes);
     if (data.tags && typeof data.tags !== 'string') data.tags = JSON.stringify(data.tags);
@@ -176,8 +208,9 @@ export async function PUT(req: NextRequest) {
     } catch (e) {}
 
     return NextResponse.json({ success: true, product: updated });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update product.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Update product error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to update product.' }, { status: 500 });
   }
 }
 
@@ -205,7 +238,8 @@ export async function DELETE(req: NextRequest) {
     } catch (e) {}
 
     return NextResponse.json({ success: true, deletedId: id });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete product.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Delete product error:', error);
+    return NextResponse.json({ error: error.message || 'Failed to delete product.' }, { status: 500 });
   }
 }

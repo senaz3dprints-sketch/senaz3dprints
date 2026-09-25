@@ -19,6 +19,7 @@ import {
   Palette,
 } from 'lucide-react';
 import { STANDARD_FILAMENT_COLORS, getFilamentColorStyle } from '@/lib/colors';
+import { normalizeImageUrl, parseImageList } from '@/lib/images';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -60,6 +61,8 @@ export default function AdminProductsPage() {
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [formError, setFormError] = useState('');
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -170,6 +173,7 @@ export default function AdminProductsPage() {
     setImages(['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80']);
     setImageUrlInput('');
     setUploadError('');
+    setFormError('');
     setModalOpen(true);
   };
 
@@ -204,15 +208,11 @@ export default function AdminProductsPage() {
     setSelectedColors(parsedColors);
     setCustomColorInput('');
 
-    let parsedImages = [];
-    try {
-      parsedImages = JSON.parse(p.images);
-    } catch (e) {
-      parsedImages = [p.images];
-    }
+    const parsedImages = parseImageList(p.images);
     setImages(parsedImages);
     setImageUrlInput('');
     setUploadError('');
+    setFormError('');
     setModalOpen(true);
   };
 
@@ -289,48 +289,81 @@ export default function AdminProductsPage() {
   };
 
   const handleAddImageUrl = () => {
-    if (!imageUrlInput.trim()) return;
-    setImages((prev) => [...prev, imageUrlInput.trim()]);
+    const trimmed = imageUrlInput.trim();
+    if (!trimmed) return;
+    const normalized = normalizeImageUrl(trimmed);
+    setImages((prev) => [...prev, normalized]);
     setImageUrlInput('');
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSavingProduct(true);
+    setFormError('');
 
-    const payload = {
-      id: editingProduct?.id,
-      name: name.trim(),
-      slug: slug.trim() || undefined,
-      price: parseFloat(price) || 0,
-      compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
-      shippingFee: parseFloat(shippingFee) || 0,
-      categoryId: categoryId || categories[0]?.id,
-      shortDescription,
-      fullDescription,
-      material,
-      stockQuantity: parseInt(stockQuantity) || 0,
-      stockStatus,
-      dimensions: dimensions.trim() || null,
-      weight: weight.trim() || null,
-      tags: tags.trim() || null,
-      isFeatured,
-      isNew,
-      isPublished,
-      personalizationEnabled,
-      colors: selectedColors,
-      images,
-    };
+    try {
+      const selectedCatId = categoryId || categories[0]?.id;
+      if (!selectedCatId) {
+        setFormError('Please select or create a category first.');
+        setSavingProduct(false);
+        return;
+      }
 
-    const method = editingProduct ? 'PUT' : 'POST';
-    const res = await fetch('/api/admin/products', {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+      if (!name.trim()) {
+        setFormError('Product Name is required.');
+        setSavingProduct(false);
+        return;
+      }
 
-    if (res.ok) {
-      setModalOpen(false);
-      fetchProducts();
+      const parsedPrice = parseFloat(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        setFormError('Please enter a valid selling price.');
+        setSavingProduct(false);
+        return;
+      }
+
+      const payload = {
+        id: editingProduct?.id,
+        name: name.trim(),
+        slug: slug.trim() || undefined,
+        price: parsedPrice,
+        compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        shippingFee: parseFloat(shippingFee) || 0,
+        categoryId: selectedCatId,
+        shortDescription: shortDescription.trim() || name.trim(),
+        fullDescription: fullDescription.trim() || shortDescription.trim() || name.trim(),
+        material,
+        stockQuantity: parseInt(stockQuantity) || 0,
+        stockStatus,
+        dimensions: dimensions.trim() || null,
+        weight: weight.trim() || null,
+        tags: tags.trim() || null,
+        isFeatured,
+        isNew,
+        isPublished,
+        personalizationEnabled,
+        colors: selectedColors,
+        images,
+      };
+
+      const method = editingProduct ? 'PUT' : 'POST';
+      const res = await fetch('/api/admin/products', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setModalOpen(false);
+        fetchProducts();
+      } else {
+        setFormError(data.error || 'Failed to save product. Please check your inputs.');
+      }
+    } catch (err: any) {
+      setFormError(err.message || 'An unexpected error occurred while saving.');
+    } finally {
+      setSavingProduct(false);
     }
   };
 
@@ -423,12 +456,7 @@ export default function AdminProductsPage() {
             </thead>
             <tbody className="divide-y divide-tech-border">
               {products.map((p, index) => {
-                let imgList = [];
-                try {
-                  imgList = JSON.parse(p.images);
-                } catch (e) {
-                  imgList = [p.images];
-                }
+                const imgList = parseImageList(p.images);
                 const primary = imgList[0] || '';
                 const isDragging = draggedIndex === index;
                 const isDragOver = dragOverIndex === index && draggedIndex !== index;
@@ -1043,12 +1071,29 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
+              {formError && (
+                <div className="p-3.5 bg-rose-500/15 border border-rose-500/40 rounded-xl text-rose-300 text-xs font-mono flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{formError}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-3.5 bg-tech-accent text-tech-bg font-extrabold font-mono text-sm rounded-xl hover:bg-tech-accent/90 transition-all shadow-xl shadow-tech-accent/25 flex items-center justify-center gap-2"
+                disabled={savingProduct}
+                className="w-full py-3.5 bg-tech-accent text-tech-bg font-extrabold font-mono text-sm rounded-xl hover:bg-tech-accent/90 transition-all shadow-xl shadow-tech-accent/25 flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <Check className="w-4 h-4" />
-                <span>{editingProduct ? 'Save & Update All Product Details' : 'Publish Product to Store'}</span>
+                {savingProduct ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Saving Product...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>{editingProduct ? 'Save & Update All Product Details' : 'Publish Product to Store'}</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
