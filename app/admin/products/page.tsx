@@ -19,6 +19,7 @@ import {
   Palette,
   Video,
   Play,
+  Link2,
 } from 'lucide-react';
 import { STANDARD_FILAMENT_COLORS, getFilamentColorStyle, parseProductColors, ColorOption } from '@/lib/colors';
 import { normalizeImageUrl, parseImageList } from '@/lib/images';
@@ -59,6 +60,7 @@ export default function AdminProductsPage() {
   const [selectedColors, setSelectedColors] = useState<(string | ColorOption)[]>([]);
   const [customColorInput, setCustomColorInput] = useState('');
   const [customColorImage, setCustomColorImage] = useState('');
+  const [customColorLinkInput, setCustomColorLinkInput] = useState('');
   const [uploadingColorImage, setUploadingColorImage] = useState(false);
 
   // Image & Video State
@@ -177,6 +179,7 @@ export default function AdminProductsPage() {
     setSelectedColors(['Matte Black', 'Pure White', 'Stealth Grey', 'Silk Gold']);
     setCustomColorInput('');
     setCustomColorImage('');
+    setCustomColorLinkInput('');
     setImages(['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80']);
     setImageUrlInput('');
     setVideoUrl('');
@@ -210,6 +213,7 @@ export default function AdminProductsPage() {
     setSelectedColors(parsedColors);
     setCustomColorInput('');
     setCustomColorImage('');
+    setCustomColorLinkInput('');
 
     const parsedImages = parseImageList(p.images);
     setImages(parsedImages);
@@ -226,15 +230,22 @@ export default function AdminProductsPage() {
     const exists = selectedColors.some(
       (c) => (typeof c === 'string' ? c : c.name).toLowerCase() === trimmed.toLowerCase()
     );
+
+    let finalImg = customColorImage;
+    if (!finalImg && customColorLinkInput.trim()) {
+      finalImg = normalizeImageUrl(customColorLinkInput.trim());
+    }
+
     if (!exists) {
-      if (customColorImage) {
-        setSelectedColors([...selectedColors, { name: trimmed, image: customColorImage }]);
+      if (finalImg) {
+        setSelectedColors([...selectedColors, { name: trimmed, image: finalImg }]);
       } else {
         setSelectedColors([...selectedColors, trimmed]);
       }
     }
     setCustomColorInput('');
     setCustomColorImage('');
+    setCustomColorLinkInput('');
   };
 
   const handleColorImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -916,67 +927,122 @@ export default function AdminProductsPage() {
                   })}
                 </div>
 
-                {/* Custom Color Input with Swatch Image Upload */}
-                <div className="pt-3 border-t border-tech-border/60 space-y-2">
+                {/* Custom Color Input with Swatch Image Upload & Link */}
+                <div className="pt-3 border-t border-tech-border/60 space-y-2.5">
                   <div className="text-[11px] font-mono text-slate-300 font-semibold flex items-center justify-between">
-                    <span>+ Add Custom Color with Swatch Photo:</span>
+                    <span>+ Add Custom Color (Upload Swatch Photo or Paste Link):</span>
                     {customColorImage && (
                       <span className="text-[10px] text-tech-accent flex items-center gap-1 font-mono">
-                        ✓ Image Attached
+                        ✓ Image Swatch Attached
                       </span>
                     )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Color name (e.g. Silk Rose Gold, Marble PLA)..."
-                      value={customColorInput}
-                      onChange={(e) => setCustomColorInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddCustomColor();
-                        }
-                      }}
-                      className="flex-1 bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
-                    />
-
+                  <div className="flex flex-col gap-2">
+                    {/* Row 1: Color Name & Add Button */}
                     <div className="flex items-center gap-2">
-                      {customColorImage ? (
-                        <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-tech-accent shrink-0 group">
-                          <img src={customColorImage} alt="" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={() => setCustomColorImage('')}
-                            className="absolute inset-0 bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Remove image"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="px-3 py-2 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent text-slate-300 hover:text-white cursor-pointer flex items-center gap-1.5 text-xs font-mono transition-all shrink-0">
-                          <Upload className="w-3.5 h-3.5 text-tech-accent" />
-                          <span>{uploadingColorImage ? 'Uploading...' : 'Upload Photo'}</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleColorImageUpload}
-                            disabled={uploadingColorImage}
-                            className="hidden"
-                          />
-                        </label>
-                      )}
+                      <input
+                        type="text"
+                        placeholder="Color name (e.g. Silk Rose Gold, Marble PLA)..."
+                        value={customColorInput}
+                        onChange={(e) => setCustomColorInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomColor();
+                          }
+                        }}
+                        className="flex-1 bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
+                      />
 
                       <button
                         type="button"
                         onClick={handleAddCustomColor}
-                        className="px-3.5 py-2 bg-tech-accent text-tech-bg hover:bg-tech-accent/90 rounded-lg text-xs font-mono font-bold transition-all shrink-0 shadow shadow-tech-accent/20 flex items-center gap-1"
+                        className="px-4 py-2 bg-tech-accent text-tech-bg hover:bg-tech-accent/90 rounded-lg text-xs font-mono font-bold transition-all shrink-0 shadow shadow-tech-accent/20 flex items-center gap-1.5"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        <span>Add</span>
+                        <span>Add Color</span>
                       </button>
+                    </div>
+
+                    {/* Row 2: Swatch Attachment (Upload Photo OR Paste Image Link) */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2 bg-tech-bg rounded-lg border border-tech-border/60">
+                      {customColorImage ? (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2.5">
+                            <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-tech-accent shrink-0 shadow-sm">
+                              <img src={customColorImage} alt="" className="w-full h-full object-cover" />
+                            </div>
+                            <span className="text-[11px] font-mono text-tech-accent font-medium">
+                              ✓ Swatch image attached
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCustomColorImage('');
+                              setCustomColorLinkInput('');
+                            }}
+                            className="px-2.5 py-1 bg-tech-card hover:bg-rose-500/20 text-rose-400 border border-tech-border hover:border-rose-500/40 rounded text-[10px] font-mono transition-all flex items-center gap-1"
+                          >
+                            <X className="w-3 h-3" />
+                            <span>Remove Swatch</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          {/* File Upload Button */}
+                          <label className="px-3 py-1.5 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent text-slate-300 hover:text-white cursor-pointer flex items-center gap-1.5 text-[11px] font-mono transition-all shrink-0">
+                            <Upload className="w-3.5 h-3.5 text-tech-accent" />
+                            <span>{uploadingColorImage ? 'Uploading...' : 'Upload Photo'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleColorImageUpload}
+                              disabled={uploadingColorImage}
+                              className="hidden"
+                            />
+                          </label>
+
+                          <span className="text-[10px] font-mono text-slate-500 hidden sm:inline text-center">or</span>
+
+                          {/* Paste Image Link */}
+                          <div className="flex-1 flex items-center gap-1.5">
+                            <div className="relative flex-1">
+                              <input
+                                type="url"
+                                placeholder="Paste swatch image link (https://... or Google Drive)"
+                                value={customColorLinkInput}
+                                onChange={(e) => setCustomColorLinkInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    if (customColorLinkInput.trim()) {
+                                      setCustomColorImage(normalizeImageUrl(customColorLinkInput.trim()));
+                                    }
+                                  }
+                                }}
+                                className="w-full bg-tech-card border border-tech-border rounded-lg pl-7 pr-2 py-1.5 text-[11px] text-white focus:outline-none focus:border-tech-accent font-mono"
+                              />
+                              <Link2 className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            </div>
+
+                            {customColorLinkInput.trim() && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (customColorLinkInput.trim()) {
+                                    setCustomColorImage(normalizeImageUrl(customColorLinkInput.trim()));
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 bg-tech-card border border-tech-border hover:border-tech-accent text-tech-accent rounded-lg text-[10px] font-mono font-bold transition-all shrink-0"
+                              >
+                                Attach
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
