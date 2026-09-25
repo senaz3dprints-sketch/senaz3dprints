@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
       isPublished,
       personalizationEnabled,
       customTextEnabled,
+      videoUrl,
       tags,
     } = body;
 
@@ -119,6 +120,7 @@ export async function POST(req: NextRequest) {
         isPublished: isPublished !== undefined ? !!isPublished : true,
         personalizationEnabled: !!personalizationEnabled,
         customTextEnabled: !!customTextEnabled,
+        videoUrl: videoUrl?.trim() || null,
         tags: typeof tags === 'string' ? tags : JSON.stringify(tags || []),
       },
     });

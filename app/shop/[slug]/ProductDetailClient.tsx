@@ -17,12 +17,15 @@ import {
   Palette,
   Check,
   Shield,
+  Video,
+  Play,
 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import ProductCard from '@/components/ProductCard';
 import { generateProductInquiryUrl } from '@/lib/whatsapp';
-import { getFilamentColorStyle } from '@/lib/colors';
+import { getFilamentColorStyle, parseProductColors, ColorOption } from '@/lib/colors';
 import { parseImageList } from '@/lib/images';
+import { parseProductVideo, ParsedVideo } from '@/lib/video';
 
 interface ProductDetailClientProps {
   product: any;
@@ -52,15 +55,25 @@ export default function ProductDetailClient({
 }: ProductDetailClientProps) {
   const { addToCart } = useCart();
 
-  // Safely parse and normalize image list
+  // Parse media (images + video)
   const imageList = parseImageList(product.images || product.image);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const parsedVideo = parseProductVideo(product.videoUrl);
 
-  const colorList: string[] = Array.isArray(product.colors)
-    ? product.colors
-    : typeof product.colors === 'string'
-    ? JSON.parse(product.colors || '[]')
-    : [];
+  type MediaSlide =
+    | { type: 'image'; url: string }
+    | { type: 'video'; embedUrl: string; videoType: 'youtube' | 'drive' | 'direct'; originalUrl: string };
+
+  const mediaSlides: MediaSlide[] = [
+    ...imageList.map((url) => ({ type: 'image' as const, url })),
+    ...(parsedVideo
+      ? [{ type: 'video' as const, embedUrl: parsedVideo.embedUrl, videoType: parsedVideo.type, originalUrl: parsedVideo.originalUrl }]
+      : []),
+  ];
+
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+
+  // Parse color options (supports custom color swatch images)
+  const colorOptions: ColorOption[] = parseProductColors(product.colors);
 
   const sizeList: string[] = Array.isArray(product.sizes)
     ? product.sizes
@@ -69,7 +82,7 @@ export default function ProductDetailClient({
     : [];
 
   const [selectedColor, setSelectedColor] = useState(
-    colorList[0] || 'Default'
+    colorOptions[0]?.name || 'Default'
   );
   const [selectedSize, setSelectedSize] = useState(sizeList[0] || 'Standard');
 
@@ -81,14 +94,14 @@ export default function ProductDetailClient({
 
   const minSwipeDistance = 40;
 
-  const nextImage = () => {
-    if (imageList.length <= 1) return;
-    setActiveImageIndex((prev) => (prev + 1) % imageList.length);
+  const nextSlide = () => {
+    if (mediaSlides.length <= 1) return;
+    setActiveMediaIndex((prev) => (prev + 1) % mediaSlides.length);
   };
 
-  const prevImage = () => {
-    if (imageList.length <= 1) return;
-    setActiveImageIndex((prev) => (prev - 1 + imageList.length) % imageList.length);
+  const prevSlide = () => {
+    if (mediaSlides.length <= 1) return;
+    setActiveMediaIndex((prev) => (prev - 1 + mediaSlides.length) % mediaSlides.length);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -104,9 +117,9 @@ export default function ProductDetailClient({
     if (touchStartX === null || touchEndX === null) return;
     const distance = touchStartX - touchEndX;
     if (distance > minSwipeDistance) {
-      nextImage();
+      nextSlide();
     } else if (distance < -minSwipeDistance) {
-      prevImage();
+      prevSlide();
     }
   };
 
@@ -119,9 +132,9 @@ export default function ProductDetailClient({
     if (!isMouseDown || mouseStartX === null) return;
     const distance = mouseStartX - e.clientX;
     if (distance > minSwipeDistance) {
-      nextImage();
+      nextSlide();
     } else if (distance < -minSwipeDistance) {
-      prevImage();
+      prevSlide();
     }
     setIsMouseDown(false);
     setMouseStartX(null);
@@ -151,7 +164,7 @@ export default function ProductDetailClient({
       productId: product.id,
       slug: product.slug,
       name: product.name,
-      image: imageList[activeImageIndex] || imageList[0],
+      image: imageList[0] || (mediaSlides[0]?.type === 'image' ? mediaSlides[0].url : 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80'),
       price: product.price,
       shippingFee: product.shippingFee || 0,
       quantity,
@@ -185,7 +198,7 @@ export default function ProductDetailClient({
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        {/* Left Column: Swipeable Image Gallery */}
+        {/* Left Column: Swipeable Image & Video Gallery */}
         <div className="lg:col-span-6 space-y-4">
           <div
             className="relative aspect-square w-full bg-tech-card rounded-2xl border border-tech-border overflow-hidden shadow-2xl group cursor-grab active:cursor-grabbing touch-pan-y"
@@ -195,19 +208,51 @@ export default function ProductDetailClient({
             onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
           >
-            {/* Sliding Image Strip */}
+            {/* Sliding Media Strip (Images & Video) */}
             <div
               className="flex w-full h-full transition-transform duration-300 ease-out"
-              style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+              style={{ transform: `translateX(-${activeMediaIndex * 100}%)` }}
             >
-              {imageList.map((img, idx) => (
-                <div key={idx} className="w-full h-full shrink-0 relative bg-tech-bg">
-                  <img
-                    src={img}
-                    alt={`${product.name} - Photo ${idx + 1}`}
-                    className="w-full h-full object-cover pointer-events-none"
-                    draggable={false}
-                  />
+              {mediaSlides.map((slide, idx) => (
+                <div key={idx} className="w-full h-full shrink-0 relative bg-tech-bg flex items-center justify-center overflow-hidden">
+                  {slide.type === 'image' ? (
+                    <img
+                      src={slide.url}
+                      alt={`${product.name} - Slide ${idx + 1}`}
+                      className="w-full h-full object-cover pointer-events-none"
+                      draggable={false}
+                    />
+                  ) : slide.videoType === 'youtube' ? (
+                    <div className="w-full h-full flex items-center justify-center bg-black relative">
+                      <iframe
+                        src={slide.embedUrl}
+                        title={`${product.name} Video`}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : slide.videoType === 'drive' ? (
+                    <div className="w-full h-full flex items-center justify-center bg-black relative">
+                      <iframe
+                        src={slide.embedUrl}
+                        title={`${product.name} Video`}
+                        className="w-full h-full border-0"
+                        allow="autoplay"
+                        allowFullScreen
+                      />
+                    </div>
+                  ) : (
+                    <video
+                      src={slide.embedUrl}
+                      controls
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover bg-black"
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -227,17 +272,27 @@ export default function ProductDetailClient({
               )}
             </div>
 
-            {/* Prev / Next Swipe Arrows (Visible when > 1 image) */}
-            {imageList.length > 1 && (
+            {/* Video Label Badge Top Right if active is video */}
+            {mediaSlides[activeMediaIndex]?.type === 'video' && (
+              <div className="absolute top-4 right-4 z-10 pointer-events-none">
+                <span className="bg-tech-bg/90 border border-tech-accent text-tech-accent font-mono font-bold text-[11px] px-2.5 py-1 rounded-full shadow-lg flex items-center gap-1.5 backdrop-blur-md">
+                  <Play className="w-3 h-3 fill-tech-accent" />
+                  <span>Product Action Video</span>
+                </span>
+              </div>
+            )}
+
+            {/* Prev / Next Swipe Arrows (Visible when > 1 slide) */}
+            {mediaSlides.length > 1 && (
               <>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    prevImage();
+                    prevSlide();
                   }}
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-tech-bg/70 hover:bg-tech-card border border-tech-border text-slate-200 hover:text-white flex items-center justify-center transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl backdrop-blur-md z-10"
-                  aria-label="Previous image"
+                  aria-label="Previous media"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -246,26 +301,26 @@ export default function ProductDetailClient({
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    nextImage();
+                    nextSlide();
                   }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-tech-bg/70 hover:bg-tech-card border border-tech-border text-slate-200 hover:text-white flex items-center justify-center transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 shadow-xl backdrop-blur-md z-10"
-                  aria-label="Next image"
+                  aria-label="Next media"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
 
                 {/* Dots Pagination Indicator & Swipe Hint */}
                 <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-tech-bg/80 border border-tech-border backdrop-blur-md z-10">
-                  {imageList.map((_, idx) => (
+                  {mediaSlides.map((slide, idx) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setActiveImageIndex(idx);
+                        setActiveMediaIndex(idx);
                       }}
-                      className={`h-2 rounded-full transition-all ${
-                        activeImageIndex === idx
+                      className={`h-2 rounded-full transition-all flex items-center justify-center ${
+                        activeMediaIndex === idx
                           ? 'w-6 bg-tech-accent shadow-sm'
                           : 'w-2 bg-slate-600 hover:bg-slate-400'
                       }`}
@@ -273,7 +328,7 @@ export default function ProductDetailClient({
                     />
                   ))}
                   <span className="text-[10px] font-mono text-slate-400 ml-1">
-                    {activeImageIndex + 1}/{imageList.length}
+                    {activeMediaIndex + 1}/{mediaSlides.length}
                   </span>
                 </div>
               </>
@@ -281,19 +336,27 @@ export default function ProductDetailClient({
           </div>
 
           {/* Synced Thumbnails Strip */}
-          {imageList.length > 1 && (
+          {mediaSlides.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-              {imageList.map((img, idx) => (
+              {mediaSlides.map((slide, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setActiveImageIndex(idx)}
+                  onClick={() => setActiveMediaIndex(idx)}
                   className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all shrink-0 relative ${
-                    activeImageIndex === idx
+                    activeMediaIndex === idx
                       ? 'border-tech-accent scale-95 shadow-lg shadow-tech-accent/20 ring-1 ring-tech-accent'
                       : 'border-tech-border opacity-60 hover:opacity-100'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  {slide.type === 'image' ? (
+                    <img src={slide.url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-tech-card flex flex-col items-center justify-center gap-1 text-tech-accent relative">
+                      <Play className="w-5 h-5 fill-tech-accent" />
+                      <span className="text-[9px] font-mono font-bold tracking-wider">VIDEO</span>
+                      <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-tech-accent animate-pulse" />
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
@@ -463,7 +526,7 @@ export default function ProductDetailClient({
           )}
 
           {/* Standard Color Selector (if personalization not active and product has colors) */}
-          {!isPersonalizationActive && colorList.length > 0 && (
+          {!isPersonalizationActive && colorOptions.length > 0 && (
             <div className="space-y-2.5 p-3.5 bg-tech-card/50 rounded-xl border border-tech-border">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
@@ -476,25 +539,33 @@ export default function ProductDetailClient({
               </div>
 
               <div className="flex flex-wrap gap-2 pt-0.5">
-                {colorList.map((color) => {
-                  const style = getFilamentColorStyle(color);
-                  const isSelected = selectedColor === color;
+                {colorOptions.map((colorOpt) => {
+                  const style = getFilamentColorStyle(colorOpt);
+                  const isSelected = selectedColor === colorOpt.name;
                   return (
                     <button
-                      key={color}
+                      key={colorOpt.name}
                       type="button"
-                      onClick={() => setSelectedColor(color)}
+                      onClick={() => setSelectedColor(colorOpt.name)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-mono border flex items-center gap-2 transition-all ${
                         isSelected
                           ? 'bg-tech-accent/20 border-tech-accent text-white shadow-md shadow-tech-accent/10 ring-1 ring-tech-accent font-bold'
                           : 'bg-tech-card border-tech-border text-slate-300 hover:border-slate-500 hover:text-white'
                       }`}
                     >
-                      <span
-                        className="w-3.5 h-3.5 rounded-full border border-slate-700 shrink-0 shadow-sm"
-                        style={{ background: style.background, borderColor: style.border }}
-                      />
-                      <span>{color}</span>
+                      {colorOpt.image ? (
+                        <img
+                          src={colorOpt.image}
+                          alt={colorOpt.name}
+                          className="w-4 h-4 rounded-full object-cover border border-tech-accent/60 shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <span
+                          className="w-3.5 h-3.5 rounded-full border border-slate-700 shrink-0 shadow-sm"
+                          style={{ background: style.background, borderColor: style.border }}
+                        />
+                      )}
+                      <span>{colorOpt.name}</span>
                     </button>
                   );
                 })}

@@ -46,6 +46,7 @@ model Product {
   isPublished           Boolean  @default(true)
   personalizationEnabled Boolean @default(false)
   customTextEnabled     Boolean  @default(false)
+  videoUrl              String?  // Optional video URL (YouTube, MP4, Drive)
   tags                  String?  // JSON string array or comma separated
   displayOrder          Int      @default(0)
   createdAt             DateTime @default(now())

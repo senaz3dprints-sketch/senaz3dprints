@@ -1,6 +1,16 @@
+import { normalizeImageUrl } from './images';
+
 export interface FilamentColor {
   name: string;
   hex: string;
+  border?: string;
+  isDark?: boolean;
+}
+
+export interface ColorOption {
+  name: string;
+  image?: string;
+  hex?: string;
   border?: string;
   isDark?: boolean;
 }
@@ -72,9 +82,62 @@ const COLOR_MAP: Record<string, string> = {
   'glow in dark': '#86efac',
 };
 
-export function getFilamentColorStyle(colorName: string): { background: string; border?: string } {
-  if (!colorName) return { background: '#64748b' };
-  const lower = colorName.toLowerCase().trim();
+export function parseProductColors(rawColors: any): ColorOption[] {
+  if (!rawColors) return [];
+  let list: any[] = [];
+  try {
+    if (Array.isArray(rawColors)) {
+      list = rawColors;
+    } else if (typeof rawColors === 'string') {
+      const parsed = JSON.parse(rawColors);
+      list = Array.isArray(parsed) ? parsed : [rawColors];
+    }
+  } catch {
+    if (typeof rawColors === 'string') {
+      list = rawColors.split(',').map((s) => s.trim()).filter(Boolean);
+    }
+  }
+
+  return list
+    .map((item) => {
+      if (!item) return null;
+      if (typeof item === 'string') {
+        const trimmed = item.trim();
+        return trimmed ? { name: trimmed } : null;
+      }
+      if (typeof item === 'object' && item.name) {
+        return {
+          name: String(item.name).trim(),
+          image: item.image ? normalizeImageUrl(item.image) : undefined,
+          hex: item.hex ? String(item.hex).trim() : undefined,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean) as ColorOption[];
+}
+
+export function getFilamentColorStyle(colorInput: string | ColorOption): { background: string; border?: string; image?: string } {
+  if (!colorInput) return { background: '#64748b' };
+  
+  if (typeof colorInput === 'object') {
+    if (colorInput.image) {
+      return {
+        background: `url("${colorInput.image}") center/cover no-repeat`,
+        border: '1px solid rgba(255,255,255,0.2)',
+        image: colorInput.image,
+      };
+    }
+    if (colorInput.hex) {
+      return {
+        background: colorInput.hex,
+        border: colorInput.border || (colorInput.hex.toLowerCase().includes('#fff') ? '1px solid #cbd5e1' : undefined),
+      };
+    }
+    return getFilamentColorStyle(colorInput.name);
+  }
+
+  const lower = String(colorInput).toLowerCase().trim();
   
   if (lower.includes('rainbow') || lower.includes('multi')) {
     return {

@@ -17,9 +17,12 @@ import {
   ArrowDown,
   RefreshCw,
   Palette,
+  Video,
+  Play,
 } from 'lucide-react';
-import { STANDARD_FILAMENT_COLORS, getFilamentColorStyle } from '@/lib/colors';
+import { STANDARD_FILAMENT_COLORS, getFilamentColorStyle, parseProductColors, ColorOption } from '@/lib/colors';
 import { normalizeImageUrl, parseImageList } from '@/lib/images';
+import { parseProductVideo } from '@/lib/video';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -53,12 +56,15 @@ export default function AdminProductsPage() {
   const [isNew, setIsNew] = useState(false);
   const [isPublished, setIsPublished] = useState(true);
   const [personalizationEnabled, setPersonalizationEnabled] = useState(false);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<(string | ColorOption)[]>([]);
   const [customColorInput, setCustomColorInput] = useState('');
+  const [customColorImage, setCustomColorImage] = useState('');
+  const [uploadingColorImage, setUploadingColorImage] = useState(false);
 
-  // Image Upload State
+  // Image & Video State
   const [images, setImages] = useState<string[]>([]);
   const [imageUrlInput, setImageUrlInput] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [savingProduct, setSavingProduct] = useState(false);
@@ -170,8 +176,10 @@ export default function AdminProductsPage() {
     setPersonalizationEnabled(false);
     setSelectedColors(['Matte Black', 'Pure White', 'Stealth Grey', 'Silk Gold']);
     setCustomColorInput('');
+    setCustomColorImage('');
     setImages(['https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80']);
     setImageUrlInput('');
+    setVideoUrl('');
     setUploadError('');
     setFormError('');
     setModalOpen(true);
@@ -198,19 +206,15 @@ export default function AdminProductsPage() {
     setIsPublished(p.isPublished !== undefined ? !!p.isPublished : true);
     setPersonalizationEnabled(!!p.personalizationEnabled);
 
-    // Parse Colors
-    let parsedColors: string[] = [];
-    try {
-      parsedColors = typeof p.colors === 'string' ? JSON.parse(p.colors) : (Array.isArray(p.colors) ? p.colors : []);
-    } catch (e) {
-      parsedColors = [];
-    }
+    const parsedColors = parseProductColors(p.colors);
     setSelectedColors(parsedColors);
     setCustomColorInput('');
+    setCustomColorImage('');
 
     const parsedImages = parseImageList(p.images);
     setImages(parsedImages);
     setImageUrlInput('');
+    setVideoUrl(p.videoUrl || '');
     setUploadError('');
     setFormError('');
     setModalOpen(true);
@@ -219,10 +223,35 @@ export default function AdminProductsPage() {
   const handleAddCustomColor = () => {
     const trimmed = customColorInput.trim();
     if (!trimmed) return;
-    if (!selectedColors.includes(trimmed)) {
-      setSelectedColors([...selectedColors, trimmed]);
+    const exists = selectedColors.some(
+      (c) => (typeof c === 'string' ? c : c.name).toLowerCase() === trimmed.toLowerCase()
+    );
+    if (!exists) {
+      if (customColorImage) {
+        setSelectedColors([...selectedColors, { name: trimmed, image: customColorImage }]);
+      } else {
+        setSelectedColors([...selectedColors, trimmed]);
+      }
     }
     setCustomColorInput('');
+    setCustomColorImage('');
+  };
+
+  const handleColorImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    setUploadingColorImage(true);
+    try {
+      const optimized = await processImageFile(file);
+      if (optimized) {
+        setCustomColorImage(optimized);
+      }
+    } catch (err) {
+      console.error('Color image upload error:', err);
+    } finally {
+      setUploadingColorImage(false);
+      if (e.target) e.target.value = '';
+    }
   };
 
   const processImageFile = (file: File): Promise<string> => {
@@ -344,6 +373,7 @@ export default function AdminProductsPage() {
         personalizationEnabled,
         colors: selectedColors,
         images,
+        videoUrl: videoUrl.trim() || null,
       };
 
       const method = editingProduct ? 'PUT' : 'POST';
@@ -462,12 +492,7 @@ export default function AdminProductsPage() {
                 const isDragOver = dragOverIndex === index && draggedIndex !== index;
 
                 // Parse Colors for table preview
-                let pColors: string[] = [];
-                try {
-                  pColors = typeof p.colors === 'string' ? JSON.parse(p.colors) : (Array.isArray(p.colors) ? p.colors : []);
-                } catch (e) {
-                  pColors = [];
-                }
+                const pColors = parseProductColors(p.colors);
 
                 return (
                   <tr
@@ -543,10 +568,18 @@ export default function AdminProductsPage() {
                         <div className="flex items-center gap-1">
                           {pColors.slice(0, 4).map((c, ci) => {
                             const style = getFilamentColorStyle(c);
-                            return (
+                            return c.image ? (
+                              <img
+                                key={ci}
+                                src={c.image}
+                                title={c.name}
+                                alt={c.name}
+                                className="w-3.5 h-3.5 rounded-full object-cover border border-tech-accent shrink-0 shadow-sm"
+                              />
+                            ) : (
                               <span
                                 key={ci}
-                                title={c}
+                                title={c.name}
                                 className="w-3 h-3 rounded-full border border-slate-700 shrink-0"
                                 style={{ background: style.background, borderColor: style.border }}
                               />
@@ -817,7 +850,9 @@ export default function AdminProductsPage() {
                       type="button"
                       onClick={() => {
                         const common = ['Matte Black', 'Pure White', 'Stealth Grey', 'Silk Gold', 'Fire Red', 'Royal Blue'];
-                        setSelectedColors(Array.from(new Set([...selectedColors, ...common])));
+                        const existingNames = selectedColors.map((c) => (typeof c === 'string' ? c : c.name));
+                        const additions = common.filter((c) => !existingNames.includes(c));
+                        setSelectedColors([...selectedColors, ...additions]);
                       }}
                       className="px-2 py-1 bg-tech-card hover:bg-tech-card/80 border border-tech-border text-slate-300 rounded text-[10px] transition-colors"
                     >
@@ -843,14 +878,20 @@ export default function AdminProductsPage() {
                 {/* Standard Filament Swatches Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 pt-1 max-h-52 overflow-y-auto pr-1">
                   {STANDARD_FILAMENT_COLORS.map((color) => {
-                    const isSelected = selectedColors.includes(color.name);
+                    const isSelected = selectedColors.some(
+                      (c) => (typeof c === 'string' ? c : c.name).toLowerCase() === color.name.toLowerCase()
+                    );
                     return (
                       <button
                         key={color.name}
                         type="button"
                         onClick={() => {
                           if (isSelected) {
-                            setSelectedColors(selectedColors.filter((c) => c !== color.name));
+                            setSelectedColors(
+                              selectedColors.filter(
+                                (c) => (typeof c === 'string' ? c : c.name).toLowerCase() !== color.name.toLowerCase()
+                              )
+                            );
                           } else {
                             setSelectedColors([...selectedColors, color.name]);
                           }
@@ -875,12 +916,21 @@ export default function AdminProductsPage() {
                   })}
                 </div>
 
-                {/* Custom Color Input */}
-                <div className="pt-2 border-t border-tech-border/60">
-                  <div className="flex items-center gap-2">
+                {/* Custom Color Input with Swatch Image Upload */}
+                <div className="pt-3 border-t border-tech-border/60 space-y-2">
+                  <div className="text-[11px] font-mono text-slate-300 font-semibold flex items-center justify-between">
+                    <span>+ Add Custom Color with Swatch Photo:</span>
+                    {customColorImage && (
+                      <span className="text-[10px] text-tech-accent flex items-center gap-1 font-mono">
+                        ✓ Image Attached
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <input
                       type="text"
-                      placeholder="Add custom color (e.g. Silk Rose Gold, Marble PLA)..."
+                      placeholder="Color name (e.g. Silk Rose Gold, Marble PLA)..."
                       value={customColorInput}
                       onChange={(e) => setCustomColorInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -891,13 +941,43 @@ export default function AdminProductsPage() {
                       }}
                       className="flex-1 bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
                     />
-                    <button
-                      type="button"
-                      onClick={handleAddCustomColor}
-                      className="px-3 py-2 bg-tech-card border border-tech-border hover:border-tech-accent text-slate-200 hover:text-white rounded-lg text-xs font-mono font-bold transition-all shrink-0"
-                    >
-                      + Add Color
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                      {customColorImage ? (
+                        <div className="relative w-8 h-8 rounded-lg overflow-hidden border border-tech-accent shrink-0 group">
+                          <img src={customColorImage} alt="" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => setCustomColorImage('')}
+                            className="absolute inset-0 bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Remove image"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="px-3 py-2 rounded-lg bg-tech-card border border-tech-border hover:border-tech-accent text-slate-300 hover:text-white cursor-pointer flex items-center gap-1.5 text-xs font-mono transition-all shrink-0">
+                          <Upload className="w-3.5 h-3.5 text-tech-accent" />
+                          <span>{uploadingColorImage ? 'Uploading...' : 'Upload Photo'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleColorImageUpload}
+                            disabled={uploadingColorImage}
+                            className="hidden"
+                          />
+                        </label>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleAddCustomColor}
+                        className="px-3.5 py-2 bg-tech-accent text-tech-bg hover:bg-tech-accent/90 rounded-lg text-xs font-mono font-bold transition-all shrink-0 shadow shadow-tech-accent/20 flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -908,21 +988,36 @@ export default function AdminProductsPage() {
                       <span>Active for Product ({selectedColors.length} colors):</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {selectedColors.map((colorName) => {
-                        const style = getFilamentColorStyle(colorName);
+                      {selectedColors.map((col, cIdx) => {
+                        const colName = typeof col === 'string' ? col : col.name;
+                        const colImg = typeof col === 'object' ? col.image : undefined;
+                        const style = getFilamentColorStyle(col);
                         return (
                           <span
-                            key={colorName}
+                            key={cIdx}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-tech-card border border-tech-accent/40 text-white text-[11px] font-mono shadow-sm"
                           >
-                            <span
-                              className="w-2.5 h-2.5 rounded-full border border-slate-700 shrink-0"
-                              style={{ background: style.background, borderColor: style.border }}
-                            />
-                            <span>{colorName}</span>
+                            {colImg ? (
+                              <img
+                                src={colImg}
+                                alt={colName}
+                                className="w-3.5 h-3.5 rounded-full object-cover border border-tech-accent shadow-sm"
+                              />
+                            ) : (
+                              <span
+                                className="w-2.5 h-2.5 rounded-full border border-slate-700 shrink-0"
+                                style={{ background: style.background, borderColor: style.border }}
+                              />
+                            )}
+                            <span>{colName}</span>
+                            {colImg && (
+                              <span className="text-[9px] text-tech-accent bg-tech-accent/15 px-1 py-0.2 rounded font-sans font-bold">
+                                IMG
+                              </span>
+                            )}
                             <button
                               type="button"
-                              onClick={() => setSelectedColors(selectedColors.filter((c) => c !== colorName))}
+                              onClick={() => setSelectedColors(selectedColors.filter((_, i) => i !== cIdx))}
                               className="hover:text-rose-400 text-slate-400 ml-0.5"
                               title="Remove"
                             >
@@ -1068,6 +1163,64 @@ export default function AdminProductsPage() {
                   >
                     Add URL
                   </button>
+                </div>
+
+                {/* Section 6.1: Product Video (YouTube / Shorts / Google Drive / MP4) */}
+                <div className="pt-3 mt-2 border-t border-tech-border/70 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-mono text-slate-300 font-semibold flex items-center gap-1.5">
+                      <Video className="w-3.5 h-3.5 text-tech-accent" />
+                      <span>Product Action Video (Optional)</span>
+                    </label>
+                    {videoUrl && (
+                      <span className="text-[10px] text-tech-accent font-mono flex items-center gap-1">
+                        <Play className="w-2.5 h-2.5 fill-tech-accent" />
+                        Video Attached
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-400 font-mono">
+                    Paste a YouTube link, YouTube Shorts, Google Drive video link, or direct MP4 URL. Customers can swipe to this video in the product gallery to see functionality & 3D finish.
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://www.youtube.com/shorts/... or Google Drive / MP4 link"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      className="flex-1 bg-tech-card border border-tech-border rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-tech-accent font-mono"
+                    />
+                    {videoUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setVideoUrl('')}
+                        className="px-3 py-2 bg-tech-card border border-tech-border hover:bg-rose-500/20 hover:border-rose-500/40 text-rose-400 rounded-lg text-xs font-mono transition-all"
+                        title="Remove Video"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {videoUrl && parseProductVideo(videoUrl) && (
+                    <div className="p-2.5 bg-tech-bg rounded-lg border border-tech-border/80 flex items-center justify-between text-xs font-mono">
+                      <div className="flex items-center gap-2 text-tech-accent">
+                        <Play className="w-4 h-4 fill-tech-accent shrink-0" />
+                        <span className="truncate text-[11px] text-slate-200">
+                          Format: {parseProductVideo(videoUrl)?.type.toUpperCase()} Video
+                        </span>
+                      </div>
+                      <a
+                        href={videoUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-tech-accent hover:underline shrink-0"
+                      >
+                        Test Link ↗
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 

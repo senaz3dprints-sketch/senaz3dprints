@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Heart, ShoppingBag, Sparkles, SlidersHorizontal, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { getFilamentColorStyle } from '@/lib/colors';
+import { getFilamentColorStyle, parseProductColors } from '@/lib/colors';
 import { parseImageList } from '@/lib/images';
 
 export interface ProductCardProps {
@@ -48,13 +48,8 @@ export default function ProductCard({
   // Parse images safely and normalize Drive/remote URLs
   const imageList = parseImageList(images);
 
-  // Parse colors JSON safely
-  let colorList: string[] = [];
-  if (colors) {
-    try {
-      colorList = typeof colors === 'string' ? JSON.parse(colors) : colors;
-    } catch (e) {}
-  }
+  // Parse colors safely
+  const colorList = parseProductColors(colors);
 
   const discountPercent = compareAtPrice && compareAtPrice > price
     ? Math.round(((compareAtPrice - price) / compareAtPrice) * 100)
@@ -213,7 +208,7 @@ export default function ProductCard({
                 return (
                   <span
                     key={idx}
-                    title={col}
+                    title={col.name}
                     className="w-3 h-3 rounded-full border border-slate-700 shadow-sm shrink-0"
                     style={{ background: style.background, borderColor: style.border }}
                   />
@@ -261,7 +256,7 @@ export default function ProductCard({
                   price,
                   shippingFee: shippingFee || 0,
                   quantity: 1,
-                  color: colorList[0] || 'Default',
+                  color: colorList[0]?.name || 'Default',
                 })
               }
               aria-label={`Add ${name} to order bag`}
