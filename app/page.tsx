@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import HeroSection from '@/components/HeroSection';
 import ProductCard from '@/components/ProductCard';
+import CustomerShowcase from '@/components/CustomerShowcase';
 import {
   Upload,
   Layers,
@@ -24,7 +25,7 @@ import {
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [products, personalizedProducts, categories, siteContentRecord] = await Promise.all([
+  const [products, personalizedProducts, categories, siteContentRecord, customShowcaseProducts] = await Promise.all([
     // 1. Featured / Catalog Products
     db.product.findMany({
       where: { isPublished: true },
@@ -99,6 +100,39 @@ export default async function HomePage() {
     db.siteContent.findUnique({
       where: { key: 'homepage' },
     }).catch(() => null),
+
+    // 5. Custom Creations / Showcase Products
+    db.product.findMany({
+      where: {
+        isPublished: true,
+        OR: [
+          { category: { slug: 'custom-prints' } },
+          { personalizationEnabled: true },
+          { name: { contains: 'photo', mode: 'insensitive' } },
+          { name: { contains: 'custom', mode: 'insensitive' } },
+          { name: { contains: 'model', mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        shortDescription: true,
+        price: true,
+        compareAtPrice: true,
+        images: true,
+        material: true,
+        personalizationEnabled: true,
+        category: {
+          select: {
+            name: true,
+            slug: true,
+          },
+        },
+      },
+      orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+      take: 6,
+    }).catch(() => []),
   ]);
 
   let content = {
@@ -325,7 +359,12 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. CUSTOM 3D PRINTING SERVICE BANNER */}
+      {/* 5. CUSTOMER SHOWCASE / HALL OF PRINTS (MADE FOR CUSTOMERS) */}
+      {customShowcaseProducts.length > 0 && (
+        <CustomerShowcase customProducts={customShowcaseProducts} />
+      )}
+
+      {/* 6. CUSTOM 3D PRINTING SERVICE BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-950 via-tech-card to-tech-bg border border-tech-accent/30 p-8 sm:p-12 text-slate-100 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-2xl">
           <div className="space-y-4 max-w-2xl text-left">
