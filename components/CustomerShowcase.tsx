@@ -97,7 +97,7 @@ export default function CustomerShowcase({ customProducts }: CustomerShowcasePro
           </div>
 
           {/* Showcase Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
             {filteredItems.map((item) => {
               const imageList = parseImageList(item.images);
               const mainImage = imageList[0] || 'https://images.unsplash.com/photo-1615655406736-b37c4fabf923?auto=format&fit=crop&w=800&q=80';
@@ -105,10 +105,10 @@ export default function CustomerShowcase({ customProducts }: CustomerShowcasePro
               return (
                 <div
                   key={item.id}
-                  className="group bg-tech-bg/90 rounded-2xl border border-tech-border hover:border-tech-accent/50 transition-all duration-300 flex flex-col overflow-hidden shadow-xl hover:shadow-tech-accent/10"
+                  className="group bg-tech-bg/90 rounded-xl border border-tech-border hover:border-tech-accent/50 transition-all duration-300 flex flex-col overflow-hidden shadow-md hover:shadow-tech-accent/10"
                 >
                   {/* Photo Container */}
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-tech-card">
+                  <div className="relative aspect-square w-full overflow-hidden bg-tech-card">
                     <img
                       src={mainImage}
                       alt={item.name}
@@ -116,41 +116,41 @@ export default function CustomerShowcase({ customProducts }: CustomerShowcasePro
                     />
 
                     {/* Top Badges */}
-                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-                      <span className="bg-tech-bg/90 border border-tech-accent/40 text-tech-accent text-[10px] font-mono font-bold px-2 py-0.5 rounded shadow backdrop-blur-md">
-                        {item.category?.name || 'Custom Print'}
+                    <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                      <span className="bg-tech-bg/90 border border-tech-accent/40 text-tech-accent text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow backdrop-blur-md">
+                        {item.category?.name || 'Custom'}
                       </span>
                     </div>
 
-                    <div className="absolute top-3 right-3 z-10">
-                      <span className="bg-emerald-500/90 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded shadow flex items-center gap-1 backdrop-blur-md">
-                        <CheckCircle2 className="w-3 h-3" /> Real Print
+                    <div className="absolute top-2 right-2 z-10">
+                      <span className="bg-emerald-500/90 text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shadow flex items-center gap-1 backdrop-blur-md">
+                        <CheckCircle2 className="w-2.5 h-2.5" /> Real Print
                       </span>
                     </div>
 
                     {/* Quick View Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                      <span className="text-[11px] font-mono text-white flex items-center gap-1.5 font-semibold">
-                        <Eye className="w-3.5 h-3.5 text-tech-accent" /> Click to view details
+                    <div className="absolute inset-0 bg-gradient-to-t from-tech-bg via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2.5">
+                      <span className="text-[10px] font-mono text-white flex items-center gap-1 font-semibold">
+                        <Eye className="w-3 h-3 text-tech-accent" /> View details
                       </span>
                     </div>
                   </div>
 
                   {/* Body Content */}
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                    <div className="space-y-1.5">
+                  <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
+                    <div className="space-y-0.5">
                       <Link href={`/shop/${item.slug}`}>
-                        <h3 className="text-base font-bold text-white group-hover:text-tech-accent transition-colors">
+                        <h3 className="text-sm font-semibold text-white group-hover:text-tech-accent transition-colors line-clamp-1 leading-snug">
                           {item.name}
                         </h3>
                       </Link>
-                      <p className="text-xs text-slate-300 font-sans line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] text-slate-400 font-sans line-clamp-1 leading-tight">
                         {item.shortDescription}
                       </p>
                     </div>
 
                     {/* Specs Pills */}
-                    <div className="flex items-center gap-2 text-[11px] font-mono text-slate-300 bg-tech-card/60 p-2.5 rounded-xl border border-tech-border">
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-300 bg-tech-card/60 p-1.5 rounded-lg border border-tech-border">
                       <span className="text-slate-400">Material:</span>
                       <span className="text-tech-accent font-semibold">{item.material || 'PLA+'}</span>
                       <span className="text-slate-600">|</span>
@@ -159,26 +159,26 @@ export default function CustomerShowcase({ customProducts }: CustomerShowcasePro
                     </div>
 
                     {/* Action Bar */}
-                    <div className="pt-2 border-t border-tech-border/70 flex items-center justify-between gap-3">
+                    <div className="pt-1.5 border-t border-tech-border/70 flex items-center justify-between gap-2">
                       <div>
-                        <span className="text-[10px] font-mono text-slate-400 block">Starting from</span>
-                        <span className="text-lg font-bold text-white font-mono">₹{item.price}</span>
+                        <span className="text-[9px] font-mono text-slate-400 block leading-none mb-0.5">From</span>
+                        <span className="text-base font-bold text-white font-mono">₹{item.price}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <Link
                           href={`/shop/${item.slug}`}
-                          className="px-3.5 py-2 rounded-lg bg-tech-accent text-tech-bg hover:bg-tech-accent/90 text-xs font-mono font-bold flex items-center gap-1.5 transition-all shadow shadow-tech-accent/10"
+                          className="px-2.5 py-1.5 rounded-lg bg-tech-accent text-tech-bg hover:bg-tech-accent/90 text-[11px] font-mono font-bold flex items-center gap-1 transition-all shadow shadow-tech-accent/10"
                         >
                           {item.personalizationEnabled ? (
                             <>
-                              <SlidersHorizontal className="w-3.5 h-3.5" />
+                              <SlidersHorizontal className="w-3 h-3" />
                               <span>Personalise</span>
                             </>
                           ) : (
                             <>
-                              <span>Order Similar</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
+                              <span>Order</span>
+                              <ArrowRight className="w-3 h-3" />
                             </>
                           )}
                         </Link>
