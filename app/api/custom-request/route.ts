@@ -132,7 +132,10 @@ export async function POST(req: NextRequest) {
       requestRecord.id,
       requestRecord.customerName,
       requestRecord.productType,
-      requestRecord.materialPreference
+      requestRecord.materialPreference,
+      undefined,
+      requestRecord.additionalNotes,
+      Boolean(requestRecord.fileUrl)
     );
 
     return NextResponse.json({

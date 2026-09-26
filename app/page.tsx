@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import HeroSection from '@/components/HeroSection';
 import ProductCard from '@/components/ProductCard';
 import CustomerShowcase from '@/components/CustomerShowcase';
+import CustomOrderDualSection from '@/components/CustomOrderDualSection';
 import {
   Upload,
   Layers,
@@ -364,34 +365,8 @@ export default async function HomePage() {
         <CustomerShowcase customProducts={customShowcaseProducts} />
       )}
 
-      {/* 6. CUSTOM 3D PRINTING SERVICE BANNER */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-950 via-tech-card to-tech-bg border border-tech-accent/30 p-8 sm:p-12 text-slate-100 flex flex-col lg:flex-row items-center justify-between gap-8 shadow-2xl">
-          <div className="space-y-4 max-w-2xl text-left">
-            <div className="flex items-center gap-2 text-xs font-mono text-tech-accent font-semibold uppercase tracking-wider">
-              <Upload className="w-4 h-4" />
-              <span>Custom STL / OBJ Service</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Have a 3D idea or model file?
-            </h2>
-            <p className="text-sm text-slate-200 leading-relaxed">
-              Send us your .stl, .obj, .3mf model file or a reference sketch. We’ll analyze the mesh, calculate print hours, and provide an instant WhatsApp quote.
-            </p>
-          </div>
-
-          <div className="shrink-0 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-            <Link
-              href="/custom-printing"
-              aria-label="Upload your 3D model STL file for instant custom quote"
-              className="px-8 py-4 rounded-xl bg-tech-accent text-tech-bg font-extrabold text-sm font-mono hover:bg-tech-accent/90 transition-all text-center shadow-lg shadow-tech-accent/20 flex items-center justify-center gap-2"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Upload Model & Quote</span>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* 6. CUSTOM 3D PRINTING DUAL PATHWAY (FILE UPLOAD VS WHATSAPP CHAT) */}
+      <CustomOrderDualSection />
 
       {/* 6. HOW IT WORKS */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-10">

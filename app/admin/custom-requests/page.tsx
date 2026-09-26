@@ -225,10 +225,22 @@ export default function AdminCustomRequestsPage() {
                       <span className="text-[11px] text-slate-400">{req.whatsapp}</span>
                     </td>
                     <td className="p-3.5">
-                      <span className="font-bold text-tech-accent block">{req.productType}</span>
-                      <span className="text-slate-400 text-[11px]">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-bold text-tech-accent block">{req.productType}</span>
+                        {!req.fileUrl && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-mono font-bold">
+                            💬 WhatsApp Idea
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-slate-400 text-[11px] block mt-0.5">
                         {req.materialPreference} | {req.colorPreference} (Qty: {req.quantity})
                       </span>
+                      {req.additionalNotes && req.additionalNotes !== 'None' && (
+                        <div className="mt-1 p-1.5 bg-tech-bg/90 rounded border border-tech-border/50 text-[10px] text-slate-300 max-w-xs line-clamp-2" title={req.additionalNotes}>
+                          <span className="text-tech-accent font-semibold">Idea: </span>{req.additionalNotes}
+                        </div>
+                      )}
                     </td>
                     <td className="p-3.5 space-y-1.5">
                       {req.fileUrl && (
@@ -275,7 +287,9 @@ export default function AdminCustomRequestsPage() {
                         </div>
                       )}
                       {!req.fileUrl && !req.referenceImageUrl && (
-                        <span className="text-slate-500 text-[10px]">No file attached</span>
+                        <span className="px-2 py-0.5 rounded bg-tech-bg border border-tech-border text-slate-400 text-[10px] font-mono inline-block">
+                          No CAD file (Direct Idea)
+                        </span>
                       )}
                     </td>
                     <td className="p-3.5">

@@ -97,20 +97,32 @@ export function generateCustomRequestWhatsAppUrl(
   customerName: string,
   productType: string,
   material: string,
-  customNumber?: string
+  customNumber?: string,
+  notes?: string | null,
+  hasFile: boolean = true
 ): string {
   const number = customNumber || DEFAULT_WHATSAPP_NUMBER;
 
-  const text = `Hello *SenAZ 3D PRINTS*,
-
-I submitted a Custom 3D Printing request!
-
-*Request ID:* ${requestId}
-*Name:* ${customerName}
-*Product Type:* ${productType}
-*Material:* ${material}
-
-I have uploaded my model/reference on your website. Looking forward to your quote!`;
+  let text = `Hello *SenAZ 3D PRINTS*,\n\n`;
+  if (!hasFile) {
+    text += `I would like to make a *Custom 3D Print* (I don't have a 3D CAD design file).\n\n`;
+    text += `*Request ID:* ${requestId}\n`;
+    text += `*Name:* ${customerName}\n`;
+    if (notes) {
+      text += `*My Idea / Requirements:* ${notes}\n`;
+    }
+    text += `\nPlease help me with CAD design, material options, and pricing!`;
+  } else {
+    text += `I submitted a Custom 3D Printing request!\n\n`;
+    text += `*Request ID:* ${requestId}\n`;
+    text += `*Name:* ${customerName}\n`;
+    text += `*Product Type:* ${productType}\n`;
+    text += `*Material:* ${material}\n`;
+    if (notes) {
+      text += `*Notes:* ${notes}\n`;
+    }
+    text += `\nI have uploaded my model/reference on your website. Looking forward to your quote!`;
+  }
 
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
 }
