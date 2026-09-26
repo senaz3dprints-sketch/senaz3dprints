@@ -172,3 +172,16 @@ model Receipt {
   @@index([createdAt])
   @@index([customerName])
 }
+
+model Feedback {
+  id           String   @id @default(cuid())
+  customerName String
+  roleOrCity   String?  // e.g. "Verified Buyer • Mumbai" or "Product Designer"
+  rating       Int      @default(5) // 1 to 5 stars
+  comment      String
+  isApproved   Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isApproved, createdAt])
+}

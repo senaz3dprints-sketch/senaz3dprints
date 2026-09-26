@@ -16,6 +16,7 @@ import {
   FileText,
   Printer,
   ExternalLink,
+  MessageSquare,
 } from 'lucide-react';
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
@@ -33,6 +34,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     { name: 'Orders', href: '/admin/orders', icon: ShoppingBag },
     { name: 'Custom Requests', href: '/admin/custom-requests', icon: UploadCloud },
     { name: 'Receipts & Quotes', href: '/admin/receipts', icon: Receipt },
+    { name: 'Customer Feedback', href: '/admin/feedback', icon: MessageSquare },
     { name: 'Coupons', href: '/admin/coupons', icon: Tag },
     { name: 'Referrals', href: '/admin/referrals', icon: Share2 },
     { name: 'Site Content', href: '/admin/content', icon: FileText },

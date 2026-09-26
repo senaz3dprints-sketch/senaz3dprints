@@ -483,3 +483,27 @@ export async function updateOrderStatusSheetRecord(
   return false;
 }
 
+export async function syncFeedbackSheetRecord(feedback: {
+  customerName: string;
+  roleOrCity?: string | null;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+}) {
+  const istDate = new Date(feedback.createdAt).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  const row = [
+    feedback.customerName,
+    feedback.roleOrCity || 'Verified Buyer',
+    `${feedback.rating} Stars`,
+    feedback.comment,
+    istDate,
+  ];
+
+  return await appendToSheet('Feedbacks', row);
+}
+

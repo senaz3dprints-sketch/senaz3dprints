@@ -5,6 +5,7 @@ import HeroSection from '@/components/HeroSection';
 import ProductCard from '@/components/ProductCard';
 import CustomerShowcase from '@/components/CustomerShowcase';
 import CustomOrderDualSection from '@/components/CustomOrderDualSection';
+import CustomerFeedbackSection from '@/components/CustomerFeedbackSection';
 import {
   Upload,
   Layers,
@@ -26,7 +27,7 @@ import {
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [products, personalizedProducts, categories, siteContentRecord, customShowcaseProducts] = await Promise.all([
+  const [products, personalizedProducts, categories, siteContentRecord, customShowcaseProducts, initialFeedbacks] = await Promise.all([
     // 1. Featured / Catalog Products
     db.product.findMany({
       where: { isPublished: true },
@@ -132,6 +133,13 @@ export default async function HomePage() {
         },
       },
       orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+      take: 6,
+    }).catch(() => []),
+
+    // 6. Customer Testimonials / Feedbacks
+    db.feedback.findMany({
+      where: { isApproved: true },
+      orderBy: { createdAt: 'desc' },
       take: 6,
     }).catch(() => []),
   ]);
@@ -478,56 +486,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 8. CUSTOMER TESTIMONIALS */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        <div className="text-center space-y-2 max-w-xl mx-auto">
-          <span className="text-xs font-mono text-tech-accent uppercase tracking-wider font-semibold">
-            Real Feedback
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-sans">
-            What Customers Say
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              name: 'Arjun K.',
-              role: 'Product Designer',
-              comment:
-                'Uploaded an STL file for a prototype enclosure. The layer smoothness and dimension tolerance were spot on. Quick WhatsApp update too!',
-              stars: 5,
-            },
-            {
-              name: 'Priya Sharma',
-              role: 'Verified Buyer',
-              comment:
-                'Ordered personalized name keychains for my team. The dual-color text looks premium and feel super solid in hand. Highly recommended!',
-              stars: 5,
-            },
-            {
-              name: 'Vikram R.',
-              role: 'Tech Enthusiast',
-              comment:
-                'The Low-Poly Dragon statue sits right next to my setup. Crisp geometric edges and fast delivery. SenAZ is my go-to print lab now.',
-              stars: 5,
-            },
-          ].map((t, idx) => (
-            <div key={idx} className="bg-tech-card p-6 rounded-xl border border-tech-border space-y-3">
-              <div className="flex text-amber-400 gap-1">
-                {[...Array(t.stars)].map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400" />
-                ))}
-              </div>
-              <p className="text-xs text-slate-200 leading-relaxed font-sans">"{t.comment}"</p>
-              <div className="pt-2 border-t border-tech-border/60 font-mono text-xs">
-                <span className="font-bold text-white block">{t.name}</span>
-                <span className="text-slate-400 text-[10px]">{t.role}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* 8. CUSTOMER TESTIMONIALS & FEEDBACK SECTION */}
+      <CustomerFeedbackSection initialFeedbacks={initialFeedbacks} />
 
       {/* 9. FAQ ACCORDION */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
