@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { createOrderSheetRecord, recordReferralSheetRecord } from '@/lib/google-sheets';
 import { generateOrderWhatsAppUrl } from '@/lib/whatsapp';
 import { getShippingSettings, calculateShippingFee } from '@/lib/shipping';
+import { sendAdminNewOrderEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -200,6 +201,24 @@ export async function POST(req: NextRequest) {
       }
     } catch (sheetErr) {
       console.error('Google Sheets sync error:', sheetErr);
+    }
+
+    // Direct Email Alert to Admin
+    try {
+      await sendAdminNewOrderEmail({
+        id: orderRecord.id,
+        customerName: orderRecord.customerName,
+        whatsapp: orderRecord.whatsapp,
+        email: orderRecord.email,
+        totalAmount: orderRecord.totalAmount,
+        items: validatedItems,
+        address: orderRecord.address,
+        city: orderRecord.city,
+        state: orderRecord.state,
+        pincode: orderRecord.pincode,
+      });
+    } catch (emailErr) {
+      console.error('Order email dispatch error:', emailErr);
     }
 
     // Generate WhatsApp URL with Full Breakdown

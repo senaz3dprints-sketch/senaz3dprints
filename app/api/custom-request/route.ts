@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { saveUploadedFile } from '@/lib/upload';
 import { createCustomRequestSheetRecord } from '@/lib/google-sheets';
 import { generateCustomRequestWhatsAppUrl } from '@/lib/whatsapp';
+import { sendAdminNewCustomRequestEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
@@ -103,6 +104,27 @@ export async function POST(req: NextRequest) {
       });
     } catch (sheetErr) {
       console.error('Custom request Google Sheets sync error:', sheetErr);
+    }
+
+    // Direct Email Alert to Admin
+    try {
+      await sendAdminNewCustomRequestEmail({
+        id: requestRecord.id,
+        customerName: requestRecord.customerName,
+        whatsapp: requestRecord.whatsapp,
+        email: requestRecord.email,
+        productType: requestRecord.productType,
+        materialPreference: requestRecord.materialPreference,
+        colorPreference: requestRecord.colorPreference,
+        quantity: requestRecord.quantity,
+        dimensions: requestRecord.dimensions,
+        fileUrl: requestRecord.fileUrl,
+        fileName: requestRecord.fileName,
+        referenceImageUrl: requestRecord.referenceImageUrl,
+        additionalNotes: requestRecord.additionalNotes,
+      });
+    } catch (emailErr) {
+      console.error('Admin email dispatch error:', emailErr);
     }
 
     // WhatsApp Redirect URL
