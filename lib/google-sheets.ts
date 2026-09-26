@@ -164,6 +164,19 @@ export async function createCustomRequestSheetRecord(request: {
     timeStyle: 'short',
   });
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://senaz3dprints.in';
+  const fileLink = request.fileUrl
+    ? (request.fileUrl.startsWith('data:')
+        ? `${siteUrl}/api/custom-request/download?id=${request.id}&type=file`
+        : (request.fileUrl.startsWith('http') ? request.fileUrl : `${siteUrl}${request.fileUrl}`))
+    : 'N/A';
+
+  const imageLink = request.referenceImageUrl
+    ? (request.referenceImageUrl.startsWith('data:')
+        ? `${siteUrl}/api/custom-request/download?id=${request.id}&type=image`
+        : (request.referenceImageUrl.startsWith('http') ? request.referenceImageUrl : `${siteUrl}${request.referenceImageUrl}`))
+    : 'N/A';
+
   const row = [
     request.id,                          // 1. Request ID
     istDate,                             // 2. Date & Time
@@ -175,8 +188,8 @@ export async function createCustomRequestSheetRecord(request: {
     request.colorPreference,             // 8. Color
     request.quantity,                    // 9. Quantity
     request.dimensions || 'N/A',         // 10. Dimensions
-    request.fileUrl || 'N/A',            // 11. STL File Link
-    request.referenceImageUrl || 'N/A',  // 12. Reference Image Link
+    fileLink,                            // 11. STL File Link (Clean Download URL)
+    imageLink,                           // 12. Reference Image Link (Clean Download URL)
     request.additionalNotes || 'None',   // 13. Additional Notes
     'PENDING',                           // 14. Status
   ];

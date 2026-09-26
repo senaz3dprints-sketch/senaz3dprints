@@ -81,6 +81,47 @@ export default function AdminCustomRequestsPage() {
     if (res.ok) fetchRequests();
   };
 
+  const handleDownloadFile = (req: any, type: 'file' | 'image' = 'file') => {
+    const targetUrl = type === 'image' ? req.referenceImageUrl : req.fileUrl;
+    const defaultName = type === 'image' ? `reference_${req.id}.jpg` : (req.fileName || `model_${req.id}.stl`);
+
+    if (!targetUrl) return;
+
+    // Fast client-side blob download if Base64
+    if (targetUrl.startsWith('data:')) {
+      try {
+        const parts = targetUrl.split(',');
+        const mime = parts[0].match(/:(.*?);/)?.[1] || 'application/octet-stream';
+        const byteCharacters = atob(parts[1]);
+        const byteNumbers = new Uint8Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const blob = new Blob([byteNumbers], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = defaultName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+        return;
+      } catch (err) {
+        console.error('Client blob download fallback:', err);
+      }
+    }
+
+    // Direct endpoint download
+    const downloadUrl = `/api/admin/custom-requests/download?id=${req.id}&type=${type}`;
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = defaultName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   // Metrics calculations
   const totalRequests = requests.length;
   const pendingRequests = requests.filter((r) => r.status === 'PENDING').length;
@@ -189,28 +230,49 @@ export default function AdminCustomRequestsPage() {
                         {req.materialPreference} | {req.colorPreference} (Qty: {req.quantity})
                       </span>
                     </td>
-                    <td className="p-3.5 space-y-1">
+                    <td className="p-3.5 space-y-1.5">
                       {req.fileUrl && (
-                        <a
-                          href={req.fileUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 text-tech-accent hover:underline text-[11px]"
-                        >
-                          <FileText className="w-3.5 h-3.5 shrink-0" />
-                          <span>Download 3D Model</span>
-                        </a>
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(req, 'file')}
+                            className="flex items-center gap-1.5 text-tech-accent hover:text-tech-accent/80 font-bold hover:underline text-[11px] text-left"
+                            title="Download 3D Model File"
+                          >
+                            <FileText className="w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate max-w-[160px]" title={req.fileName || 'Download 3D Model'}>
+                              {req.fileName || 'Download 3D Model'}
+                            </span>
+                          </button>
+                          <a
+                            href={`/api/admin/custom-requests/download?id=${req.id}&type=file`}
+                            download={req.fileName || `model_${req.id}.stl`}
+                            className="text-[9px] text-slate-400 hover:text-tech-accent transition-colors flex items-center gap-1 font-mono"
+                          >
+                            <span>⤓ Direct Download Link</span>
+                          </a>
+                        </div>
                       )}
                       {req.referenceImageUrl && (
-                        <a
-                          href={req.referenceImageUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1.5 text-sky-400 hover:underline text-[11px]"
-                        >
-                          <ImageIcon className="w-3.5 h-3.5 shrink-0" />
-                          <span>View Image</span>
-                        </a>
+                        <div className="flex flex-col gap-0.5 pt-0.5 border-t border-tech-border/40">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(req, 'image')}
+                            className="flex items-center gap-1.5 text-sky-400 hover:text-sky-300 font-medium hover:underline text-[11px] text-left"
+                            title="Download Reference Image"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5 shrink-0" />
+                            <span>View / Download Image</span>
+                          </button>
+                          <a
+                            href={`/api/admin/custom-requests/download?id=${req.id}&type=image`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[9px] text-slate-400 hover:text-sky-300 transition-colors flex items-center gap-1 font-mono"
+                          >
+                            <span>↗ Open in New Tab</span>
+                          </a>
+                        </div>
                       )}
                       {!req.fileUrl && !req.referenceImageUrl && (
                         <span className="text-slate-500 text-[10px]">No file attached</span>

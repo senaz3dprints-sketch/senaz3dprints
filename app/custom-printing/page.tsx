@@ -18,6 +18,7 @@ export default function CustomPrintingPage() {
   const [additionalNotes, setAdditionalNotes] = useState('');
 
   const [file3d, setFile3d] = useState<File | null>(null);
+  const [file3dLink, setFile3dLink] = useState('');
   const [referenceImage, setReferenceImage] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,7 @@ export default function CustomPrintingPage() {
       if (additionalNotes) formData.append('additionalNotes', additionalNotes);
 
       if (file3d) formData.append('file3d', file3d);
+      if (file3dLink) formData.append('file3dLink', file3dLink.trim());
       if (referenceImage) formData.append('referenceImage', referenceImage);
 
       const res = await fetch('/api/custom-request', {
@@ -181,13 +183,24 @@ export default function CustomPrintingPage() {
 
           {/* File Uploaders */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-            <FileUpload
-              label="1. Upload 3D File (.stl, .obj, .3mf, .step, .gcode)"
-              acceptTypes=".stl,.obj,.3mf,.step,.stp,.gcode"
-              maxSizeMb={25}
-              allowedExtensionsText=".stl, .obj, .3mf, .step, .gcode"
-              onFileSelect={(f) => setFile3d(f)}
-            />
+            <div className="space-y-2">
+              <FileUpload
+                label="1. Upload 3D File (.stl, .obj, .3mf, .step, .gcode)"
+                acceptTypes=".stl,.obj,.3mf,.step,.stp,.gcode"
+                maxSizeMb={25}
+                allowedExtensionsText=".stl, .obj, .3mf, .step, .gcode"
+                onFileSelect={(f) => setFile3d(f)}
+              />
+              <div className="pt-1">
+                <input
+                  type="url"
+                  placeholder="Or paste Google Drive / Dropbox link..."
+                  value={file3dLink}
+                  onChange={(e) => setFile3dLink(e.target.value)}
+                  className="w-full bg-tech-bg border border-tech-border rounded-lg px-3 py-1.5 text-[11px] text-white focus:outline-none focus:border-tech-accent font-mono"
+                />
+              </div>
+            </div>
 
             <FileUpload
               label="2. Upload Reference Image (.jpg, .png, .webp)"

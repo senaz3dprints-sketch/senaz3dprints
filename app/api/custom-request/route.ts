@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
     const additionalNotes = formData.get('additionalNotes') as string;
 
     const file3d = formData.get('file3d') as File | null;
+    const file3dLink = (formData.get('file3dLink') as string)?.trim();
     const referenceImage = formData.get('referenceImage') as File | null;
 
     if (!customerName || !whatsapp || !productType) {
@@ -43,6 +44,9 @@ export async function POST(req: NextRequest) {
       }
       fileUrl = uploadRes.fileUrl;
       fileName = uploadRes.fileName;
+    } else if (file3dLink) {
+      fileUrl = file3dLink;
+      fileName = 'Cloud 3D Model Link';
     }
 
     // Process reference image if provided
